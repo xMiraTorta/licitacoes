@@ -3,7 +3,7 @@
 **Ao iniciar qualquer sessão: leia `HANDOFF.md` primeiro.** Atualize-o a cada etapa relevante concluída (não só no fim), com evidência do que foi testado.
 
 ## Objetivo
-**Monitor de Licitações**: painel estático de compras públicas (PNCP) para o dono achar oportunidades de vender ao governo, mais um coletor diário que atualiza os dados e avisa no Telegram. Foco atual: só café (decisão do dono em 17/10/2026; ele está aberto a outros produtos no futuro). Não existe marca "Café Bizinotto": não use esse nome em lugar nenhum (nem interno). O dono pede: sempre fazer tudo, sem deixar pendências escondidas. Origem para distâncias: Uberaba-MG. O dono usa para achar oportunidades, acompanhar propostas (favorito, status, preço, notas) e seguir o guia/checklist de documentos (nunca participou de licitação). O dono não é programador: explique decisões em português simples.
+**Monitor de Licitações**: painel estático de compras públicas (PNCP) para o dono achar oportunidades de vender ao governo, mais um coletor diário que atualiza os dados e avisa no Telegram. Foco atual: só café (decisão do dono em 17/10/2026; ele está aberto a outros produtos no futuro). O dono pede: sempre fazer tudo, sem deixar pendências escondidas. Origem para distâncias: Uberaba-MG. O dono usa para achar oportunidades, acompanhar propostas (favorito, status, preço, notas) e seguir o guia/checklist de documentos (nunca participou de licitação). O dono não é programador: explique decisões em português simples.
 
 ## Arquitetura
 - **Site** (GitHub Pages, sem build, repositório público por decisão do dono): `index.html` tem CSS + HTML + JS. Abas: Oportunidades (lista + painel lateral de detalhe, `#c=<chave>` na URL), Minhas propostas (quadro por status), Agenda, Painel, Guia da proposta, Sobre. Tema claro/escuro. **A linha que começa com `const DATA0 = ` contém uma cópia integral de `data.json`** (~860 KB). Não abra/imprima essa linha; leia o JS com `grep -v '^const DATA0'` ou por faixa de linhas, e os dados com `python3`/`json`. A página usa `DATA0` ao abrir e baixa `data.json` a cada 15 min; troca só se `gerado_em` for mais novo.
@@ -16,9 +16,9 @@
 
 ### Contratos que não podem quebrar
 - Identificador de compra: `chave` (= `numeroControlePNCP`, ex. `18243295000192-1-000080/2026`). Os dados pessoais do navegador são indexados por ele.
-- Chaves do `localStorage`: `monitorLicitacoes.meusDados.v1` (`{chave: {fav,status,preco,resp,notas,upd}}`), `monitorLicitacoes.ui.v1`, `monitorLicitacoes.checklist.v1` (`{índice: 1}`, indexado pela **posição** em `checklist`: não reordene `checklist`), `monitorLicitacoes.antesDaImportacao.v1` (retrato antes de importar), `monitorLicitacoes.backupMigracao.v1` (texto exato das chaves antigas `cafeBizinotto.*`, migradas e apagadas em 17/10/2026; botão "Restaurar dados de antes da troca de nome"), `*.ilegivel.<data>` (cópia de dado corrompido).
-- Backup exportado: `{app:'monitor-licitacoes', versao:1, exportado_em, meus_dados, checklist}`. A importação aceita qualquer arquivo com `meus_dados`, inclusive os antigos (`app:'cafe-bizinotto-licitacoes'`).
-- Formato de `data.json`: `coletor/modelos.py` (validado antes de gravar). Ausente/sigiloso é `null`, nunca 0. `vcafe` exclui cestas (vão em `vcesta`). `wf0` sempre vazio (é público).
+- Chaves do `localStorage`: `monitorLicitacoes.meusDados.v1` (`{chave: {fav,status,preco,resp,notas,upd}}`), `monitorLicitacoes.ui.v1`, `monitorLicitacoes.checklist.v1` (`{índice: 1}`, indexado pela **posição** em `checklist`: não reordene `checklist`), `monitorLicitacoes.antesDaImportacao.v1` (retrato antes de importar), `*.ilegivel.<data>` (cópia de dado corrompido).
+- Backup exportado: `{app:'monitor-licitacoes', versao:1, exportado_em, meus_dados, checklist}`. A importação aceita qualquer arquivo com `meus_dados`.
+- Formato de `data.json`: `coletor/modelos.py` (validado antes de gravar). Ausente/sigiloso é `null`, nunca 0. `vcafe` exclui cestas (vão em `vcesta`).
 
 ## Comandos confirmados
 ```bash

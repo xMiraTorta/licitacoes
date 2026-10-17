@@ -13,12 +13,12 @@ CNAEs do dono: 1081-3/02 (torrefação e moagem de café, principal), 4611-7/00 
 O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. Segredos do Telegram cadastrados pelo dono (confirmado pelo envio do aviso de falha do run #1). Não autorizado: ampliar para outros CNAEs.
 
 ## Sessão 17/10/2026 noite: decisões do dono e entregas
-Decisões (perguntadas e respondidas): repositório **continua público** (Pages grátis; dados já são públicos); nome **"Monitor de Licitações"** (não existe "Café Bizinotto"); escopo **só café por enquanto**; **reserva no Claude Code** aprovada. Dono quer renomear o repositório para `licitacoes`: o agente não tem ferramenta para isso; o dono faz em Settings. O código não depende do nome (link do Telegram vem do workflow).
+Decisões (perguntadas e respondidas): repositório **continua público** (Pages grátis; dados já são públicos); nome **"Monitor de Licitações"**; escopo **só café por enquanto**; **reserva no Claude Code** aprovada. Dono quer renomear o repositório para `licitacoes`: o agente não tem ferramenta para isso; o dono faz em Settings. O código não depende do nome (link do Telegram vem do workflow).
 Entregue e testado (112 testes, coleta real com 0 falhas, 39 min neste ambiente):
 - Distância por estrada desde Uberaba (OSRM, `coletor/distancias_uberaba.csv`), campo novo `dist_min`.
 - Redesenho total do site: lista + painel lateral, Minhas propostas (quadro por status), Agenda, Painel, Guia com progresso, tema escuro, celular sem rolagem lateral. Chaves do navegador preservadas.
 - Workflows `testes.yml` (PRs) e `avisar.yml` (avisos da reserva); coletor recupera velocidade após 429.
-- Chaves do navegador renomeadas para `monitorLicitacoes.*` a pedido do dono ("sempre faça tudo, não deixe nada pra trás"): migração automática na 1ª visita (backup exato em `monitorLicitacoes.backupMigracao.v1`, cópia conferida, chaves antigas apagadas) + botão de restauração; backup exportado agora `app:'monitor-licitacoes'` (arquivos antigos continuam aceitos). 116 testes.
+- Chaves do navegador com prefixo `monitorLicitacoes.*`; backup exportado `app:'monitor-licitacoes'`. O dono confirmou que não tinha dados salvos, então não há migração de formato antigo.
 - Respostas ao dono: CNAEs 4611-7/00 e 7490-1/04 são intermediação, não permitem revenda em nome próprio (precisa CNAE de comércio, confirmar com contador). Varredura incremental: só ~1/3 mais rápida e com risco de perder compras, não implementada. Coleta no Claude Code: 12 a 39 min contra 59 min no GitHub; varia com o limite do PNCP, então o GitHub segue como principal.
 
 ## Feito e validado nesta sessão
