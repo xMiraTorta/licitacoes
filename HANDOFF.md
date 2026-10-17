@@ -1,7 +1,7 @@
-# HANDOFF · licitacoes-cafe
+# HANDOFF · licitacoes
 
 - **Atualizado em:** 2026-10-17 (fim da sessão de nuvem 1; automação ativa na main)
-- **Branch de trabalho:** `claude/confident-galileo-equwuz` · PR aberto: https://github.com/xMiraTorta/licitacoes-cafe/pull/1 (não fazer merge sem o dono)
+- **Branch de trabalho:** `claude/confident-galileo-equwuz` · repositório `xMiraTorta/licitacoes` (renomeado pelo dono em 17/10/2026; site https://xmiratorta.github.io/licitacoes/). Merge automático autorizado (ver CLAUDE.md).
 - **Commit de partida:** `bd38a7f` (main). Último commit relevante: ver `git log` da branch.
 
 ## Contexto (vindo do dono)

@@ -1,4 +1,4 @@
-# CLAUDE.md · licitacoes-cafe
+# CLAUDE.md · licitacoes
 
 **Ao iniciar qualquer sessão: leia `HANDOFF.md` primeiro.** Atualize-o a cada etapa relevante concluída (não só no fim), com evidência do que foi testado.
 
