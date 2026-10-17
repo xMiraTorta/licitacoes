@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import html
 import os
+from datetime import datetime
 from typing import Any
 
 import httpx
@@ -29,7 +30,8 @@ def _valor(v: float | None, sig: str) -> str:
 
 def linha(c: dict[str, Any]) -> str:
     fim = c.get("fim") or ""
-    prazo = f"{fim[8:10]}/{fim[5:7]} {fim[11:16]}" if fim else "sem prazo"
+    ano = f"/{fim[:4]}" if fim and fim[:4] != str(datetime.now().year) else ""
+    prazo = f"{fim[8:10]}/{fim[5:7]}{ano} {fim[11:16]}" if fim else "sem prazo"
     bola = "🟢" if c["uf"] == "MG" else "🔵" if c["uf"] in ("SP", "GO") else "⚪"
     km = f" · {c['dist']} km" if c.get("dist") is not None else ""
     tipos = ", ".join(c.get("tipos", []))

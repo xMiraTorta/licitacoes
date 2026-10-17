@@ -239,3 +239,16 @@ def test_single_type_price_matches_generator(page: Page, real_url: str) -> None:
     wait_ready(page)
     bad = page.evaluate("""() => window.__cafe.rkCheck()""")
     assert bad == [], bad
+
+
+def test_duplicate_with_my_data_is_never_hidden(page: Page, fixture_url: str) -> None:
+    page.goto(fixture_url + "/index.html")
+    wait_ready(page)
+    dup = "01612382000177-1-000090/2026"  # dup_of no conjunto de teste
+    assert page.locator(f'article.card[data-ch="{dup}"]').count() == 0
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)",
+                  [WFK, json.dumps({dup: {"fav": True, "upd": "2026-10-17T12:00:00Z"}})])
+    page.reload()
+    wait_ready(page)
+    assert page.locator(f'article.card[data-ch="{dup}"]').count() == 1
+    assert page.evaluate("window.__cafe.count()") == 9
