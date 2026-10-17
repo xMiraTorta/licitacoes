@@ -1,0 +1,1300 @@
+{
+ "gerado_em": "2026-10-17T09:00:00-03:00",
+ "run_date": "2026-10-17",
+ "seed_date": "2026-10-17",
+ "novas_desde": "2026-10-16",
+ "origem": {
+  "nome": "Sacramento-MG",
+  "lat": -19.8622,
+  "lon": -47.4508
+ },
+ "status_opcoes": [
+  "A analisar",
+  "Em preparação",
+  "Enviada",
+  "Ganha",
+  "Perdida",
+  "Desistiu"
+ ],
+ "fonte": "PNCP – Portal Nacional de Contratações Públicas (pncp.gov.br)",
+ "editais_lidos": 200,
+ "compras": [
+  {
+   "chave": "18243295000192-1-000080/2026",
+   "fim": "2099-01-10T10:00",
+   "abre": "2026-10-06T08:00",
+   "publicado": "2026-09-23T07:41",
+   "first_seen": "2026-10-17",
+   "nova": false,
+   "uf": "MG",
+   "mun": "Conceição da Aparecida",
+   "dist": 189,
+   "orgao": "MUNICIPIO DE CONCEICAO DA APARECIDA",
+   "unidade": "PREFEITURA MUNICIPAL DE CONCEIÇÃO DA APARECIDA - MG",
+   "esfera": "Municipal",
+   "mod": "Pregão Eletrônico",
+   "num": "037/2026",
+   "plat": "BLL Compras",
+   "plat_src": "link de origem (PNCP)",
+   "plat_f": "BLL Compras",
+   "publicado_via": "BLL Compras",
+   "uasg": "",
+   "srp": "Não",
+   "objeto": "Registro de preços visando futura e eventual aquisições de cestas básicas de alimentos para os servidores públicos do município de Conceição da Aparecida",
+   "link_pncp": "https://pncp.gov.br/app/editais/18243295000192/2026/80",
+   "link_plat": "https://bllcompras.com/Process/ProcessView?param1=[gkz]1vV_DGgWUBKakBvWfHl/sMDAl95ctj7hFTbsGrp/24Fj54tA6yZ8KQ5WuXbOR8K2jjcggLiDEMyRangyvcRHsXuKBdL6eN_X/ajXAaSdxLQ=",
+   "ed_tags": [],
+   "ed_pz": "",
+   "edital_lido": false,
+   "trecho_edital": "",
+   "tipos": [
+    "Torrado e moído"
+   ],
+   "cats": [
+    "Superior",
+    "Extraforte"
+   ],
+   "cat_do_edital": false,
+   "embs": "500g vácuo",
+   "emb_f": [
+    "500 g",
+    "Vácuo"
+   ],
+   "vcafe": 398932.72,
+   "vcesta": null,
+   "kg": 6042.0,
+   "kg_parcial": false,
+   "rkg": 66.03,
+   "sig": "Não",
+   "me": "Ampla (sem exclusividade)",
+   "me_f": [
+    "Ampla concorrência"
+   ],
+   "tags": [
+    "ABIC/pureza",
+    "Validade ≥10 meses"
+   ],
+   "resumo": "T&M 500g ×12084 PACOTE",
+   "dup": "",
+   "dup_of": null,
+   "dup_group": [],
+   "wf0": {},
+   "itens": [
+    {
+     "n": 7,
+     "tipo": "Torrado e moído",
+     "cat": "Superior/Extraforte",
+     "emb": "500g vácuo",
+     "kgu": 0.5,
+     "kg_src": "descrição do item",
+     "qtd": 12084.0,
+     "un": "PACOTE",
+     "vu": 33.0133,
+     "vt": 398932.7172,
+     "sig": false,
+     "kgt": 6042.0,
+     "rkg": 66.03,
+     "conferir": false,
+     "me": "Não",
+     "sit": "Em andamento",
+     "tags": [
+      "ABIC/pureza",
+      "Validade ≥10 meses"
+     ],
+     "espec": "Cafe em po torrado e moido, cesta basica- CAFE EM PO TORRADO E MOIDO: Cafe em po homogeneo, torrado e moido, TIPO SUPERIOR, sabor tipo extraforte, com, no maximo, 20% de graos tipo Conilon/Robusta. Embalagem: pacotes de 500g, tipo vacuo, contendo na embalagem a identificacao do produto, a marca do fabricante, a data de fabricacao, o prazo de validade nao inferior a 10 (dez) meses contados da data de recebimento, com selo de pureza e qualidade \"ABIC. Caracteristicas quimicas (exigidas para cada 100g): umidade maxima 5,0%, residuo mineral fixo maximo 5,0%, residuo mineral fixo, insoluvel em acido cloridrico a 10% maximo 1,0%, cafeina minimo 0,7%, extrato aquoso minimo 25,0%, extrato etereo minimo 8,0%, caracteristicas sensoriais: aroma caracteristico do produto, acidez baixa a moderada, amargor moderado, sabor caracteristico e equilibrado, livre de sabor fermentado, mofado e de terra, adstringencia baixa, corpo razoavelmente encorpado. Acondicionado em embalagem a vacuo puro, 500g.",
+     "usa_trecho": false
+    }
+   ]
+  },
+  {
+   "chave": "77402196000175-1-000046/2026",
+   "fim": "2099-01-11T10:00",
+   "abre": "2026-10-16T08:30",
+   "publicado": "2026-10-15T16:50",
+   "first_seen": "2026-10-17",
+   "nova": false,
+   "uf": "PR",
+   "mun": "Toledo",
+   "dist": 843,
+   "orgao": "TOLEDO CAMARA MUNICIPAL",
+   "unidade": "MPR-CÂMARA MUNICIPAL DE TOLEDO",
+   "esfera": "Municipal",
+   "mod": "Pregão Eletrônico",
+   "num": "44/2026",
+   "plat": "Compras.gov.br",
+   "plat_src": "link de origem (PNCP)",
+   "plat_f": "Compras.gov.br",
+   "publicado_via": "Compras.gov.br",
+   "uasg": "930217",
+   "srp": "Sim",
+   "objeto": "Registro de Preços, pelo período de 12 (doze) meses, para eventual aquisição parcelada de gêneros alimentícios, água mineral, materiais de higiene e itens de copa e cozinha, destinados ao atendimento das necessidades da Câmara Municipal de Toledo.",
+   "link_pncp": "https://pncp.gov.br/app/editais/77402196000175/2026/46",
+   "link_plat": "https://cnetmobile.estaleiro.serpro.gov.br/comprasnet-web/public/compras/acompanhamento-compra?compra=93021705000442026",
+   "ed_tags": [],
+   "ed_pz": "",
+   "edital_lido": false,
+   "trecho_edital": "",
+   "tipos": [
+    "Torrado e moído",
+    "Solúvel"
+   ],
+   "cats": [
+    "Tradicional",
+    "Extraforte",
+    "Gourmet",
+    "especial"
+   ],
+   "cat_do_edital": false,
+   "embs": "vácuo; 500g",
+   "emb_f": [
+    "Vácuo",
+    "500 g"
+   ],
+   "vcafe": 23092.0,
+   "vcesta": null,
+   "kg": 5.0,
+   "kg_parcial": true,
+   "rkg": 300.0,
+   "sig": "Não",
+   "me": "Exclusivo ME/EPP",
+   "me_f": [
+    "Exclusiva ME/EPP (todos os itens)"
+   ],
+   "tags": [],
+   "resumo": "T&M vácuo ×800 Pacote G; Solúvel 500g ×10 Pacote G",
+   "dup": "",
+   "dup_of": null,
+   "dup_group": [],
+   "wf0": {},
+   "itens": [
+    {
+     "n": 3,
+     "tipo": "Torrado e moído",
+     "cat": "Tradicional/Extraforte",
+     "emb": "vácuo",
+     "kgu": null,
+     "kg_src": "tamanho não informado",
+     "qtd": 800.0,
+     "un": "Pacote G",
+     "vu": 26.99,
+     "vt": 21592.0,
+     "sig": false,
+     "kgt": null,
+     "rkg": null,
+     "conferir": false,
+     "me": "Exclusivo",
+     "sit": "Em andamento",
+     "tags": [],
+     "espec": "Café Café, Apresentação:Torrado Moído, Intensidade:Intensa Ou Extra Forte, Tipo:Tradicional, Empacotamento:Vácuo Conforme TR",
+     "usa_trecho": false
+    },
+    {
+     "n": 21,
+     "tipo": "Solúvel",
+     "cat": "Gourmet/especial/Tradicional",
+     "emb": "500g",
+     "kgu": 0.5,
+     "kg_src": "descrição do item",
+     "qtd": 10.0,
+     "un": "Pacote G",
+     "vu": 150.0,
+     "vt": 1500.0,
+     "sig": false,
+     "kgt": 5.0,
+     "rkg": 300.0,
+     "conferir": false,
+     "me": "Exclusivo",
+     "sit": "Em andamento",
+     "tags": [],
+     "espec": "Café Café, Apresentação:Solúvel Granulado, Intensidade:Média, Tipo:Tradicional Café solúvel liofilizado gourmet para máquina de café, em embalagens de 500 g. Obs.: Este insumo deve ser compatível com a máquina de café da marca SVAGO modelo 5S.",
+     "usa_trecho": false
+    }
+   ]
+  },
+  {
+   "chave": "01612911000132-1-000128/2026",
+   "fim": "2099-01-12T10:00",
+   "abre": "2026-10-08T08:00",
+   "publicado": "2026-10-07T15:25",
+   "first_seen": "2026-10-17",
+   "nova": false,
+   "uf": "PR",
+   "mun": "Reserva do Iguaçu",
+   "dist": 813,
+   "orgao": "MUNICIPIO DE RESERVA DO IGUACU",
+   "unidade": "PREFEITURA MUNICIPAL DE RESERVA DO IGUAÇU-PR",
+   "esfera": "Municipal",
+   "mod": "Pregão Eletrônico",
+   "num": "42/2026",
+   "plat": "BLL Compras",
+   "plat_src": "link de origem (PNCP)",
+   "plat_f": "BLL Compras",
+   "publicado_via": "BLL Compras",
+   "uasg": "",
+   "srp": "Sim",
+   "objeto": "é REGISTRO DE PREÇOS PARA FUTURA E EVENTUAL AQUISIÇÃO DE GÊNEROS ALIMENTÍCIOS DESTINADOS AO ATENDIMENTO DAS NECESSIDADES DE TODAS AS SECRETARIAS DO MUNICÍPIO DE RESERVA DO IGUAÇU – PR, CONFORME ESPECIFICAÇÕES, QUANTIDADES ESTIMADAS E DEMAIS CONDIÇÕES ESTABELECIDAS NO PRESENTE INSTRUMENTO.",
+   "link_pncp": "https://pncp.gov.br/app/editais/01612911000132/2026/128",
+   "link_plat": "https://bllcompras.com/Process/ProcessView?param1=[gkz]Jr5XXdLx2hmeBZyBmNYKqhfNEXZ8ovg2zDq1rTO7rSaKhBhIznMetd3MDS6_g3HiUUKrH16sdwXBUKrm6rAIAMHlLdOq20AsYLZ_mlpR864=",
+   "ed_tags": [
+    "SICAF",
+    "Amostra",
+    "Atestado cap. técnica",
+    "Garantia contratual"
+   ],
+   "ed_pz": "",
+   "edital_lido": true,
+   "trecho_edital": "",
+   "tipos": [
+    "Torrado e moído",
+    "Solúvel"
+   ],
+   "cats": [
+    "Superior"
+   ],
+   "cat_do_edital": false,
+   "embs": "500g vácuo; 200g",
+   "emb_f": [
+    "500 g",
+    "Vácuo",
+    "Outro tamanho"
+   ],
+   "vcafe": 49212.66,
+   "vcesta": null,
+   "kg": 805.5,
+   "kg_parcial": false,
+   "rkg": 61.1,
+   "sig": "Não",
+   "me": "Exclusivo ME/EPP",
+   "me_f": [
+    "Exclusiva ME/EPP (todos os itens)"
+   ],
+   "tags": [
+    "Validade ≥12 meses",
+    "Marca ref."
+   ],
+   "resumo": "T&M 500g ×1393 UN; Solúvel 200g ×545 UN",
+   "dup": "",
+   "dup_of": null,
+   "dup_group": [],
+   "wf0": {},
+   "itens": [
+    {
+     "n": 44,
+     "tipo": "Torrado e moído",
+     "cat": "Superior",
+     "emb": "500g vácuo",
+     "kgu": 0.5,
+     "kg_src": "descrição do item",
+     "qtd": 1393.0,
+     "un": "UN",
+     "vu": 23.47,
+     "vt": 32693.71,
+     "sig": false,
+     "kgt": 696.5,
+     "rkg": 46.94,
+     "conferir": false,
+     "me": "Exclusivo",
+     "sit": "Em andamento",
+     "tags": [
+      "Validade ≥12 meses",
+      "Marca ref."
+     ],
+     "espec": "CAFÉ TORRADO E MOÍDO DO TIPO SUPERIOR, DE PRIMEIRA QUALIDADE, COM AS SEGUINTES CARACTERÍSTICAS: MARCAS DE REFERÊNCIA: MELITTA SUPERIOR OU EQUIVALENTE. BEBIDA (SABOR): DO TIPO INTENSO, EMBALAGEM: TIPO ALTO VÁCUO OU VÁCUO PURO EM PACOTES DE 500 GRAMAS; INTENSIDADE 8 • DEVERÁ CONSTAR NA EMBALAGEM A DATA DE FABRICAÇÃO E PRAZO DE VALIDADE, QUE DEVERÁ SER DE, NO MÍNIMO, 12 (DOZE) MESES; • NO ATO DA ENTREGA DO PRODUTO, PODERÃO TER TRANSCORRIDO, NO MÁXIMO, 60 (SESSENTA) DIAS DA DATA DE SUA FABRICAÇÃO.",
+     "usa_trecho": false
+    },
+    {
+     "n": 45,
+     "tipo": "Solúvel",
+     "cat": "",
+     "emb": "200g",
+     "kgu": 0.2,
+     "kg_src": "descrição do item",
+     "qtd": 545.0,
+     "un": "UN",
+     "vu": 30.31,
+     "vt": 16518.95,
+     "sig": false,
+     "kgt": 109.0,
+     "rkg": 151.55,
+     "conferir": false,
+     "me": "Exclusivo",
+     "sit": "Em andamento",
+     "tags": [
+      "Validade ≥12 meses"
+     ],
+     "espec": "CAFÉ GRANULADO, SOLUVEL INSTANTÂNEO, EMBALAGEM DE 200 G, DEVE CONSTAR NA EMBALAGEM DATA DE FABRICAÇÃO E PRAZO DE VALIDADE DE NO MÍNIMO 12 MESES.",
+     "usa_trecho": false
+    }
+   ]
+  },
+  {
+   "chave": "75458836000133-1-000147/2026",
+   "fim": "2099-01-13T10:00",
+   "abre": "2026-10-06T00:00",
+   "publicado": "2026-10-06T11:21",
+   "first_seen": "2026-10-17",
+   "nova": false,
+   "uf": "PR",
+   "mun": "Itaúna do Sul",
+   "dist": 647,
+   "orgao": "MUNICIPIO DE ITAUNA DO SUL",
+   "unidade": "SEC. DE EDUCACAO",
+   "esfera": "Municipal",
+   "mod": "Pregão Eletrônico",
+   "num": "37/2026",
+   "plat": "Licitanet",
+   "plat_src": "citado no edital",
+   "plat_f": "Licitanet",
+   "publicado_via": "Equiplano Sistemas LTDA / Equiplano Sistemas ",
+   "uasg": "",
+   "srp": "Sim",
+   "objeto": "Fornecimento de itens de mercado (desertos e fracassados no ultimo certame)",
+   "link_pncp": "https://pncp.gov.br/app/editais/75458836000133/2026/147",
+   "link_plat": "",
+   "ed_tags": [
+    "Amostra",
+    "Atestado cap. técnica",
+    "Laudo",
+    "Registro MAPA",
+    "Garantia contratual"
+   ],
+   "ed_pz": "3 dias úteis",
+   "edital_lido": true,
+   "trecho_edital": "618302 - CAFÉ TORRADO E MOÍDO, TIPO TRADICIONAL 500GR - puro, acondicionado em EMBALAGEM A VÁCUO, íntegra e original do fabricante. O produto deverá possuir classificação mínima Tipo 8 ou superior e bebida mínima Dura ou superior, conforme prova de xícara oficial, apresentar umidade máxima de 5%, granulometria uniforme adequada para preparo coado/filtrado, sendo isento de impurezas, matérias estranhas, adulterações ou quaisquer substâncias nocivas à saúde. Deverá possuir Selo de Pureza da Associação Brasileira da Indústria de Café (ABIC) dentro da validade, atender integralmente às normas sani || da Indústria de Café (ABIC) dentro da validade, atender integralmente às normas sanitárias da Agência Nacional de Vigilância Sanitária (ANVISA) e aos padrões de classificação e qualidade estabelecidos pelo Ministério da Agricultura e Pecuária (MAPA), além de apresentar validade mínima de 06 (seis) meses na data da entrega.MARCAS REFERÊNCIA: MELITTA, 3 CORAÇÕES, PILÃO (OU QUALIDADE SEMELHANTE) ITEM 8 · Unid.: CAIXA · Qtd.: 140 · exigido amostra?: sim Valor Unitário: R$ 27,10 · valor total: R$",
+   "tipos": [
+    "Torrado e moído",
+    "Cápsula"
+   ],
+   "cats": [
+    "Tradicional",
+    "Superior"
+   ],
+   "cat_do_edital": false,
+   "embs": "500g",
+   "emb_f": [
+    "500 g"
+   ],
+   "vcafe": 27162.0,
+   "vcesta": null,
+   "kg": 400.0,
+   "kg_parcial": false,
+   "rkg": 58.42,
+   "sig": "Não",
+   "me": "Exclusivo em 1 de 2 itens",
+   "me_f": [
+    "Exclusiva em parte dos itens"
+   ],
+   "tags": [
+    "ABIC/pureza",
+    "Validade ≥6 meses",
+    "Amostra",
+    "Marca ref.",
+    "100% arábica"
+   ],
+   "resumo": "T&M 500g ×800 UND; Cápsula ×140 CX",
+   "dup": "",
+   "dup_of": null,
+   "dup_group": [],
+   "wf0": {},
+   "itens": [
+    {
+     "n": 10,
+     "tipo": "Torrado e moído",
+     "cat": "Tradicional",
+     "emb": "500g",
+     "kgu": 0.5,
+     "kg_src": "descrição do item",
+     "qtd": 800.0,
+     "un": "UND",
+     "vu": 29.21,
+     "vt": 23368.0,
+     "sig": false,
+     "kgt": 400.0,
+     "rkg": 58.42,
+     "conferir": false,
+     "me": "Exclusivo",
+     "sit": "Em andamento",
+     "tags": [
+      "ABIC/pureza",
+      "Validade ≥6 meses",
+      "Amostra",
+      "Marca ref."
+     ],
+     "espec": "CAFÉ TORRADO E MOÍDO, TIPO TRADICIONAL 500GR, 100% puro",
+     "usa_trecho": true
+    },
+    {
+     "n": 12,
+     "tipo": "Cápsula",
+     "cat": "Superior/Tradicional*",
+     "emb": "",
+     "kgu": null,
+     "kg_src": "",
+     "qtd": 140.0,
+     "un": "CX",
+     "vu": 27.1,
+     "vt": 3794.0,
+     "sig": false,
+     "kgt": null,
+     "rkg": null,
+     "conferir": false,
+     "me": "Não se aplica",
+     "sit": "Em andamento",
+     "tags": [
+      "ABIC/pureza",
+      "100% arábica",
+      "Validade ≥6 meses",
+      "Amostra",
+      "Marca ref."
+     ],
+     "espec": "CÁPSULA DE CAFÉ (COMPATÍVEL SISTEMA DOLCE GUSTO) 100% ARÁBICA",
+     "usa_trecho": true
+    }
+   ]
+  },
+  {
+   "chave": "01005727000124-1-000299/2026",
+   "fim": "2099-01-14T10:00",
+   "abre": "2026-10-06T11:00",
+   "publicado": "2026-10-06T18:34",
+   "first_seen": "2026-10-17",
+   "nova": false,
+   "uf": "GO",
+   "mun": "Aparecida de Goiânia",
+   "dist": 388,
+   "orgao": "MUNICIPIO DE APARECIDA DE GOIANIA",
+   "unidade": "PREFEITURA MUNICIPAL DE APARECIDA DE GOIANIA",
+   "esfera": "Municipal",
+   "mod": "Pregão Eletrônico",
+   "num": "114/2026/2026",
+   "plat": "Licitações-e (Banco do Brasil)",
+   "plat_src": "link de origem (PNCP)",
+   "plat_f": "Licitações-e (Banco do Brasil)",
+   "publicado_via": "Licitações-E BB",
+   "uasg": "",
+   "srp": "Não",
+   "objeto": "Aquisição de cestas básicas, conforme condições e especificações estabelecidas no edital e seus anexos.",
+   "link_pncp": "https://pncp.gov.br/app/editais/01005727000124/2026/299",
+   "link_plat": "https://licitacoes-e2.bb.com.br/aop-inter-estatico/visualizar-processo-publico/1101819",
+   "ed_tags": [],
+   "ed_pz": "",
+   "edital_lido": false,
+   "trecho_edital": "",
+   "tipos": [
+    "Cesta/kit"
+   ],
+   "cats": [
+    "Gourmet",
+    "especial",
+    "Tradicional"
+   ],
+   "cat_do_edital": false,
+   "embs": "",
+   "emb_f": [
+    "Vácuo",
+    "Almofada",
+    "Lata",
+    "Sachê"
+   ],
+   "vcafe": null,
+   "vcesta": 1215436.2,
+   "kg": null,
+   "kg_parcial": false,
+   "rkg": null,
+   "sig": "Não",
+   "me": "Ampla (sem exclusividade)",
+   "me_f": [
+    "Ampla concorrência"
+   ],
+   "tags": [],
+   "resumo": "Cesta/kit vácuo/almofada/lata ×7260 UNIDADE; Cesta/kit vácuo/almofada/lata/sachê ×660 UNIDADE",
+   "dup": "",
+   "dup_of": null,
+   "dup_group": [],
+   "wf0": {},
+   "itens": [
+    {
+     "n": 10001,
+     "tipo": "Cesta/kit",
+     "cat": "Gourmet/especial",
+     "emb": "vácuo/almofada/lata",
+     "kgu": null,
+     "kg_src": "",
+     "qtd": 7260.0,
+     "un": "UNIDADE",
+     "vu": 148.49,
+     "vt": 1078037.4,
+     "sig": false,
+     "kgt": null,
+     "rkg": null,
+     "conferir": false,
+     "me": "Não",
+     "sit": "Em andamento",
+     "tags": [],
+     "espec": "CESTA BASICA COM 15 ITENS Arroz agulhinha tipo 1 - polido, longo fino, grãos inteiros. 5kg; Feijão carioca, primeira linha, in natura, novo, grãos inteiros, aspecto brilhoso; Açúcar cristal granulado. 5kg; Óleo de soja, refinado. 900ml; Café torrado e moído tipo 1 - embalado a vácuo ou tipo almofada, com 100% de pureza. 2kg; Sal iodado refinado, sal fino seco, iodado para cozinha.1kg; Macarrão espaguete.500g; Extrato de tomate.minimo 300g; Biscoito rosquinha ou doce. Minimo 800g; Achocolatado em pó. Minimo 400g; Farinha de mandioca.500g; Farinha de trigo especial - enriquecida com ferro e ácido fólico.1kg; Bolacha de água e Sal ou Cream Cracker. Minimo 350g; Sardinha em lata. Lata 125g; Flocão de milho.1kg; Os itens deverão conter todas as especificações descritas no edital.",
+     "usa_trecho": false
+    },
+    {
+     "n": 20001,
+     "tipo": "Cesta/kit",
+     "cat": "Gourmet/especial/Tradicional",
+     "emb": "vácuo/almofada/lata/sachê",
+     "kgu": null,
+     "kg_src": "",
+     "qtd": 660.0,
+     "un": "UNIDADE",
+     "vu": 208.18,
+     "vt": 137398.8,
+     "sig": false,
+     "kgt": null,
+     "rkg": null,
+     "conferir": false,
+     "me": "Não",
+     "sit": "Em andamento",
+     "tags": [],
+     "espec": "CESTAS BÁSICAS DE NATAL: Arroz agulhinha tipo 1 - polido, longo fino, grãos inteiros. 5kg; Feijão carioca, primeira linha, in natura, novo, grãos inteiros, aspecto brilhoso; Açúcar cristal granulado. 5kg; Óleo de soja, refinado. 900ml; Café torrado e moído tipo 1 - embalado a vácuo ou tipo almofada, com 100% de pureza. 2kg; Sal iodado refinado, sal fino seco, iodado para cozinha.1kg; Macarrão espaguete.500g; Extrato de tomate.minimo 300g; Biscoito rosquinha ou doce. Minimo 800g; Achocolatado em pó. Minimo 400g; Farinha de mandioca.500g; Farinha de trigo especial - enriquecida com ferro e ácido fólico.1kg; Bolacha de água e Sal ou Cream Cracker. Minimo 350g; Sardinha em lata. Lata 125g; Flocão de milho.1kg; Azeitona verde em conserva com caroço.Sachê 500g; Milho verde em conserva enlatado. Mínimo 170g; Panettone tradicional com frutas cristalizadas. Mínimo 400g; Leite condensado integral. Caixa 395g. Os itens deverão conter todas as especificações exigidas no edital.",
+     "usa_trecho": false
+    }
+   ]
+  },
+  {
+   "chave": "96291141000180-1-006590/2026",
+   "fim": "2099-01-15T10:00",
+   "abre": "2026-10-06T08:00",
+   "publicado": "2026-10-05T10:02",
+   "first_seen": "2026-10-17",
+   "nova": false,
+   "uf": "SP",
+   "mun": "São José do Rio Preto",
+   "dist": 227,
+   "orgao": "SAO PAULO SECRETARIA DA ADMINISTRACAO PENITENCIARIA",
+   "unidade": "ESP-COMPLEXO PENAL DE SÃO JOSÉ DO RIO PRETO",
+   "esfera": "Estadual",
+   "mod": "Pregão Eletrônico",
+   "num": "83/2026",
+   "plat": "Compras.gov.br",
+   "plat_src": "link de origem (PNCP)",
+   "plat_f": "Compras.gov.br",
+   "publicado_via": "Compras.gov.br",
+   "uasg": "380106",
+   "srp": "Não",
+   "objeto": "AQUISIÇÃO DE GÊNEROS ALIMENTÍCIOS ESTOCAVEIS E PERECIVEIS NOV E DEZ/2026.",
+   "link_pncp": "https://pncp.gov.br/app/editais/96291141000180/2026/6590",
+   "link_plat": "https://cnetmobile.estaleiro.serpro.gov.br/comprasnet-web/public/compras/acompanhamento-compra?compra=38010605000832026",
+   "ed_tags": [
+    "SICAF",
+    "Amostra",
+    "Atestado cap. técnica",
+    "Laudo",
+    "Registro MAPA"
+   ],
+   "ed_pz": "",
+   "edital_lido": true,
+   "trecho_edital": "Cafe Tradicional Torrado e Moido, Embalagem Alto 3 3317935 463587 Emb. 500G 1226 R$ 4,650 R$ 5.700,90 Vacuo(tijolinho)  || Cafe Tradicional Torrado e Moido, Embalagem Alto Vacuo 3 3317935 463587 Emb. 500G 1226 1ª Semana de DEZEMBRO; (tijolinho) (Prazo a ser confirmado e definido em cronograma apôs assinatura de contrato) ",
+   "tipos": [
+    "Torrado e moído"
+   ],
+   "cats": [
+    "Tradicional"
+   ],
+   "cat_do_edital": false,
+   "embs": "500g vácuo",
+   "emb_f": [
+    "500 g",
+    "Vácuo"
+   ],
+   "vcafe": 5700.9,
+   "vcesta": null,
+   "kg": 613.0,
+   "kg_parcial": false,
+   "rkg": null,
+   "sig": "Não",
+   "me": "Exclusivo ME/EPP",
+   "me_f": [
+    "Exclusiva ME/EPP (todos os itens)"
+   ],
+   "tags": [],
+   "resumo": "T&M 500g ×1226 Pacote 500 G",
+   "dup": "",
+   "dup_of": null,
+   "dup_group": [],
+   "wf0": {},
+   "itens": [
+    {
+     "n": 3,
+     "tipo": "Torrado e moído",
+     "cat": "Tradicional",
+     "emb": "500g vácuo",
+     "kgu": 0.5,
+     "kg_src": "unidade de compra",
+     "qtd": 1226.0,
+     "un": "Pacote 500 G",
+     "vu": 4.65,
+     "vt": 5700.9,
+     "sig": false,
+     "kgt": 613.0,
+     "rkg": 9.3,
+     "conferir": true,
+     "me": "Exclusivo",
+     "sit": "Em andamento",
+     "tags": [],
+     "espec": "Café apresentação: torrado moído, intensidade: média, tipo: tradicional, empacotamento: vácuo",
+     "usa_trecho": true
+    }
+   ]
+  },
+  {
+   "chave": "95440517000108-1-000295/2026",
+   "fim": "2099-01-16T10:00",
+   "abre": "2026-10-19T08:15",
+   "publicado": "2026-10-01T09:56",
+   "first_seen": "2026-10-17",
+   "nova": false,
+   "uf": "RS",
+   "mun": "Santa Cruz do Sul",
+   "dist": 1206,
+   "orgao": "MUNICIPIO DE SANTA CRUZ DO SUL",
+   "unidade": "PREFEITURA MUNICIPAL DE SANTA CRUZ DO SUL",
+   "esfera": "Municipal",
+   "mod": "Pregão Eletrônico",
+   "num": "118/2026",
+   "plat": "Ver edital (publicado via Município Santa Cruz do Sul)",
+   "plat_src": "não derivável",
+   "plat_f": "Não identificada (ver edital)",
+   "publicado_via": "Município Santa Cruz do Sul",
+   "uasg": "",
+   "srp": "Sim",
+   "objeto": "Registro de Preços para futuras aquisições parceladas de GÊNEROS ALIMENTÍCIOS (NÃO PERECÍVEIS)",
+   "link_pncp": "https://pncp.gov.br/app/editais/95440517000108/2026/295",
+   "link_plat": "",
+   "ed_tags": [
+    "SICAF",
+    "Amostra",
+    "Alvará/licença sanitária",
+    "Laudo",
+    "Registro MAPA"
+   ],
+   "ed_pz": "10 dias úteis",
+   "edital_lido": true,
+   "trecho_edital": "Café solúvel, em pó, tradicional, embalagem Três Corações, 30 60865 pacote 437 SIM com no mínimo 200 g do produto Iguaçu, Nescafé 31 59103 Café torrado e moído ESPECIAL ou PREMIUM, pacote 3406 SIM Melitta, 3 Corações Intensidade 7, Certificado pureza e qualidade  || 31 59103 Café torrado e moído ESPECIAL ou PREMIUM, pacote 3406 SIM Melitta, 3 Corações Intensidade 7, Certificado pureza e qualidade ",
+   "tipos": [
+    "Torrado e moído",
+    "Solúvel"
+   ],
+   "cats": [
+    "Gourmet",
+    "especial",
+    "Tradicional",
+    "Extraforte"
+   ],
+   "cat_do_edital": false,
+   "embs": "500g vácuo",
+   "emb_f": [
+    "500 g",
+    "Vácuo"
+   ],
+   "vcafe": null,
+   "vcesta": null,
+   "kg": 4509.0,
+   "kg_parcial": true,
+   "rkg": null,
+   "sig": "Sim",
+   "me": "Não se aplica",
+   "me_f": [
+    "Não se aplica / não informado"
+   ],
+   "tags": [
+    "ABIC/pureza"
+   ],
+   "resumo": "Solúvel ×437 PAC; T&M 500g ×3406 PAC; T&M 500g ×1675 PAC; T&M 500g ×3937 PAC",
+   "dup": "",
+   "dup_of": null,
+   "dup_group": [],
+   "wf0": {},
+   "itens": [
+    {
+     "n": 30,
+     "tipo": "Solúvel",
+     "cat": "Gourmet/especial/Tradicional*",
+     "emb": "",
+     "kgu": null,
+     "kg_src": "tamanho não informado",
+     "qtd": 437.0,
+     "un": "PAC",
+     "vu": null,
+     "vt": null,
+     "sig": true,
+     "kgt": null,
+     "rkg": null,
+     "conferir": false,
+     "me": "Não se aplica",
+     "sit": "Em andamento",
+     "tags": [],
+     "espec": "Café solúvel, em pó",
+     "usa_trecho": true
+    },
+    {
+     "n": 31,
+     "tipo": "Torrado e moído",
+     "cat": "Gourmet/especial",
+     "emb": "500g vácuo",
+     "kgu": 0.5,
+     "kg_src": "descrição do item",
+     "qtd": 3406.0,
+     "un": "PAC",
+     "vu": null,
+     "vt": null,
+     "sig": true,
+     "kgt": 1703.0,
+     "rkg": null,
+     "conferir": false,
+     "me": "Não se aplica",
+     "sit": "Em andamento",
+     "tags": [
+      "ABIC/pureza"
+     ],
+     "espec": "Café torrado e moído ESPECIAL ou PREMIUM, Intensidade 7, Certificado pureza e qualidade ABIC, embalagem alto vácuo, pacote com 500 gramas",
+     "usa_trecho": false
+    },
+    {
+     "n": 32,
+     "tipo": "Torrado e moído",
+     "cat": "Extraforte",
+     "emb": "500g vácuo",
+     "kgu": 0.5,
+     "kg_src": "descrição do item",
+     "qtd": 1675.0,
+     "un": "PAC",
+     "vu": null,
+     "vt": null,
+     "sig": true,
+     "kgt": 837.5,
+     "rkg": null,
+     "conferir": false,
+     "me": "Não se aplica",
+     "sit": "Em andamento",
+     "tags": [
+      "ABIC/pureza"
+     ],
+     "espec": "Café torrado e moído EXTRAFORTE, Intensidade 10, Certificado pureza e qualidade ABIC, embalagem alto vácuo, pacote com 500 gramas.",
+     "usa_trecho": false
+    },
+    {
+     "n": 33,
+     "tipo": "Torrado e moído",
+     "cat": "Tradicional",
+     "emb": "500g vácuo",
+     "kgu": 0.5,
+     "kg_src": "descrição do item",
+     "qtd": 3937.0,
+     "un": "PAC",
+     "vu": null,
+     "vt": null,
+     "sig": true,
+     "kgt": 1968.5,
+     "rkg": null,
+     "conferir": false,
+     "me": "Não se aplica",
+     "sit": "Em andamento",
+     "tags": [
+      "ABIC/pureza"
+     ],
+     "espec": "Café torrado e moído TRADICIONAL, Intensidade 8, Certificado pureza e qualidade ABIC, embalagem alto vácuo, pacote com 500 gramas",
+     "usa_trecho": false
+    }
+   ]
+  },
+  {
+   "chave": "01612382000177-1-000090/2026",
+   "fim": "2099-01-17T10:00",
+   "abre": "2026-10-02T08:00",
+   "publicado": "2026-09-21T10:25",
+   "first_seen": "2026-10-17",
+   "nova": false,
+   "uf": "RN",
+   "mun": "Tenente Laurentino Cruz",
+   "dist": 1917,
+   "orgao": "MUNICIPIO DE TENENTE LAURENTINO CRUZ",
+   "unidade": "Prefeitura",
+   "esfera": "Municipal",
+   "mod": "Pregão Eletrônico",
+   "num": "26/2026",
+   "plat": "Ver edital (publicado via TOP DOWN CONSULTORIA LTDA)",
+   "plat_src": "não derivável",
+   "plat_f": "Não identificada (ver edital)",
+   "publicado_via": "TOP DOWN CONSULTORIA LTDA",
+   "uasg": "",
+   "srp": "Sim",
+   "objeto": "Aquisição de Cestas Básicas destinadas à Secretaria Municipal de Ação Social e Desenvolvimento Comunitário, para atender às famílias em situação de vulnerabilidade social e insegurança alimentar no âmbito do Município.",
+   "link_pncp": "https://pncp.gov.br/app/editais/01612382000177/2026/90",
+   "link_plat": "",
+   "ed_tags": [],
+   "ed_pz": "",
+   "edital_lido": false,
+   "trecho_edital": "",
+   "tipos": [
+    "Torrado e moído"
+   ],
+   "cats": [
+    "Não informada"
+   ],
+   "cat_do_edital": false,
+   "embs": "250g",
+   "emb_f": [
+    "250 g"
+   ],
+   "vcafe": 9528.0,
+   "vcesta": null,
+   "kg": 150.0,
+   "kg_parcial": false,
+   "rkg": 63.52,
+   "sig": "Não",
+   "me": "Não se aplica",
+   "me_f": [
+    "Não se aplica / não informado"
+   ],
+   "tags": [
+    "ABIC/pureza",
+    "Validade ≥6 meses"
+   ],
+   "resumo": "T&M 250g ×600 PCT",
+   "dup": "Possível duplicata de: 01612382000177-1-000097/2026",
+   "dup_of": "01612382000177-1-000097/2026",
+   "dup_group": [
+    "01612382000177-1-000097/2026"
+   ],
+   "wf0": {},
+   "itens": [
+    {
+     "n": 5,
+     "tipo": "Torrado e moído",
+     "cat": "",
+     "emb": "250g",
+     "kgu": 0.25,
+     "kg_src": "descrição do item",
+     "qtd": 600.0,
+     "un": "PCT",
+     "vu": 15.88,
+     "vt": 9528.0,
+     "sig": false,
+     "kgt": 150.0,
+     "rkg": 63.52,
+     "conferir": false,
+     "me": "Não se aplica",
+     "sit": "Em andamento",
+     "tags": [
+      "ABIC/pureza",
+      "Validade ≥6 meses"
+     ],
+     "espec": "CAFÉ – torrado e moído embalagem comum de 250 gramas, de primeira qualidade, com selo de pureza da Associação Brasileira da Indústria do Café - ABIC. O produto deverá ter registro no Ministério da Saúde e atender a Portaria 451/97 do Ministério da Saúde. Prazo de validade mínimo de 6 (seis) meses a partir data de entrega.",
+     "usa_trecho": false
+    }
+   ]
+  },
+  {
+   "chave": "01612382000177-1-000097/2026",
+   "fim": "2099-01-18T10:00",
+   "abre": "2026-10-02T08:00",
+   "publicado": "2026-10-01T14:20",
+   "first_seen": "2026-10-17",
+   "nova": false,
+   "uf": "RN",
+   "mun": "Tenente Laurentino Cruz",
+   "dist": 1917,
+   "orgao": "MUNICIPIO DE TENENTE LAURENTINO CRUZ",
+   "unidade": "Prefeitura Municipal de Tenente Laurentino Cruz",
+   "esfera": "Municipal",
+   "mod": "Pregão Eletrônico",
+   "num": "26/2026/2026",
+   "plat": "Portal de Compras Públicas",
+   "plat_src": "link de origem (PNCP)",
+   "plat_f": "Portal de Compras Públicas",
+   "publicado_via": "ECustomize Consultoria em Software S.A",
+   "uasg": "",
+   "srp": "Sim",
+   "objeto": "[Portal de Compras Públicas] - Aquisição de Cestas Básicas destinadas à Secretaria Municipal de Ação Social e Desenvolvimento Comunitário, para atender às famílias em situação de vulnerabilidade social e insegurança alimentar no âmbito do Município.",
+   "link_pncp": "https://pncp.gov.br/app/editais/01612382000177/2026/97",
+   "link_plat": "https://www.portaldecompraspublicas.com.br/processos/RN/Prefeitura-Municipal-de-Tenente-Laurentino-Cruz-1598/RPE-26-2026-2026-2026-515547",
+   "ed_tags": [],
+   "ed_pz": "",
+   "edital_lido": false,
+   "trecho_edital": "",
+   "tipos": [
+    "Torrado e moído"
+   ],
+   "cats": [
+    "Não informada"
+   ],
+   "cat_do_edital": false,
+   "embs": "250g",
+   "emb_f": [
+    "250 g"
+   ],
+   "vcafe": 9528.0,
+   "vcesta": null,
+   "kg": 150.0,
+   "kg_parcial": false,
+   "rkg": 63.52,
+   "sig": "Não",
+   "me": "Exclusivo ME/EPP",
+   "me_f": [
+    "Exclusiva ME/EPP (todos os itens)"
+   ],
+   "tags": [
+    "ABIC/pureza",
+    "Validade ≥6 meses"
+   ],
+   "resumo": "T&M 250g ×600 Pacote",
+   "dup": "Possível duplicata de: 01612382000177-1-000090/2026",
+   "dup_of": null,
+   "dup_group": [
+    "01612382000177-1-000090/2026"
+   ],
+   "wf0": {},
+   "itens": [
+    {
+     "n": 5,
+     "tipo": "Torrado e moído",
+     "cat": "",
+     "emb": "250g",
+     "kgu": 0.25,
+     "kg_src": "descrição do item",
+     "qtd": 600.0,
+     "un": "Pacote",
+     "vu": 15.88,
+     "vt": 9528.0,
+     "sig": false,
+     "kgt": 150.0,
+     "rkg": 63.52,
+     "conferir": false,
+     "me": "Exclusivo",
+     "sit": "Em andamento",
+     "tags": [
+      "ABIC/pureza",
+      "Validade ≥6 meses"
+     ],
+     "espec": "LOTE 01 - CAFE torrado e moido embalagem comum de 250 gramas, de primeira qualidade, com selo de pureza da Associacao Brasileira da Industria do Cafe - ABIC. O produto devera ter registro no Ministerio da Saude e atender a Portaria 451/97 do Ministerio da Saude. Prazo de validade minimo de 6 (seis) meses a partir data de entrega.",
+     "usa_trecho": false
+    }
+   ]
+  }
+ ],
+ "checklist": [
+  {
+   "etapa": "1. Cadastro",
+   "item": "Cadastro na plataforma de disputa (Compras.gov.br/SICAF, BLL, Licitanet, Portal de Compras Públicas, BNC, Licitar Digital etc.)",
+   "dica": "Veja a coluna \"Onde enviar proposta\". Compras.gov.br exige conta gov.br (prata/ouro) do representante e SICAF ativo. Outras plataformas cobram ou não taxa ao fornecedor – verifique.",
+   "freq": 0.975
+  },
+  {
+   "etapa": "1. Cadastro",
+   "item": "SICAF (níveis I a VI) atualizado",
+   "dica": "Usado em compras federais e por muitos órgãos estaduais/municipais que operam no Compras.gov.br.",
+   "freq": 0.58
+  },
+  {
+   "etapa": "1. Cadastro",
+   "item": "Certificado de Registro Cadastral (CRC) do órgão, quando exigido",
+   "dica": "Alguns municípios/estados têm cadastro próprio.",
+   "freq": 0.165
+  },
+  {
+   "etapa": "2. Habilitação jurídica",
+   "item": "CNPJ, contrato social/requerimento de empresário/CCMEI e alterações; documento do sócio/representante",
+   "dica": "O CNAE deve ser compatível (fabricação/comércio de café torrado e moído).",
+   "freq": 0.91
+  },
+  {
+   "etapa": "3. Regularidade fiscal",
+   "item": "CND federal + INSS (Receita/PGFN)",
+   "dica": "Validade ~180 dias.",
+   "freq": 0.93
+  },
+  {
+   "etapa": "3. Regularidade fiscal",
+   "item": "CRF do FGTS",
+   "dica": "Validade 30 dias – renove perto da sessão.",
+   "freq": 0.94
+  },
+  {
+   "etapa": "3. Regularidade fiscal",
+   "item": "CNDT – Certidão negativa de débitos trabalhistas",
+   "dica": "Emitida no site do TST.",
+   "freq": 0.73
+  },
+  {
+   "etapa": "3. Regularidade fiscal",
+   "item": "Certidões estadual e municipal; inscrição estadual",
+   "dica": "ME/EPP podem regularizar pendência fiscal em 5 dias úteis após declaradas vencedoras (LC 123/2006, art. 43).",
+   "freq": 0.85
+  },
+  {
+   "etapa": "4. Econômico-financeira",
+   "item": "Certidão negativa de falência/recuperação judicial",
+   "dica": "Do distribuidor da sede.",
+   "freq": 0.865
+  },
+  {
+   "etapa": "4. Econômico-financeira",
+   "item": "Balanço patrimonial / índices",
+   "dica": "Mais comum em valores maiores; muitos editais dispensam para entrega imediata.",
+   "freq": 0.43
+  },
+  {
+   "etapa": "5. Qualificação técnica",
+   "item": "Atestado de capacidade técnica (fornecimento anterior de café/gêneros)",
+   "dica": "Peça atestados a clientes (supermercados, empresas, órgãos públicos).",
+   "freq": 0.78
+  },
+  {
+   "etapa": "5. Qualificação técnica",
+   "item": "Alvará / licença sanitária (Vigilância Sanitária) da torrefação",
+   "dica": "Normalmente do fabricante; se você revende, pode ser pedido do fabricante.",
+   "freq": 0.555
+  },
+  {
+   "etapa": "6. Qualidade do café",
+   "item": "Selo de Pureza ABIC (ou laudo de pureza de laboratório credenciado)",
+   "dica": "Muitos editais aceitam laudo em substituição ao selo; confira o texto.",
+   "freq": 0.58
+  },
+  {
+   "etapa": "6. Qualidade do café",
+   "item": "Certificado PQC (Programa de Qualidade do Café – ABIC) da categoria pedida",
+   "dica": "Tradicional / Extraforte / Superior / Gourmet.",
+   "freq": 0.07
+  },
+  {
+   "etapa": "6. Qualidade do café",
+   "item": "Laudo de análise sensorial com Nota de Qualidade Global (NQG) – Portaria SDA/MAPA nº 570/2022",
+   "dica": "Ex.: Tradicional 4,5–5,9; Superior 6,0–7,2; Gourmet ≥ 7,3 (conforme edital). Laboratório credenciado; laudo recente.",
+   "freq": 0.2
+  },
+  {
+   "etapa": "6. Qualidade do café",
+   "item": "Laudo microscópico/microbiológico ou de impurezas",
+   "dica": "Pedido em parte dos editais junto com a amostra.",
+   "freq": 0.375
+  },
+  {
+   "etapa": "6. Qualidade do café",
+   "item": "Ficha técnica do produto",
+   "dica": "Espécie (arábica/blend), torra, moagem, validade, embalagem, informação nutricional.",
+   "freq": 0.145
+  },
+  {
+   "etapa": "6. Qualidade do café",
+   "item": "Rótulo conforme legislação (ANVISA/MAPA); registro/indicação do fabricante",
+   "dica": "Data de fabricação, validade, lote, peso líquido, \"contém/não contém glúten\".",
+   "freq": 0.665
+  },
+  {
+   "etapa": "7. Proposta",
+   "item": "Amostra do produto (prazo e local de entrega)",
+   "dica": "Geralmente 2–5 dias úteis após convocação; embalagem original e lacrada.",
+   "freq": 0.72
+  },
+  {
+   "etapa": "7. Proposta",
+   "item": "Proposta com marca/fabricante, preço unitário e total, validade da proposta (geralmente 60 dias)",
+   "dica": "Use a coluna \"R$/kg estimado\" para comparar com seu preço; atenção à unidade (pacote 250 g/500 g/1 kg).",
+   "freq": 0.99
+  },
+  {
+   "etapa": "7. Proposta",
+   "item": "Validade mínima do produto na entrega",
+   "dica": "Ex.: ≥ 6 ou 12 meses, ou 2/3 do prazo de validade.",
+   "freq": 1.0
+  },
+  {
+   "etapa": "7. Proposta",
+   "item": "Prazo e local de entrega; entregas parceladas (SRP)",
+   "dica": "Comum 5, 10, 15 ou 30 dias após o pedido; calcule frete até o município (coluna distância).",
+   "freq": 0.705
+  },
+  {
+   "etapa": "8. Declarações",
+   "item": "Declaração de enquadramento ME/EPP (LC 123/2006)",
+   "dica": "Garante disputa em itens exclusivos/cota reservada e empate ficto; marcar no sistema.",
+   "freq": 0.38
+  },
+  {
+   "etapa": "8. Declarações",
+   "item": "Declarações padrão: não emprega menor (art. 7º XXXIII CF), inexistência de impedimento, cumprimento dos requisitos de habilitação, reserva de cargos PcD",
+   "dica": "No Compras.gov.br são marcadas no sistema ao cadastrar a proposta.",
+   "freq": 0.875
+  },
+  {
+   "etapa": "8. Declarações",
+   "item": "Agricultura familiar / economia solidária (DAP/CAF), quando o item exige",
+   "dica": "Alguns itens pedem café de agricultura familiar – verifique se a Fazenda Mumbuca se enquadra (CAF).",
+   "freq": 0.21
+  },
+  {
+   "etapa": "9. Pós-disputa",
+   "item": "Envio de documentos e proposta ajustada no prazo do pregoeiro (geralmente 2 h a 24 h)",
+   "dica": "Deixe tudo em PDF numa pasta por licitação antes da sessão.",
+   "freq": 0.215
+  },
+  {
+   "etapa": "9. Pós-disputa",
+   "item": "Assinatura da ata de registro de preços/contrato; garantia contratual quando exigida",
+   "dica": "Registro de preços (SRP) = pedidos parcelados ao longo da vigência da ata.",
+   "freq": 0.925
+  }
+ ],
+ "coffee_break": [
+  {
+   "orgao": "MINISTERIO DA GESTAO E DA INOVACAO EM SERVICOS PUBLICOS",
+   "uf": "CE",
+   "mun": "Fortaleza",
+   "objeto": "Contratação de empresa especializada para a prestação de serviço de coffee break, compreendendo o fornecimento de alimentos e bebidas, disponibilização de garçons, utensílios, materiais, arranjos florais, montagem, atendimento durante o evento e desmontagem, destinado ao evento institucional organiz",
+   "fim": "2026-10-22T08:00",
+   "link": "https://pncp.gov.br/app/editais/00489828000155/2026/620"
+  },
+  {
+   "orgao": "MUNICIPIO DE TABATINGA",
+   "uf": "AM",
+   "mun": "Tabatinga",
+   "objeto": "[LICITANET] - CONTRATAÇÃO DE EMPRESA PARA FORNECIMENTO DE REFEIÇÕES PARA ATENDER ÀS NECESSIDADES DAS SECRETARIAS MUNICIPAIS DA PREFEITURA DE TABATINGA/AM – ITENS CANCELADOS DO PREGÃO ELETRÔNICO Nº 11/2026",
+   "fim": "2026-11-04T11:30",
+   "link": "https://pncp.gov.br/app/editais/04011805000191/2026/55"
+  },
+  {
+   "orgao": "MUNICIPIO DE JI-PARANA",
+   "uf": "RO",
+   "mun": "Ji-Paraná",
+   "objeto": "Contratação de empresas especializadas para a prestação de serviços e fornecimento de bens (locação de estruturas e equipamentos, fornecimento de coffee break, disponibilização de mão de obra para montagem de estandes, locação de banheiros químicos, confecção e instalação de outdoors e banner e aqui",
+   "fim": "2026-11-05T13:30",
+   "link": "https://pncp.gov.br/app/editais/04092672000125/2026/646"
+  },
+  {
+   "orgao": "FUNDO ESTADUAL DE SAUDE DO ESTADO DA BAHIA",
+   "uf": "BA",
+   "mun": "Salvador",
+   "objeto": "Serviços comuns e serviços comuns de engenharia",
+   "fim": "2026-10-23T09:59",
+   "link": "https://pncp.gov.br/app/editais/05816630000152/2026/7558"
+  },
+  {
+   "orgao": "MUNICIPIO DE CRISTINO CASTRO",
+   "uf": "PI",
+   "mun": "Cristino Castro",
+   "objeto": "Contratação de empresa do ramo para fornecimento de Coffee Break, para atender as necessidades de todas as unidades da Prefeitura de Cristino Castro - PI",
+   "fim": "2026-11-04T08:00",
+   "link": "https://pncp.gov.br/app/editais/06554364000108/2026/42"
+  },
+  {
+   "orgao": "MUNICIPIO DE SANTA QUITERIA",
+   "uf": "CE",
+   "mun": "Santa Quitéria",
+   "objeto": "Contratação de empresa especializada para fornecimento de lanches, coffee breaks, refeições prontas tipo quentinha, refeições tipo executiva e buffet tipo self-service, para atender às demandas das diversas Secretarias do Município de Santa Quitéria/CE.",
+   "fim": "2026-10-23T08:00",
+   "link": "https://pncp.gov.br/app/editais/07725138000105/2026/136"
+  },
+  {
+   "orgao": "MUNICIPIO DE LIMOEIRO DO NORTE",
+   "uf": "CE",
+   "mun": "Limoeiro do Norte",
+   "objeto": "REGISTRO DE PREÇOS PARA A PRESTAÇÃO DE SERVIÇOS DE FORNECIMENTO DE REFEIÇÕES PRONTAS DO TIPO “QUENTINHAS”, “BUFFET” E “COFFE BREAK” VISANDO ATENDER AS NECESSIDADES DAS SECRETARIAS DO MUNICIPIO DE LIMOEIRO DO NORTE",
+   "fim": "2026-10-27T08:00",
+   "link": "https://pncp.gov.br/app/editais/07891674000172/2026/138"
+  },
+  {
+   "orgao": "ESTADO DO CEARA",
+   "uf": "CE",
+   "mun": "Fortaleza",
+   "objeto": "Prestação dos serviços de organização e suporte para eventos educacionais voltados às formações continuadas, contemplando hospedagem, alimentação e aluguel de espaços, nas condições estabelecidas neste Edital e seus anexos",
+   "fim": "2026-10-21T09:00",
+   "link": "https://pncp.gov.br/app/editais/07954480000179/2026/22306"
+  },
+  {
+   "orgao": "MUNICIPIO DE BREJAO",
+   "uf": "PE",
+   "mun": "Brejão",
+   "objeto": "CONSTITUI OBJETO DA PRESENTE LICITAÇÃO O REGISTRO DE PREÇOS PARA FUTURA E EVENTUAL CONTRATAÇÃO DE EMPRESA ESPECIALIZADA PARA A PRESTAÇÃO DE SERVIÇOS DE BUFFET, SOB DEMANDA, CONTEMPLANDO O FORNECIMENTO DE CAFÉ DA MANHÃ, ALMOÇO, JANTAR E COFFEE BREAK, CONFORME A NECESSIDADE DA CONTRATANTE, PARA VIABIL",
+   "fim": "2026-10-27T07:00",
+   "link": "https://pncp.gov.br/app/editais/10131076000100/2026/16"
+  },
+  {
+   "orgao": "INSTITUTO FEDERAL DE EDUCACAO, CIENCIA E TECNOLOGIA DO CEARA",
+   "uf": "CE",
+   "mun": "Fortaleza",
+   "objeto": "Contratação de serviços para planejamento, organização, execução à realização de eventos institucionais esportivos, especificamente os Jogos Sub-19 Encontro dos Servidores 2026",
+   "fim": "2026-10-22T09:00",
+   "link": "https://pncp.gov.br/app/editais/10744098000145/2026/229"
+  },
+  {
+   "orgao": "ESTADO DA BAHIA",
+   "uf": "BA",
+   "mun": "Salvador",
+   "objeto": "Registro de Preços para futura e eventual contratação de empresa na prestação de serviços de alimentação, sob demanda, compreendendo o fornecimento de alimentos, bebidas, utensílios, materiais de consumo e demais itens necessários à adequada prestação dos serviços, destinados ao atendimento de reuni",
+   "fim": "2026-10-23T10:00",
+   "link": "https://pncp.gov.br/app/editais/13937032000160/2026/2787"
+  },
+  {
+   "orgao": "CONSELHO DE ARQUITETURA E URBANISMO DE SANTA CATARINA",
+   "uf": "SC",
+   "mun": "Florianópolis",
+   "objeto": "Contratação de empresa organizadora/gerenciadora de eventos para o CAU/SC",
+   "fim": "2026-10-22T09:00",
+   "link": "https://pncp.gov.br/app/editais/14895272000101/2026/25"
+  },
+  {
+   "orgao": "DEPARTAMENTO ESTADUAL DE TRANSITO",
+   "uf": "RO",
+   "mun": "Porto Velho",
+   "objeto": "Registro de Preço para Futura e Eventual para contratação de empresa especializada para o fornecimento de alimentação e locação de espaços adequados à realização de eventos institucionais ao longo do ano, sendo aquela que apresenta maior vantajosidade e atenda integralmente o interesse público no ap",
+   "fim": "2026-10-23T10:00",
+   "link": "https://pncp.gov.br/app/editais/15883796000145/2026/61"
+  },
+  {
+   "orgao": "MUNICIPIO DE MACHADINHO D'OESTE",
+   "uf": "RO",
+   "mun": "Machadinho D'Oeste",
+   "objeto": "[LICITANET] - Aquisição de Refeições Prontas, Compreendendo Fornecimento Marmitex, Coffee Break e Serviço de Bufê.",
+   "fim": "2026-10-27T09:00",
+   "link": "https://pncp.gov.br/app/editais/22855142000173/2026/84"
+  },
+  {
+   "orgao": "MUNICIPIO DE MUNIZ FREIRE",
+   "uf": "ES",
+   "mun": "Muniz Freire",
+   "objeto": "Aquisição de Coffee Break, Lanches e Alimentação para diversas secretarias desta municipalidade.",
+   "fim": "2026-10-22T13:00",
+   "link": "https://pncp.gov.br/app/editais/27165687000171/2026/137"
+  },
+  {
+   "orgao": "FUNDACAO INSTIT BRAS DE GEOGRAFIA E ESTATISTICA IBGE",
+   "uf": "RR",
+   "mun": "Boa Vista",
+   "objeto": "Contratação de empresa especializada no serviço de fornecimento de alimentação (Coffee Break) para Treinamento para o Teste de Ambientação do 12° Censo Agropecuário Florestal Aquícola - CENSO CAFA, , a ser realizado no Auditório do Centro de Ensino Técnico e Superior/Prefeitura, município de Mucajaí",
+   "fim": "2026-10-23T08:00",
+   "link": "https://pncp.gov.br/app/editais/33787094000140/2026/487"
+  },
+  {
+   "orgao": "SECRETARIA DE ESTADO DA SAUDE",
+   "uf": "SP",
+   "mun": "São Paulo",
+   "objeto": "Contratação de serviços de alimentação para a Capacitação Presencial em Rede de Frio.",
+   "fim": "2026-10-22T09:00",
+   "link": "https://pncp.gov.br/app/editais/46374500000194/2026/8350"
+  },
+  {
+   "orgao": "SECRETARIA DE ESTADO DA ADMINISTRACAO E DA PREVIDENCIA - SEAP",
+   "uf": "PR",
+   "mun": "Curitiba",
+   "objeto": "Serviço Contínuo de Coffee Break",
+   "fim": "2026-11-04T10:00",
+   "link": "https://pncp.gov.br/app/editais/77071579000108/2026/137"
+  },
+  {
+   "orgao": "CONSELHO REGIONAL DE ENFERMAGEM DO RIO GRANDE DO SUL",
+   "uf": "RS",
+   "mun": "Porto Alegre",
+   "objeto": "Contratação para realização de evento de capacitação e integração de funcionários, colaboradores e conselheiros do Coren-RS, com estimativa de até 180 (cento e oitenta) participantes, programado para ocorrer no dia 16 de dezembro de 2026, das 8h às 17h, em Porto Alegre-RS, compreendendo a locação de",
+   "fim": "2026-11-06T09:00",
+   "link": "https://pncp.gov.br/app/editais/87088670000190/2026/54"
+  }
+ ]
+}
