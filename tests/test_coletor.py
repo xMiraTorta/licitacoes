@@ -228,7 +228,7 @@ def test_descricao_limpa_html_e_usa_informacao_complementar() -> None:
     assert i["kgu"] == 0.5  # o peso só estava na informação complementar
 
 
-def test_duplicata_empate_mantem_visivel_a_de_antes() -> None:
+def test_duplicata_mantem_visivel_a_de_antes() -> None:
     a = montar.montar_compra(compra_api("11111111000111", 1, "café"), [item_api(1, "Café em pó 500g", 10, 30.0)])
     b = montar.montar_compra(compra_api("11111111000111", 2, "café"), [item_api(1, "Café em pó 500g", 10, 30.0)])
     assert a and b

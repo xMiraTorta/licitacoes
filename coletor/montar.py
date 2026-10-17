@@ -231,8 +231,9 @@ def _completude(c: dict[str, Any]) -> tuple[int, ...]:
 
 def marcar_duplicatas(compras: list[dict[str, Any]], visiveis_antes: set[str] = frozenset()) -> None:
     """Mesmo município/UF, mesmo valor de café (ou, sem valor, mesmos itens) e mesmo dia de prazo final:
-    provável mesma compra publicada duas vezes. A mais completa fica visível; as outras recebem dup_of.
-    Em empate, mantém visível a que já era visível antes (não esconder favoritas), depois a mais recente."""
+    provável mesma compra publicada duas vezes. Fica visível a que já era visível na coleta anterior
+    (não esconder favoritas); senão a mais completa, depois a mais recente. As outras recebem dup_of.
+    Sem valor e com itens diferentes, não agrupa: melhor mostrar as duas do que esconder uma compra real."""
     grupos: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
     for c in compras:
         c["dup"], c["dup_of"], c["dup_group"] = "", None, []
@@ -243,7 +244,7 @@ def marcar_duplicatas(compras: list[dict[str, Any]], visiveis_antes: set[str] = 
     for g in grupos.values():
         if len(g) < 2:
             continue
-        g.sort(key=lambda c: (_completude(c), c["chave"] in visiveis_antes, c.get("publicado") or ""), reverse=True)
+        g.sort(key=lambda c: (c["chave"] in visiveis_antes, _completude(c), c.get("publicado") or ""), reverse=True)
         for c in g:
             outros = [x["chave"] for x in g if x is not c]
             c["dup"] = "Possível duplicata de: " + ", ".join(outros)

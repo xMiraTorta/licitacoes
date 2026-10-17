@@ -51,6 +51,7 @@ def test_tipo(desc: str, esperado: str) -> None:
     "JOGO DE PORTA-MANTIMENTOS, PARA GUARDAR (CAFÉ, AÇÚCAR, FEIJÃO, ARROZ, SAL)",
     "KIT COZINHA/ POTES PARA CAFÉ E ACUÇAR",
     "CESTA RETANGULAR P/ PÃO DE CAFÉ DA MANHÃ - PCESTA RETANGULAR PARA PÃO, alimentos",
+    "KIT COZINHA INFANTIL COM PANELINHAS, COOKTOP E UTENSÍLIOS: café, arroz e feijão de brinquedo",
     "FORNECIMENTO DE ALIMENTAÇÃO, almoço: arroz, feijão, salada, sal, café",
 ])
 def test_nao_e_cafe(desc: str) -> None:

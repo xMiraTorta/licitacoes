@@ -30,7 +30,7 @@ _CESTA_INICIO = re.compile(r"^(\W|\d|item|lote|aquisicao( de)?)*\s*(cestas?|kits
 _BASICOS = re.compile(r"\b(arroz|feijao|acucar|oleo|macarrao|farinha|fuba|sal|biscoito|leite em po|sardinha|extrato de tomate)\b")
 _TEM_CAFE = re.compile(r"\bcafe\b")
 # Começos que indicam utensílio ou serviço mesmo listando alimentos ("jogo de porta-mantimentos: café, açúcar...").
-_UTENSILIO = re.compile(r"^(\W|\d)*\s*(jogo|conjunto|porta|potes?|kit cozinha|fornecimento de alimentacao|refeic|almoco|"
+_UTENSILIO = re.compile(r"^(\W|\d)*\s*(jogo|conjunto|porta|potes?|kit (de )?cozinha|brinquedo|fornecimento de alimentacao|refeic|almoco|"
                         r"\[[^\]]*\]\s*-?\s*conjunto)")
 
 
@@ -70,9 +70,8 @@ def eh_item_de_cafe(descricao: str) -> str | None:
         return None
     cabeca = t[:150]
     basicos = len(set(_BASICOS.findall(t)))
-    if _CESTA_INICIO.match(cabeca) and (basicos >= 2 or re.search(r"cestas? (basica|de alimento|natalin)|aliment", cabeca)):
-        return CESTA
-    if basicos >= 3 and not _UTENSILIO.match(cabeca):
+    if not _UTENSILIO.match(cabeca) and (
+            basicos >= 3 or (_CESTA_INICIO.match(cabeca) and re.search(r"cestas? (basica|de alimento|natalin)", cabeca))):
         return CESTA
     produto = _RUIDO.sub("", cabeca)
     if not _PRODUTO_CAFE.match(produto):
