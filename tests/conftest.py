@@ -104,4 +104,4 @@ def page(browser: Browser) -> Iterator[Page]:
 
 
 def wait_ready(pg: Page) -> None:
-    pg.wait_for_function("() => window.__cafe && document.querySelectorAll('.kpi').length > 0")
+    pg.wait_for_function("() => window.__monitor && document.querySelectorAll('.kpi').length > 0")

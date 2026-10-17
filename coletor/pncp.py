@@ -19,7 +19,7 @@ import httpx
 from loguru import logger
 
 BASE = "https://pncp.gov.br/api"
-USER_AGENT = "licitacoes-cafe/1.0 (painel de licitacoes; github.com/xMiraTorta/licitacoes-cafe)"
+USER_AGENT = "monitor-licitacoes/1.0 (github.com/xMiraTorta)"
 RETRY_STATUS = {429, 500, 502, 503, 504}
 # O PNCP responde 429 ("Limite de requisições excedido") sem cabeçalho Retry-After quando há
 # rajadas, e limita bem mais os servidores do GitHub Actions do que outras máquinas (17/10/2026:
