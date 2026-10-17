@@ -257,3 +257,15 @@ def test_busca_pula_pagina_com_falha() -> None:
     p = PNCP(httpx.Client(transport=httpx.MockTransport(handler)), tentativas=2, espera_base=0, intervalo_min=0)
     achados = p.buscar("café")
     assert len(achados) == 110 and len(p.stats.falhas) == 1  # página 2 pulada, página 3 lida
+
+
+def test_429_desacelera_e_insiste() -> None:
+    respostas = iter([429, 429, 429, 200])
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        st = next(respostas)
+        return httpx.Response(200, json={"ok": 1}) if st == 200 else httpx.Response(429, text="limite")
+    p = PNCP(httpx.Client(transport=httpx.MockTransport(handler)), espera_base=0, espera_429=0, intervalo_min=0.01)
+    assert p.get_json("/x") == {"ok": 1}
+    assert p.intervalo_min == pytest.approx(0.8)  # 0,1 -> 0,2 -> 0,4 -> 0,8 após três 429
+    assert p.stats.novas_tentativas == 3
