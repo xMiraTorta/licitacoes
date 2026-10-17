@@ -217,3 +217,12 @@ def test_sem_segredos_telegram(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
     with pytest.raises(telegram.TelegramErro, match="não configurados"):
         telegram.enviar(["oi"])
+
+
+def test_descricao_limpa_html_e_usa_informacao_complementar() -> None:
+    raw = item_api(52, "Café torrado e moído, <p>categoria&nbsp;Superior</p>  TIPO ÚNICO", 100, 30.0, un="Pct")
+    raw["informacaoComplementar"] = "Pacote de 500g, vácuo"
+    i = montar.montar_item(raw)
+    assert i is not None
+    assert i["espec"] == "Café torrado e moído, categoria Superior TIPO ÚNICO | Inf. compl.: Pacote de 500g, vácuo"
+    assert i["kgu"] == 0.5  # o peso só estava na informação complementar

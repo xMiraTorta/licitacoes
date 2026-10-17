@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import html
 import math
 import re
 from functools import lru_cache
@@ -54,6 +55,8 @@ PLATAFORMAS_PUBLICADOR = {
     "Compras Pará": "Compras Pará",
 }
 
+ORDEM_TIPOS = {t: n for n, t in enumerate((cafe.TM, cafe.TM_DESCAF, cafe.SOLUVEL, cafe.GRAO, cafe.CAPSULA,
+                                           cafe.BEBIDA, cafe.CESTA))}
 ABREV = {cafe.TM: "T&M", cafe.TM_DESCAF: "T&M descaf.", cafe.SOLUVEL: "Solúvel", cafe.GRAO: "Grão",
          cafe.CAPSULA: "Cápsula", cafe.BEBIDA: "Café pronto", cafe.CESTA: "Cesta/kit"}
 ME_ITEM = {1: "Exclusivo", 2: "Não", 3: "Cota reservada", 4: "Não", 5: "Não se aplica"}
@@ -95,6 +98,11 @@ def plataforma(link: str | None, publicador: str | None) -> tuple[str, str, str]
     return f"Ver edital (publicado via {pub or 'sistema não informado'})", "não derivável", "Não identificada (ver edital)"
 
 
+def limpar_texto(s: str | None) -> str:
+    """Remove HTML que alguns sistemas mandam na descrição (<p>, &nbsp;) e espaços repetidos."""
+    return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", s or "")).split())
+
+
 def _num(v: Any) -> float | None:
     """Valor numérico do PNCP; 0 e ausente viram None (valor sigiloso ou não informado nunca é zero)."""
     if v is None:
@@ -111,7 +119,10 @@ def montar_item(raw: dict[str, Any]) -> dict[str, Any] | None:
     vu = None if sig else _num(raw.get("valorUnitarioEstimado"))
     vt = None if sig else _num(raw.get("valorTotal"))
     un = str(raw.get("unidadeMedida") or "")
-    c = cafe.classificar(raw.get("descricao") or "", un, vu)
+    espec = limpar_texto(raw.get("descricao"))
+    if (compl := limpar_texto(raw.get("informacaoComplementar"))) and compl not in espec:
+        espec += f" | Inf. compl.: {compl}"  # mesmo formato do painel original; às vezes o peso só está aqui
+    c = cafe.classificar(espec, un, vu)
     if c is None:
         return None
     qtd = _num(raw.get("quantidade"))
@@ -121,7 +132,7 @@ def montar_item(raw: dict[str, Any]) -> dict[str, Any] | None:
         "n": raw.get("numeroItem"), "tipo": c.tipo, "cat": c.cat, "emb": c.emb, "kgu": c.kgu, "kg_src": c.kg_src,
         "qtd": qtd, "un": un, "vu": vu, "vt": vt, "sig": sig, "kgt": kgt, "rkg": rkg,
         "conferir": cafe.precisa_conferir(rkg), "me": ME_ITEM.get(raw.get("tipoBeneficio"), "Não se aplica"),
-        "sit": raw.get("situacaoCompraItemNome") or "", "tags": c.tags, "espec": (raw.get("descricao") or "").strip(),
+        "sit": raw.get("situacaoCompraItemNome") or "", "tags": c.tags, "espec": espec,
         "usa_trecho": False,
     }
 
@@ -199,7 +210,7 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
         "srp": "Sim" if c.get("srp") else "Não", "objeto": (c.get("objetoCompra") or "").strip(),
         "link_pncp": f"https://pncp.gov.br/app/editais/{cnpj}/{ano}/{seq}", "link_plat": c.get("linkSistemaOrigem") or "",
         "ed_tags": [], "ed_pz": "", "edital_lido": False, "trecho_edital": "",
-        "tipos": _uniq([i["tipo"] for i in itens]), "cats": cats or ["Não informada"], "cat_do_edital": False,
+        "tipos": sorted(_uniq([i["tipo"] for i in itens]), key=lambda t: ORDEM_TIPOS.get(t, 99)), "cats": cats or ["Não informada"], "cat_do_edital": False,
         "embs": "; ".join(embs), "emb_f": _emb_f(embs),
         "vcafe": round(sum(vts), 2) if vts else None,
         "vcesta": round(sum(i["vt"] for i in cesta_it if i["vt"] is not None), 2) if any(i["vt"] for i in cesta_it) else None,
@@ -251,6 +262,7 @@ def herdar_do_anterior(novo: dict[str, Any], antigo: dict[str, Any]) -> None:
             novo[k] = antigo[k]
     if antigo.get("plat_src") in ("citado no edital", "edital cita mais de uma") and novo["plat_src"] != "link de origem (PNCP)":
         novo["plat"], novo["plat_src"], novo["plat_f"] = antigo["plat"], antigo["plat_src"], antigo["plat_f"]
+        novo["uasg"] = antigo.get("uasg", novo["uasg"])
     velhos = {i.get("n"): i for i in antigo.get("itens", [])}
     for i in novo["itens"]:
         v = velhos.get(i["n"])

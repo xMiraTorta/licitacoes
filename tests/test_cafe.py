@@ -37,9 +37,34 @@ def test_tipo(desc: str, esperado: str) -> None:
     "Cafeteira elétrica 30 xícaras",
     "Máquina de café expresso automática",
     "Cápsula de chá de camomila",
+    # casos reais do PNCP (17/10/2026) que citam café sem ser compra de café
+    "Muda De Planta tipo: café, espécie 2: coffea arábica, altura: 15",
+    "Construção nova ponte Graciano Bogo na comunidade de Ribeirão Café",
+    "Fruta tipo: caqui café, apresentação: natural",
+    "Moedor De Alimento - Peça / Componente tipo: moedor de café",
+    "Pazinha mexedora de cafe pacote c 500un plastica descartavel",
+    "APARADOR DE CAFÉ COM ESPAÇO DESTINADO À ACOMODAÇÃO DE FRIGOBAR",
+    "Promoção de Eventos Café, Água e Biscoitos",
+    "Para coar café, confeccionado em 100% fibras celulósicas",
+    "CAFETEIRA ELÉTRICA INDUSTRIAL 10 LITROS com dois reservatórios café e leite",
+    "JOGO DE PORTA-MANTIMENTOS, PARA GUARDAR (CAFÉ, AÇÚCAR, FEIJÃO, ARROZ, SAL)",
+    "KIT COZINHA/ POTES PARA CAFÉ E ACUÇAR",
+    "CESTA RETANGULAR P/ PÃO DE CAFÉ DA MANHÃ - PCESTA RETANGULAR PARA PÃO, alimentos",
+    "FORNECIMENTO DE ALIMENTAÇÃO, almoço: arroz, feijão, salada, sal, café",
 ])
 def test_nao_e_cafe(desc: str) -> None:
     assert cafe.classificar(desc, "Unidade") is None
+
+
+@pytest.mark.parametrize("desc", [
+    "CAFÉCafé - torrado, moagem fina ou média",
+    "Lote 1: LOTE 01 - Item 4 - Lote 1: CAFE",
+    "[COTA RESERVADA ME/EPP] - Café torrado e moído 500g",
+    "(L3) 8910.10465-Café, TIPO: Torrado e moído",
+    "LOTE UNICO - GENEROS ALIMENTICIOS - CAFE, torrado e moido",
+])
+def test_cafe_com_ruido_no_inicio(desc: str) -> None:
+    assert cafe.classificar(desc, "Pacote") is not None
 
 
 @pytest.mark.parametrize("desc,un,vu,kgu,src", [

@@ -24,18 +24,14 @@ CAPSULA = "Cápsula"
 BEBIDA = "Café pronto (bebida)"
 CESTA = "Cesta/kit"
 
-# Produto citado ANTES de "café" no começo da descrição indica que o item é outra coisa
-# (copo para café, filtro de café, açúcar...). "Café da manhã"/"coffee break" são serviços.
-_NAO_CAFE_ANTES = re.compile(
-    r"\b(copos?|copinhos?|colher(inha)?s?|garrafas?|filtros?|coador(es)?|xicaras?|bules?|maquinas?|acucar|adocante|"
-    r"leite|biscoitos?|bolachas?|paes?|pao|chas?|achocolatado|mesas?|jogos?|conjuntos?|suportes?|porta|servicos?|"
-    r"locacao|prestacao|toalhas?|bandejas?|chocolates?|jarras?|canecas?|potes?|capas?|refeic(ao|oes)|lanches?|"
-    r"sacos?|papel|guardanapos?|mexedor(es)?|paletas?|creme|cappuccino|capuccino|bolos?|torradas?|armarios?|"
-    r"descartave(l|is)|termica|aparelho|cafeteiras?)\b")
+# "Café da manhã"/"coffee break" são serviços.
 _SERVICO = re.compile(r"cafe da manha|cafe colonial|coffee ?-?break|coffe ?-?break|cafe regional")
 _CESTA_INICIO = re.compile(r"^(\W|\d|item|lote|aquisicao( de)?)*\s*(cestas?|kits?)\b")
 _BASICOS = re.compile(r"\b(arroz|feijao|acucar|oleo|macarrao|farinha|fuba|sal|biscoito|leite em po|sardinha|extrato de tomate)\b")
 _TEM_CAFE = re.compile(r"\bcafe\b")
+# Começos que indicam utensílio ou serviço mesmo listando alimentos ("jogo de porta-mantimentos: café, açúcar...").
+_UTENSILIO = re.compile(r"^(\W|\d)*\s*(jogo|conjunto|porta|potes?|kit cozinha|fornecimento de alimentacao|refeic|almoco|"
+                        r"\[[^\]]*\]\s*-?\s*conjunto)")
 
 
 def _tipo(t: str, un: str) -> str:
@@ -55,20 +51,34 @@ def _tipo(t: str, un: str) -> str:
     return TM
 
 
+# Ruído antes do nome do produto: "(COTA)", "[COTA RESERVADA ME/EPP] -", "Lote 1: Item 4 -", "(L3) 8910.10465-",
+# "GENEROS ALIMENTICIOS -".
+_RUIDO = re.compile(r"^(?:[\W\d_]+|lote\b|item\b|unico\b|cota\b|ampla\b|concorrencia\b|reservada\b|exclusiv\w*|"
+                    r"me/epp\b|me\b|epp\b|generos?\b|alimenticios?\b|\(l\d+\)|l\d+\b)+")
+# O produto (começo da descrição, sem o ruído) precisa ser café.
+_PRODUTO_CAFE = re.compile(r"^(cafe\b|cafecafe|po (de |para )?cafe\b|capsulas?\b|bebida (de )?cafe\b)")
+
+
 def eh_item_de_cafe(descricao: str) -> str | None:
-    """CESTA para cesta/kit com café; "?" para item de café (tipo decidido depois); None se não for café."""
-    t = norm(descricao)
-    tem_cafe = bool(_TEM_CAFE.search(t))
-    if not tem_cafe and not re.search(r"\bcapsula", t):
+    """CESTA para cesta/kit com café; "?" para item de café (tipo decidido depois); None se não for café.
+
+    Exige que a descrição COMECE pelo produto café: "Muda de planta tipo: café", "Caqui café",
+    "Ponte na comunidade Ribeirão Café" e "Moedor de café" não são compras de café."""
+    t = _SERVICO.sub(" ", norm(descricao))  # "café da manhã", "coffee break": não é o produto café
+    tem_cafe = bool(_TEM_CAFE.search(t)) or "cafecafe" in t[:30]
+    if not tem_cafe:
         return None
     cabeca = t[:150]
-    if tem_cafe and (_CESTA_INICIO.match(cabeca) or len(set(_BASICOS.findall(t))) >= 3):
+    basicos = len(set(_BASICOS.findall(t)))
+    if _CESTA_INICIO.match(cabeca) and (basicos >= 2 or re.search(r"cestas? (basica|de alimento|natalin)|aliment", cabeca)):
         return CESTA
-    m = re.search(r"\bcafe\b|\bcapsulas?\b", cabeca)
-    if not m or _NAO_CAFE_ANTES.search(cabeca[:m.start()]) or _SERVICO.search(cabeca):
+    if basicos >= 3 and not _UTENSILIO.match(cabeca):
+        return CESTA
+    produto = _RUIDO.sub("", cabeca)
+    if not _PRODUTO_CAFE.match(produto):
         return None
-    if not tem_cafe:
-        return None  # cápsula sem "café" no texto (chá, achocolatado)
+    if produto.startswith("capsula") and not _TEM_CAFE.search(produto[:60]):
+        return None  # cápsula de chá, achocolatado
     return "?"
 
 
