@@ -1,6 +1,6 @@
 # HANDOFF · licitacoes-cafe
 
-- **Atualizado em:** 2026-10-17 (fim da sessão de nuvem 1)
+- **Atualizado em:** 2026-10-17 (fim da sessão de nuvem 1; automação ativa na main)
 - **Branch de trabalho:** `claude/confident-galileo-equwuz` · PR aberto: https://github.com/xMiraTorta/licitacoes-cafe/pull/1 (não fazer merge sem o dono)
 - **Commit de partida:** `bd38a7f` (main). Último commit relevante: ver `git log` da branch.
 
@@ -37,6 +37,8 @@ O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge
 
 ## Execuções no GitHub Actions
 - Run #1 (17/10/2026 15:53 BRT, manual, após merge do PR #1): **falhou de propósito pela trava**. O PNCP limitou o servidor do GitHub muito mais que o ambiente de testes (a listagem de pregões levou ~22 min e a página 15 de dispensas deu 429 cinco vezes). Nada foi publicado; o aviso de falha chegou ao Telegram (HTTP 200), o que confirma que os segredos do bot novo estão configurados.
+- Run #2 (após a correção): **sucesso**. 59 min, 813 chamadas, 37 novas tentativas, 0 falhas, 334 compras; commit `9fd2701` na main, build do Pages pedido (HTTP 201), site no ar conferido com os dados novos; Telegram: 1 mensagem enviada ("nenhuma nova hoje", pois a 1ª carga foi no mesmo dia).
+- Ajustes após o run #2: limite do job 180 min; agendamento às 8h07 BRT para o aviso chegar ~9h.
 - Correção: intervalo entre chamadas dobra a cada 429 (0,3 s até 4 s), 7 tentativas com espera até 120 s, listagem com 2 threads; actions atualizadas (checkout@v5, setup-python@v6) por causa do aviso de Node 20.
 
 ## Problemas conhecidos / não verificado
@@ -65,6 +67,9 @@ Duplicatas: 321/327 iguais ao original; 5 pares sem valor com itens diferentes d
 Nenhuma ao final da sessão (conferir `git status`).
 
 ## Próximo passo concreto
+**Atualização em 17/10:** PRs #1 e #2 mergeados, automação ativa e conferida. Próximo: acompanhar a execução agendada de segunda 19/10 (8h07) e o selo "Nova".
+
+Texto original:
 O dono decide sobre: (1) autorizar merge do PR na `main`; (2) revogar acessos do Grok; (3) token novo do Telegram como segredo `TELEGRAM_BOT_TOKEN` e o chat como `TELEGRAM_CHAT_ID`; (4) se vale ampliar para outros CNAEs. Depois do merge: rodar o workflow manualmente ("Run workflow") e conferir o site e o Telegram.
 
 ## Adoção pelo Claude Code local
