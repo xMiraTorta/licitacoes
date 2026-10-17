@@ -304,6 +304,7 @@ footer{text-align:center;font-size:12px;color:var(--muted);padding:10px 20px 40p
   .card .l-short{display:inline}
   .card .actions .btn{padding:7px 11px;font-size:13px}
 }
+.alert{max-width:1320px;width:calc(100% - 32px);margin:4px auto 12px;border-color:var(--red);background:var(--red-bg);color:var(--ink)}
 </style>
 </head>
 <body>
@@ -324,6 +325,7 @@ footer{text-align:center;font-size:12px;color:var(--muted);padding:10px 20px 40p
           <small>Favoritos, status, preços e notas ficam salvos neste navegador.</small>
           <button id="expJson" role="menuitem">⬇️ Exportar meus dados (JSON)</button>
           <button id="impJson" role="menuitem">⬆️ Importar meus dados (JSON)</button>
+          <button id="undoImp" role="menuitem">↩️ Desfazer última importação</button>
           <input type="file" id="impFile" accept="application/json,.json" hidden>
         </div>
       </div>
@@ -440,8 +442,27 @@ function tcase(s) {
 /* ---------------- armazenamento local */
 const LS = (() => { try { const k = '__t'; localStorage.setItem(k, 1); localStorage.removeItem(k); return localStorage; } catch (e) { return null; } })();
 const mem = {};
-const lget = (k, d) => { try { const v = LS ? LS.getItem(k) : mem[k]; return v ? JSON.parse(v) : d; } catch (e) { return d; } };
-const lset = (k, v) => { const s = JSON.stringify(v); if (LS) { try { LS.setItem(k, s); } catch (e) { toast('Não foi possível salvar no navegador.'); } } else mem[k] = s; };
+/* Dado salvo ilegível: guarda uma cópia antes de seguir com o valor padrão, para nunca apagar
+   anotações em silêncio. Se nem a cópia couber, bloqueia a gravação daquela chave. */
+const BAD = {}, LOCKED = new Set();
+const lget = (k, d) => {
+  let v;
+  try { v = LS ? LS.getItem(k) : mem[k]; } catch (e) { console.error('Falha ao ler', k, e); return d; }
+  if (!v) return d;
+  try { return JSON.parse(v); } catch (e) {
+    if (!(k in BAD)) {
+      const bk = k + '.ilegivel.' + new Date().toISOString();
+      try { LS.setItem(bk, v); BAD[k] = bk; } catch (e2) { BAD[k] = null; LOCKED.add(k); }
+      console.error('Dados salvos ilegíveis em', k, '- cópia:', BAD[k], e);
+    }
+    return d;
+  }
+};
+const lset = (k, v) => {
+  if (LOCKED.has(k)) { toast('Não salvei: os dados antigos estão ilegíveis e não consegui guardar uma cópia.'); return; }
+  const s = JSON.stringify(v); if (LS) { try { LS.setItem(k, s); } catch (e) { toast('Não foi possível salvar no navegador.'); } } else mem[k] = s;
+};
+const PREIMP = 'cafeBizinotto.antesDaImportacao.v1';
 const WFK = 'cafeBizinotto.meusDados.v1', UIK = 'cafeBizinotto.ui.v1', CLK = 'cafeBizinotto.checklist.v1';
 let WF = lget(WFK, {});
 function getW(c) {
@@ -921,6 +942,7 @@ function exportJSON() {
 function importText(text) {
   const j = JSON.parse(text), md = j.meus_dados || j;
   if (typeof md !== 'object' || Array.isArray(md)) throw new Error('formato');
+  lset(PREIMP, {salvo_em: new Date().toISOString(), meus_dados: WF, checklist: lget(CLK, {})});
   let n = 0;
   for (const [k, v] of Object.entries(md)) {
     if (!v || typeof v !== 'object' || Array.isArray(v)) continue;
@@ -931,6 +953,14 @@ function importText(text) {
   if (j.checklist && typeof j.checklist === 'object') lset(CLK, Object.assign(lget(CLK, {}), j.checklist));
   render(); renderChecklist();
   return n;
+}
+function undoImport() {
+  const b = lget(PREIMP, null);
+  if (!b || typeof b.meus_dados !== 'object') { toast('Nenhuma importação para desfazer.'); return; }
+  WF = b.meus_dados; lset(WFK, WF); lset(CLK, b.checklist || {});
+  if (LS) LS.removeItem(PREIMP);
+  render(); renderChecklist();
+  toast(`Importação desfeita: restaurei os dados de ${new Date(b.salvo_em).toLocaleString('pt-BR', {timeZone: TZ, dateStyle: 'short', timeStyle: 'short'})}.`);
 }
 function importJSON(file) {
   const r = new FileReader();
@@ -981,6 +1011,7 @@ function bind() {
   document.addEventListener('click', e => { if (!e.target.closest('#dataMenu')) $('#dataMenu').classList.remove('open'); });
   $('#expJson').addEventListener('click', () => { $('#dataMenu').classList.remove('open'); exportJSON(); });
   $('#impJson').addEventListener('click', () => $('#impFile').click());
+  $('#undoImp').addEventListener('click', () => { $('#dataMenu').classList.remove('open'); undoImport(); });
   $('#impFile').addEventListener('change', e => { $('#dataMenu').classList.remove('open'); if (e.target.files[0]) importJSON(e.target.files[0]); e.target.value = ''; });
   const fb = $('#fbody');
   fb.addEventListener('click', e => {
@@ -1110,11 +1141,16 @@ function init() {
   const md = Math.max(...C.map(c => c.dist || 0)); DISTMAX = Math.ceil(md / 100) * 100 || 3000;
   if (F.dist >= DISTMAX) F.dist = 0;
   updHeader(); bind(); render(); renderAbout();
+  const bad = Object.keys(BAD);
+  if (bad.length) {
+    $('#kpis').insertAdjacentHTML('afterend', `<div class="note alert" role="alert" id="badData"><b>Atenção:</b> os dados salvos neste navegador estavam ilegíveis. ${LOCKED.size ? 'Bloqueei a gravação para não apagar nada.' : 'Guardei uma cópia intacta e comecei do zero.'} Se tiver um backup, use <b>Meus dados → Importar</b>. <button class="linkbtn" id="badDataOk">Entendi</button></div>`);
+    $('#badDataOk').addEventListener('click', () => $('#badData').remove());
+  }
   setInterval(tick, 1000);
   setInterval(checkUpdate, 15 * 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkUpdate(); renderKPIs(); renderQuick(); } });
   checkUpdate();
-  window.__cafe = {count: () => LAST.length, csvText, importText, F: () => F};
+  window.__cafe = {count: () => LAST.length, csvText, importText, undoImport, F: () => F};
 }
 init();
 })();

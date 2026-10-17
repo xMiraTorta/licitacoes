@@ -145,3 +145,41 @@ def test_ui_state_saved(page: Page, fixture_url: str) -> None:
     page.select_option("#sort", "valor")
     ui = ls(page, UIK)
     assert ui["view"] == "table" and ui["sort"] == "valor"
+
+
+def test_corrupted_storage_is_backed_up_not_erased(page: Page, fixture_url: str) -> None:
+    page.goto(fixture_url + "/index.html")
+    wait_ready(page)
+    broken = '{"A":{"fav":true},"B":{"notas":"importante"'
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, broken])
+    page.reload()
+    wait_ready(page)
+    page.locator(f'article.card[data-ch="{FIRST}"] [data-act="fav"]').click()
+    keys = page.evaluate("Object.keys(localStorage)")
+    copies = [k for k in keys if k.startswith(WFK + ".ilegivel.")]
+    assert len(copies) == 1
+    assert page.evaluate("k => localStorage.getItem(k)", copies[0]) == broken
+    assert ls(page, WFK)[FIRST]["fav"] is True
+    alert = page.locator("#badData")
+    assert "ilegíveis" in alert.inner_text()
+    page.click("#badDataOk")
+    assert alert.count() == 0
+
+
+def test_undo_import_restores_previous_data(page: Page, fixture_url: str) -> None:
+    page.goto(fixture_url + "/index.html")
+    wait_ready(page)
+    page.locator(f'article.card[data-ch="{FIRST}"] [data-act="fav"]').click()
+    page.click('[data-tab="check"]')
+    page.click('[data-cl="2"]')
+    before_wf, before_cl = ls(page, WFK), ls(page, CLK)
+    imp = {"meus_dados": {"X-1-000001/2026": {"notas": "outra", "upd": "2030-01-01T00:00:00Z"}}, "checklist": {"5": 1}}
+    page.evaluate("t => window.__cafe.importText(t)", json.dumps(imp))
+    assert "X-1-000001/2026" in ls(page, WFK)
+    page.click("#dataBtn")
+    page.click("#undoImp")
+    assert ls(page, WFK) == before_wf and ls(page, CLK) == before_cl
+    assert ls(page, "cafeBizinotto.antesDaImportacao.v1") is None
+    page.click("#dataBtn")
+    page.click("#undoImp")
+    assert "Nenhuma importação" in page.locator("#toast").inner_text()
