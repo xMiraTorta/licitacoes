@@ -10,7 +10,7 @@ O projeto foi feito pelo agente "Grok Bot", que tinha: uma planilha, uma busca d
 CNAEs do dono: 1081-3/02 (torrefação e moagem de café, principal), 4611-7/00 (representante de matérias-primas agrícolas), 7490-1/04 (intermediação de negócios).
 
 ## Escopo aprovado
-O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. **Pendente com o dono:** cadastrar os segredos `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` no GitHub (o agente não pode e não deve ver o token). Não autorizado: ampliar para outros CNAEs.
+O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. Segredos do Telegram cadastrados pelo dono (confirmado pelo envio do aviso de falha do run #1). Não autorizado: ampliar para outros CNAEs.
 
 ## Feito e validado nesta sessão
 1. **Testes** (`tests/`, pytest + Chromium headless, sem internet): página, dados, classificador, coletor. 106 testes passando.
@@ -34,6 +34,10 @@ O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge
 - **Travas**: aborta se a listagem falhar, se >5% dos itens falharem, ou se as abertas caírem >40% vs coleta anterior. `--forcar` ignora (botão manual do workflow).
 - **Telegram**: manda resumo das novas (MG primeiro), ou uma linha "nenhuma nova hoje" (confirma que está vivo). Falha da coleta também avisa.
 - Mantida a cópia dos dados dentro do `index.html` (abre offline, como o Grok prometeu). Custo: ~1,8 MB por visita.
+
+## Execuções no GitHub Actions
+- Run #1 (17/10/2026 15:53 BRT, manual, após merge do PR #1): **falhou de propósito pela trava**. O PNCP limitou o servidor do GitHub muito mais que o ambiente de testes (a listagem de pregões levou ~22 min e a página 15 de dispensas deu 429 cinco vezes). Nada foi publicado; o aviso de falha chegou ao Telegram (HTTP 200), o que confirma que os segredos do bot novo estão configurados.
+- Correção: intervalo entre chamadas dobra a cada 429 (0,3 s até 4 s), 7 tentativas com espera até 120 s, listagem com 2 threads; actions atualizadas (checkout@v5, setup-python@v6) por causa do aviso de Node 20.
 
 ## Problemas conhecidos / não verificado
 - **Não verificado**: se o GitHub Pages está ativo e de qual branch; se commits do GITHUB_TOKEN disparam o build (o workflow pede o build pela API por garantia); Telegram real (sem token aqui).

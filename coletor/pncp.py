@@ -22,9 +22,14 @@ BASE = "https://pncp.gov.br/api"
 USER_AGENT = "licitacoes-cafe/1.0 (painel de licitacoes; github.com/xMiraTorta/licitacoes-cafe)"
 RETRY_STATUS = {429, 500, 502, 503, 504}
 # O PNCP responde 429 ("Limite de requisições excedido") sem cabeçalho Retry-After quando há
-# rajadas. Intervalo mínimo entre chamadas (somando todas as threads) e espera maior no 429.
-INTERVALO_MIN = 0.15
-ESPERA_429 = 10.0
+# rajadas, e limita bem mais os servidores do GitHub Actions do que outras máquinas (17/10/2026:
+# uma página falhou 5 vezes seguidas lá). Por isso: intervalo mínimo entre chamadas (somando todas
+# as threads), espera longa no 429 e, a cada 429, o intervalo dobra até INTERVALO_MAX (desacelera
+# e continua devagar até o fim da coleta).
+INTERVALO_MIN = 0.3
+INTERVALO_MAX = 4.0
+ESPERA_429 = 15.0
+ESPERA_MAX = 120.0
 
 
 class ColetaErro(RuntimeError):
@@ -39,7 +44,7 @@ class Estatisticas:
 
 
 class PNCP:
-    def __init__(self, client: httpx.Client | None = None, tentativas: int = 5, espera_base: float = 2.0,
+    def __init__(self, client: httpx.Client | None = None, tentativas: int = 7, espera_base: float = 2.0,
                  limite_chamadas: int = 20000, intervalo_min: float = INTERVALO_MIN, espera_429: float = ESPERA_429) -> None:
         self.client = client or httpx.Client(timeout=httpx.Timeout(60.0, connect=20.0),
                                              headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
@@ -89,15 +94,18 @@ class PNCP:
                 else:
                     raise ColetaErro(f"{url} {params} -> HTTP {r.status_code}: {r.text[:300]}")
             if n < self.tentativas:
-                espera = (self.espera_429 if limitado else self.espera_base) * 2 ** (n - 1)
+                espera = min(ESPERA_MAX, (self.espera_429 if limitado else self.espera_base) * 2 ** (n - 1))
                 with self._lock:
                     self.stats.novas_tentativas += 1
+                    if limitado and self.intervalo_min < INTERVALO_MAX:
+                        self.intervalo_min = min(INTERVALO_MAX, max(self.intervalo_min, 0.1) * 2)
+                        logger.warning("PNCP limitou as chamadas: intervalo entre chamadas agora {:.1f}s", self.intervalo_min)
                 logger.warning("PNCP {} {} falhou ({}); tentativa {}/{} em {:.0f}s", url, params, ultimo, n + 1,
                                self.tentativas, espera)
                 time.sleep(espera)
         raise ColetaErro(f"{url} {params} -> {ultimo}")
 
-    def listar_abertas(self, modalidade: int, data_final: str, paralelo: int = 3) -> Iterator[dict[str, Any]]:
+    def listar_abertas(self, modalidade: int, data_final: str, paralelo: int = 2) -> Iterator[dict[str, Any]]:
         """Todas as compras da modalidade com propostas abertas. Erro em qualquer página -> ColetaErro."""
         path = "/consulta/v1/contratacoes/proposta"
         base = {"dataFinal": data_final, "codigoModalidadeContratacao": modalidade, "tamanhoPagina": 50}
