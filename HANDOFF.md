@@ -10,7 +10,7 @@ O projeto foi feito pelo agente "Grok Bot", que tinha: uma planilha, uma busca d
 CNAEs do dono: 1081-3/02 (torrefação e moagem de café, principal), 4611-7/00 (representante de matérias-primas agrícolas), 7490-1/04 (intermediação de negócios).
 
 ## Escopo aprovado
-O dono autorizou implementar "o que for válido" após o diagnóstico. **Não autorizado ainda:** merge na `main`, configurar segredos/Pages, ampliar para outros CNAEs.
+O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. **Pendente com o dono:** cadastrar os segredos `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` no GitHub (o agente não pode e não deve ver o token). Não autorizado: ampliar para outros CNAEs.
 
 ## Feito e validado nesta sessão
 1. **Testes** (`tests/`, pytest + Chromium headless, sem internet): página, dados, classificador, coletor. 106 testes passando.
@@ -37,7 +37,7 @@ O dono autorizou implementar "o que for válido" após o diagnóstico. **Não au
 
 ## Problemas conhecidos / não verificado
 - **Não verificado**: se o GitHub Pages está ativo e de qual branch; se commits do GITHUB_TOKEN disparam o build (o workflow pede o build pela API por garantia); Telegram real (sem token aqui).
-- **Risco de segurança**: o Grok recebeu autorização OAuth na conta GitHub do dono e tem o token do bot do Telegram. Recomendado: revogar o app em GitHub > Settings > Applications > Authorized OAuth Apps e gerar token novo no @BotFather (`/revoke`) antes de ativar a automação.
+- Acessos do Grok: revogados pelo dono em 17/10/2026 (OAuth do GitHub e bot antigo apagado).
 - PNCP responde 429 em rajadas; o cliente espera e tenta de novo (40 recuperações na 1ª listagem com 4 threads; 0 com 3 threads + intervalo).
 - Fuso: horários do PNCP tratados como -03:00. Compras de AM/MT/MS/RO/AC/RR podem estar no horário local (hipótese não verificada; `municipios.csv` tem o fuso de cada município).
 - `checklist` é marcado pela posição: não reordenar.
