@@ -183,3 +183,59 @@ def test_undo_import_restores_previous_data(page: Page, fixture_url: str) -> Non
     page.click("#dataBtn")
     page.click("#undoImp")
     assert "Nenhuma importação" in page.locator("#toast").inner_text()
+
+
+SOLUVEL_ONLY = "77402196000175-1-000046/2026"  # T&M sem peso + solúvel 0,5 kg a R$ 300/kg
+MIXED = "01612911000132-1-000128/2026"  # T&M R$ 46,94/kg (696,5 kg) + solúvel R$ 151,55/kg
+CAPSULE = "75458836000133-1-000147/2026"  # T&M 400 kg + cápsulas sem peso
+
+
+def card_nums(page: Page, chave: str) -> str:
+    return page.locator(f'article.card[data-ch="{chave}"] .nums').inner_text()
+
+
+def test_price_per_kg_separated_by_coffee_type(page: Page, fixture_url: str) -> None:
+    page.goto(fixture_url + "/index.html")
+    wait_ready(page)
+    mixed = card_nums(page, MIXED)
+    assert "R$ 46,94" in mixed and "solúvel R$ 151,55" in mixed  # antes: R$ 61,10 misturado
+    sol = card_nums(page, SOLUVEL_ONLY).lower()
+    assert "r$ 300,00" in sol and "solúvel" in sol  # identificado como solúvel, não como T&M
+    assert "R$ 66,03" in card_nums(page, FIRST)
+
+
+def test_median_and_sort_use_only_roast_and_ground(page: Page, fixture_url: str) -> None:
+    page.goto(fixture_url + "/index.html")
+    wait_ready(page)
+    kpi = page.locator('.kpi[data-k="rkg"]').inner_text()
+    # T&M visíveis (sem a duplicata oculta): 66,03; 46,94; 58,42; 63,52. Com o solúvel (300) daria outra.
+    assert "R$ 60,97" in kpi and "4 de torrado e moído" in kpi
+    page.select_option("#sort", "rkg_desc")
+    first = page.locator("article.card").first.get_attribute("data-ch")
+    assert first != SOLUVEL_ONLY  # R$ 300/kg de solúvel não lidera a ordenação de T&M
+
+
+def test_partial_volume_marked_when_item_has_no_weight(page: Page, fixture_url: str) -> None:
+    page.goto(fixture_url + "/index.html")
+    wait_ready(page)
+    assert "≥ 400 kg" in card_nums(page, CAPSULE)
+    assert "≥" not in card_nums(page, FIRST)
+
+
+def test_margin_uses_type_specific_price(page: Page, fixture_url: str) -> None:
+    page.goto(fixture_url + "/index.html")
+    wait_ready(page)
+    card = open_card(page, MIXED)
+    card.locator('[data-w="preco"]').fill("42,25")
+    page.wait_for_timeout(450)
+    calc = card.locator("[data-calc]").inner_text()
+    assert "R$ 46,94/kg (torrado e moído)" in calc and "+10%" in calc
+    assert "só torrado e moído" in calc and "R$ 29.427" in calc and "697 kg" in calc  # 42,25 × 696,5 kg
+
+
+def test_single_type_price_matches_generator(page: Page, real_url: str) -> None:
+    """Onde há um só tipo com R$/kg, o valor recalculado na página bate com o do gerador."""
+    page.goto(real_url + "/index.html")
+    wait_ready(page)
+    bad = page.evaluate("""() => window.__cafe.rkCheck()""")
+    assert bad == [], bad

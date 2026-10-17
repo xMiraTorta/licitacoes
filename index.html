@@ -304,6 +304,7 @@ footer{text-align:center;font-size:12px;color:var(--muted);padding:10px 20px 40p
   .card .l-short{display:inline}
   .card .actions .btn{padding:7px 11px;font-size:13px}
 }
+.nums .rk-o{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.2}
 .alert{max-width:1320px;width:calc(100% - 32px);margin:4px auto 12px;border-color:var(--red);background:var(--red-bg);color:var(--ink)}
 </style>
 </head>
@@ -367,8 +368,8 @@ footer{text-align:center;font-size:12px;color:var(--muted);padding:10px 20px 40p
             <select id="sort">
               <option value="prazo">Prazo (mais próximo)</option>
               <option value="valor">Maior valor</option>
-              <option value="rkg_desc">Maior R$/kg</option>
-              <option value="rkg_asc">Menor R$/kg</option>
+              <option value="rkg_desc">Maior R$/kg (torrado e moído)</option>
+              <option value="rkg_asc">Menor R$/kg (torrado e moído)</option>
               <option value="dist">Mais perto de Sacramento</option>
               <option value="kg">Maior volume (kg)</option>
               <option value="pub">Publicadas mais recentemente</option>
@@ -484,12 +485,29 @@ function setW(chave, patch) {
 }
 
 /* ---------------- preparação */
+/* R$/kg por tipo de café: misturar solúvel (~R$ 150/kg) com torrado e moído (~R$ 65/kg) distorce
+   a comparação. O principal é o de torrado e moído; sem ele, o tipo de maior volume. Itens
+   marcados "conferir" (provável erro de unidade no edital) ficam fora, como no gerador. */
+const TM = 'Torrado e moído';
+function rkInfo(c) {
+  const by = {};
+  c.itens.forEach(i => { if (i.rkg == null || i.conferir) return; const t = by[i.tipo] || (by[i.tipo] = {v: 0, kg: 0}); t.v += i.vt; t.kg += i.kgt; });
+  const L = Object.entries(by).map(([t, x]) => ({t, v: Math.round(x.v / x.kg * 100) / 100, kg: x.kg}))
+    .sort((a, b) => (b.t === TM) - (a.t === TM) || b.kg - a.kg);
+  return L.length ? {main: L[0], outros: L.slice(1)} : null;
+}
+const rkV = c => c._rk ? c._rk.main.v : null;
+const rkTM = c => c._rk && c._rk.main.t === TM ? c._rk.main.v : null;
+const rkLbl = c => c._rk && c._rk.main.t !== TM ? c._rk.main.t.toLowerCase() : '';
+const rkOutros = c => c._rk ? c._rk.outros.map(o => `${o.t.toLowerCase()} ${BRL(o.v)}`).join(' · ') : '';
 let C = [], BYK = {};
 function prep() {
   C = DATA.compras; BYK = {};
   C.forEach((c, i) => {
     c._i = i; BYK[c.chave] = c;
     c._ms = toMs(c.fim);
+    c._rk = rkInfo(c);
+    c._parcial = c.kg != null && c.itens.some(i => i.kgt == null && i.tipo !== 'Cesta/kit');
     c._orgao = tcase(c.orgao);
     c._near = c.uf === 'MG' ? 'mg' : (c.uf === 'SP' || c.uf === 'GO') ? 'near' : '';
     c._new = ('nova' in c) ? !!c.nova : (c.first_seen === DATA.run_date && DATA.run_date !== DATA.seed_date);
@@ -547,7 +565,7 @@ function passes(c, skip) {
   if (F.fav && !w.fav) return false;
   if (F.novas && !c._new) return false;
   if (F.urg) { const u = urg(c); if (!(u.d != null && u.d <= 3 && u.cls !== 'closed')) return false; }
-  if (F.rkg && c.rkg == null) return false;
+  if (F.rkg && rkV(c) == null) return false;
   if (F.status && (F.status === '__none' ? !!w.status : w.status !== F.status)) return false;
   if (F.dist && (c.dist == null || c.dist > F.dist)) return false;
   if (!valorOk(c, F.valor)) return false;
@@ -562,7 +580,7 @@ function passes(c, skip) {
 function sortList(L) {
   const BIG = 1e15;
   const by = {
-    prazo: c => c._ms ?? BIG, valor: c => -(c.vcafe ?? -1), rkg_desc: c => -(c.rkg ?? -1), rkg_asc: c => c.rkg ?? BIG,
+    prazo: c => c._ms ?? BIG, valor: c => -(c.vcafe ?? -1), rkg_desc: c => -(rkTM(c) ?? -1), rkg_asc: c => rkTM(c) ?? BIG,
     dist: c => c.dist ?? BIG, kg: c => -(c.kg ?? -1), pub: c => -(toMs(c.publicado) ?? 0)
   }[UI.sort] || (c => c._ms ?? BIG);
   return L.slice().sort((a, b) => (by(a) - by(b)) || ((a._ms ?? BIG) - (b._ms ?? BIG)));
@@ -652,7 +670,7 @@ function renderKPIs() {
   const mg = O.filter(c => c.uf === 'MG').length;
   const me = O.filter(c => c.me_f.includes(MEX[0])).length;
   const val = O.reduce((a, c) => a + (c.vcafe || 0), 0);
-  const withR = O.map(c => c.rkg).filter(x => x != null);
+  const withR = O.map(rkTM).filter(x => x != null);
   const med = median(withR);
   const nov = O.filter(c => c._new).length;
   const favs = C.filter(c => getW(c).fav && isOpen(c)).length;
@@ -662,7 +680,7 @@ function renderKPIs() {
     ['mg', 'Em Minas', NF0.format(mg), 'MG · perto de casa', 'uf:MG'],
     ['me', 'Exclusivas ME/EPP', NF0.format(me), 'todos os itens', 'meX'],
     ['', 'Valor total', BRLc(val), 'só café, estimado', 'valor'],
-    ['', 'Mediana R$/kg', med != null ? BRL(med) : '—', withR.length + ' com R$/kg', 'rkg'],
+    ['', 'Mediana R$/kg', med != null ? BRL(med) : '—', withR.length + ' de torrado e moído', 'rkg'],
     nov ? ['new opt-k', 'Novas', NF0.format(nov), 'na última busca', 'novas'] : ['opt-k', 'Favoritos', NF0.format(favs), 'abertas marcadas ★', 'fav'],
   ];
   $('#kpis').innerHTML = k.map(([cls, l, v, s, act]) => `<button class="kpi ${cls}" data-k="${act}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></button>`).join('');
@@ -678,7 +696,7 @@ function chipsHTML(c, max = 99) {
   if (c.tags.length > max) ch.push(`<span class="chip req">+${c.tags.length - max}</span>`);
   return ch.join('');
 }
-const margin = (c, w) => (w.preco && c.rkg) ? (c.rkg - w.preco) / c.rkg : null;
+const margin = (c, w) => { const r = rkV(c); return (w.preco && r) ? (r - w.preco) / r : null; };
 const stCls = s => 's-' + String(s || '').split(' ')[0].normalize('NFD').replace(/[^\w]/g, '');
 function mineHTML(c, w) {
   const m = margin(c, w), o = [];
@@ -707,8 +725,8 @@ function cardHTML(c, open) {
   <div class="org">${esc(c._orgao)}</div>
   <div class="meta"><span>${esc(c.mod)} <b>${esc(c.num)}</b></span><span>Enviar em <b>${esc(platShort(c))}</b></span><span>Prazo <b>${fmtPrazo(c.fim)}</b></span></div>
   <div class="nums"><div><small>Valor café</small><b class="${c.vcafe == null ? 'na' : ''}">${val}</b></div>
-    <div><small>Volume</small><b class="${c.kg == null ? 'na' : ''}" ${c.kg_parcial ? 'title="Parcial: algum item sem peso"' : ''}>${c.kg == null ? '—' : (c.kg_parcial ? '≥ ' : '') + KG(c.kg)}</b></div>
-    <div><small>R$/kg est.</small><b class="${c.rkg == null ? 'na' : ''}">${c.rkg == null ? '—' : BRL(c.rkg)}</b></div></div>
+    <div><small>Volume</small><b class="${c.kg == null ? 'na' : ''}" ${c._parcial ? 'title="Parcial: algum item sem peso"' : ''}>${c.kg == null ? '—' : (c._parcial ? '≥ ' : '') + KG(c.kg)}</b></div>
+    <div><small>R$/kg est.${rkLbl(c) ? ' · ' + esc(rkLbl(c)) : ''}</small><b class="${rkV(c) == null ? 'na' : ''}">${rkV(c) == null ? '—' : BRL(rkV(c))}</b>${rkOutros(c) ? `<div class="rk-o">+ ${esc(rkOutros(c))}</div>` : ''}</div></div>
   <div class="chips">${chipsHTML(c, open ? 99 : 4)}</div>
   ${mine ? `<div class="mine">${mine}</div>` : ''}
   <div class="actions">${linkBtns(c, 'sm')}<button class="btn sm more" data-act="toggle" aria-expanded="${open}">${open ? 'Fechar' : 'Detalhes'} <span class="chev">▾</span></button></div>
@@ -734,10 +752,12 @@ function itemHTML(i) {
 }
 function calcHTML(c, w) {
   const m = margin(c, w);
-  if (!w.preco) return c.rkg ? `Estimado pelo órgão: <b>${BRL(c.rkg)}/kg</b>. Digite seu preço para ver a margem.` : 'Sem R$/kg calculável para esta licitação; compare pelo valor unitário dos itens.';
-  let s = `Estimado: <b>${c.rkg ? BRL(c.rkg) + '/kg' : '—'}</b> · Meu preço: <b>${BRL(w.preco)}/kg</b>`;
+  const r = rkV(c), rt = c._rk ? ' (' + c._rk.main.t.toLowerCase() + ')' : '';
+  if (!w.preco) return r ? `Estimado pelo órgão: <b>${BRL(r)}/kg</b>${esc(rt)}. Digite seu preço para ver a margem.` : 'Sem R$/kg calculável para esta licitação; compare pelo valor unitário dos itens.';
+  let s = `Estimado: <b>${r ? BRL(r) + '/kg' : '—'}</b>${esc(rt)} · Meu preço: <b>${BRL(w.preco)}/kg</b>`;
   if (m != null) s += `<br>Margem vs estimado: <span class="marg ${m >= 0 ? 'pos' : 'neg'}">${PCT(m)}</span> ${m >= 0 ? '(meu preço está abaixo do estimado ✓)' : '(meu preço está acima do estimado)'}`;
-  if (c.kg) s += `<br>Proposta total aprox.: <b>${BRL0(w.preco * c.kg)}</b> para ${c.kg_parcial ? '≥ ' : ''}${KG(c.kg)}${c.vcafe ? ` (estimado ${BRL0(c.vcafe)})` : ''}`;
+  if (c._rk && c._rk.outros.length) s += `<br>Proposta aprox. (só ${esc(c._rk.main.t.toLowerCase())}): <b>${BRL0(w.preco * c._rk.main.kg)}</b> para ${KG(c._rk.main.kg)} (estimado ${BRL0(c._rk.main.v * c._rk.main.kg)})`;
+  else if (c.kg) s += `<br>Proposta total aprox.: <b>${BRL0(w.preco * c.kg)}</b> para ${c._parcial ? '≥ ' : ''}${KG(c.kg)}${c.vcafe ? ` (estimado ${BRL0(c.vcafe)})` : ''}`;
   return s;
 }
 function detailHTML(c) {
@@ -759,7 +779,7 @@ function detailHTML(c) {
     <div class="dsec wf"><h4>Meu acompanhamento</h4>
       <div class="wf-grid">
         <div><label for="st-${c._i}">Status da proposta</label><select class="inp" id="st-${c._i}" data-w="status"><option value="">—</option>${sts.map(s => `<option ${w.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
-        <div><label for="pr-${c._i}">Meu preço (R$/kg)</label><input class="inp" id="pr-${c._i}" data-w="preco" inputmode="decimal" placeholder="${c.rkg ? 'ex.: ' + NF2.format(Math.round(c.rkg * 90) / 100) : 'ex.: 45,00'}" value="${w.preco != null ? NF2.format(w.preco) : ''}"></div>
+        <div><label for="pr-${c._i}">Meu preço (R$/kg)</label><input class="inp" id="pr-${c._i}" data-w="preco" inputmode="decimal" placeholder="${rkV(c) ? 'ex.: ' + NF2.format(Math.round(rkV(c) * 90) / 100) : 'ex.: 45,00'}" value="${w.preco != null ? NF2.format(w.preco) : ''}"></div>
         <div class="full"><label for="rs-${c._i}">Responsável</label><input class="inp" id="rs-${c._i}" data-w="resp" value="${esc(w.resp || '')}" placeholder="Quem cuida desta proposta"></div>
         <div class="full"><label for="nt-${c._i}">Notas</label><textarea class="inp" id="nt-${c._i}" data-w="notas" placeholder="Frete, amostra, contato do pregoeiro…">${esc(w.notas || '')}</textarea></div>
       </div>
@@ -779,6 +799,7 @@ function detailHTML(c) {
         <dt>Orçamento sigiloso</dt><dd>${esc(c.sig)}</dd>
         <dt>ME/EPP</dt><dd>${esc(c.me)}</dd>
         ${c.vcesta ? `<dt>Cestas/kits</dt><dd>${BRL(c.vcesta)} em cestas que incluem café</dd>` : ''}
+        ${rkOutros(c) ? `<dt>R$/kg por tipo</dt><dd>${esc(c._rk.main.t.toLowerCase())} ${BRL(c._rk.main.v)} · ${esc(rkOutros(c))}</dd>` : ''}
         <dt>Distância</dt><dd>${c.dist != null ? NF0.format(c.dist) + ' km em linha reta de Sacramento' : '—'}</dd>
         <dt>Chave PNCP</dt><dd>${esc(c.chave)} <button class="copy" data-copy="${esc(c.chave)}">copiar</button></dd>
         ${dups ? `<dt>Duplicata?</dt><dd>Possível duplicata de ${dups}${c.dup_of ? ' (esta fica oculta por padrão)' : ''}</dd>` : ''}
@@ -797,7 +818,7 @@ function rowHTML(c, open) {
     <td>${esc(platShort(c))}</td>
     <td>${esc(c.tipos.join(', '))}<div class="sub">${esc(c.embs)}</div></td>
     <td class="num">${c.vcafe == null ? (c.sig !== 'Não' ? 'Sigiloso' : '—') : BRLc(c.vcafe)}<div class="sub">${c.kg ? KG(c.kg) : ''}</div></td>
-    <td class="num">${BRL(c.rkg)}</td>
+    <td class="num">${BRL(rkV(c))}${rkLbl(c) ? `<div class="sub">${esc(rkLbl(c))}</div>` : ''}</td>
     <td>${esc(c.me.replace('Ampla (sem exclusividade)', 'Ampla').replace('Exclusivo ME/EPP', 'Exclusiva').replace('Exclusivo em', 'Excl. em'))}</td>
     <td>${w.status ? `<span class="st ${stCls(w.status)}">${esc(w.status)}</span>` : ''}${w.preco ? `<div class="sub">${BRL(w.preco)}/kg</div>` : ''}</td>
   </tr>${open ? `<tr class="dr" data-ch="${esc(c.chave)}"><td colspan="10">${detailHTML(c)}<div class="actions" style="justify-content:flex-end;margin-top:10px"><button class="btn sm" data-act="toggle">Fechar ▴</button></div></td></tr>` : ''}`;
@@ -871,8 +892,8 @@ function renderCharts() {
   const tpr = agg(c => c.itens.map(i => [i.tipo, i.vt])).map(([k, x]) => ({l: k, v: x.n, val: x.v}));
   const pfr = agg(c => [[c.plat_f, c.vcafe]]).slice(0, 10).map(([k, x]) => ({l: k, v: x.n, val: x.v, click: 'plats|' + k}));
   const bk = [['até R$ 40', 0, 40], ['R$ 40–55', 40, 55], ['R$ 55–70', 55, 70], ['R$ 70–85', 70, 85], ['R$ 85–100', 85, 100], ['acima de R$ 100', 100, 1e9]];
-  const rk = bk.map(([l, a, b]) => ({l, v: L.filter(c => c.rkg != null && c.rkg >= a && c.rkg < b).length}));
-  const med = median(L.map(c => c.rkg).filter(x => x != null));
+  const rk = bk.map(([l, a, b]) => ({l, v: L.filter(c => rkTM(c) != null && rkTM(c) >= a && rkTM(c) < b).length}));
+  const med = median(L.map(rkTM).filter(x => x != null));
   const fv = r => `<b>${r.v}</b>${r.val ? ' · ' + BRLc(r.val) : ''}`;
   $('#charts').innerHTML = `
    <div class="ch wide"><h3>Prazos nos próximos 30 dias</h3><p class="sub">Quantas licitações fecham em cada dia (fins de semana sombreados).</p>${svg}
@@ -880,7 +901,7 @@ function renderCharts() {
    <div class="ch"><h3>Por estado (UF)</h3><p class="sub">Licitações e valor estimado de café. MG em verde, SP/GO em azul.</p>${hbars(ufr, fv)}</div>
    <div class="ch"><h3>Por tipo de café</h3><p class="sub">Número de itens e valor total estimado.</p>${hbars(tpr, fv)}</div>
    <div class="ch"><h3>Onde enviar a proposta</h3><p class="sub">Plataformas em que você precisa ter cadastro.</p>${hbars(pfr, fv)}</div>
-   <div class="ch"><h3>R$/kg estimado pelos órgãos</h3><p class="sub">Distribuição do preço de referência${med != null ? `, mediana <b>${BRL(med)}</b>` : ''}.</p>${hbars(rk, r => `<b>${r.v}</b>`)}</div>`;
+   <div class="ch"><h3>R$/kg estimado pelos órgãos (torrado e moído)</h3><p class="sub">Distribuição do preço de referência${med != null ? `, mediana <b>${BRL(med)}</b>` : ''}.</p>${hbars(rk, r => `<b>${r.v}</b>`)}</div>`;
 }
 
 /* ---------------- checklist e sobre */
@@ -896,7 +917,7 @@ function renderChecklist() {
   $('#checklist').innerHTML = h;
 }
 function renderAbout() {
-  const n = C.length, semK = C.filter(c => !c.kg).length, semR = C.filter(c => c.rkg == null).length, dup = C.filter(c => c.dup).length, dupH = C.filter(c => c.dup_of).length;
+  const n = C.length, semK = C.filter(c => !c.kg).length, semR = C.filter(c => rkV(c) == null).length, dup = C.filter(c => c.dup).length, dupH = C.filter(c => c.dup_of).length;
   const naoPlat = C.filter(c => c.plat.startsWith('Ver edital')).length, semEd = C.filter(c => !c.edital_lido).length;
   $('#about').innerHTML = `
   <h3>De onde vêm os dados</h3><p>${esc(DATA.fonte)}. São todas as compras com itens de café que estavam recebendo propostas na data da busca, de órgãos federais, estaduais e municipais (Compras.gov.br e as outras plataformas que publicam no PNCP). Atualizado em <b>${fmtDate(DATA.gerado_em.slice(0, 16))}</b> (horário de Brasília).</p>
@@ -904,6 +925,7 @@ function renderAbout() {
    <li><b>Dias restantes</b>: vermelho até 3 dias, amarelo até 7, verde acima disso. O contador mostra quanto falta para o prazo final de propostas, no horário de Brasília.</li>
    <li><b>MG</b> em verde e <b>SP/GO</b> em azul. A distância é em <b>linha reta</b> de Sacramento-MG até a sede do município; por estrada é maior.</li>
    <li><b>R$/kg estimado</b> só aparece quando o peso da embalagem é inequívoco. Volume com “≥” é parcial (algum item sem peso).</li>
+   <li>O <b>R$/kg é separado por tipo de café</b>. O card mostra o de torrado e moído; se a compra não tem torrado e moído, mostra o de outro tipo, indicado ao lado (ex.: “solúvel”). Mediana, ordenação e gráfico de R$/kg usam só torrado e moído, para comparar preços parecidos.</li>
    <li><b>Categoria com *</b> veio do trecho do edital, porque a descrição do item era curta.</li>
    <li><b>Nova</b>: apareceu pela primeira vez desde a busca diária anterior.</li>
    <li><b>Duplicatas</b>: mesmo município, mesmo valor e mesma data, provavelmente a mesma compra publicada duas vezes. Por padrão mostro só a versão mais completa.</li></ul>
@@ -923,9 +945,9 @@ function download(name, content, type) {
 }
 function csvText() {
   const num = v => v == null ? '' : String(v).replace('.', ',');
-  const H = ['Chave PNCP', 'Prazo final', 'Dias restantes', 'UF', 'Município', 'Distância Sacramento (km)', 'Órgão', 'Modalidade', 'Número', 'Onde enviar', 'ME/EPP', 'Tipo', 'Categoria', 'Embalagem', 'Qtd café (kg)', 'Valor estimado café (R$)', 'R$/kg estimado', 'Exigências', 'Edital menciona', 'Objeto', 'Nova', 'Possível duplicata', 'Link PNCP', 'Link plataforma', 'Favorito', 'Status', 'Meu preço R$/kg', 'Margem vs estimado', 'Responsável', 'Notas'];
+  const H = ['Chave PNCP', 'Prazo final', 'Dias restantes', 'UF', 'Município', 'Distância Sacramento (km)', 'Órgão', 'Modalidade', 'Número', 'Onde enviar', 'ME/EPP', 'Tipo', 'Categoria', 'Embalagem', 'Qtd café (kg)', 'Valor estimado café (R$)', 'R$/kg estimado', 'Exigências', 'Edital menciona', 'Objeto', 'Nova', 'Possível duplicata', 'Link PNCP', 'Link plataforma', 'Favorito', 'Status', 'Meu preço R$/kg', 'Margem vs estimado', 'Responsável', 'Notas', 'R$/kg refere-se a'];
   const rows = LAST.map(c => { const w = getW(c), u = urg(c), m = margin(c, w);
-    return [c.chave, fmtDate(c.fim), u.d ?? '', c.uf, c.mun, c.dist ?? '', c._orgao, c.mod, c.num, c.plat, c.me, c.tipos.join('; '), c.cats.join('; '), c.embs, num(c.kg), num(c.vcafe), num(c.rkg), c.tags.join('; '), c.ed_tags.join('; '), c.objeto, c._new ? 'Sim' : '', c.dup ? 'Sim' : '', c.link_pncp, c.link_plat, w.fav ? 'Sim' : '', w.status || '', num(w.preco), m != null ? NF1.format(m * 100) + '%' : '', w.resp || '', w.notas || '']; });
+    return [c.chave, fmtDate(c.fim), u.d ?? '', c.uf, c.mun, c.dist ?? '', c._orgao, c.mod, c.num, c.plat, c.me, c.tipos.join('; '), c.cats.join('; '), c.embs, num(c.kg), num(c.vcafe), num(rkV(c)), c.tags.join('; '), c.ed_tags.join('; '), c.objeto, c._new ? 'Sim' : '', c.dup ? 'Sim' : '', c.link_pncp, c.link_plat, w.fav ? 'Sim' : '', w.status || '', num(w.preco), m != null ? NF1.format(m * 100) + '%' : '', w.resp || '', w.notas || '', c._rk ? c._rk.main.t : '']; });
   const q = v => { v = String(v ?? ''); return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
   return {n: rows.length, csv: '\ufeff' + [H, ...rows].map(r => r.map(q).join(';')).join('\r\n')};
 }
@@ -979,7 +1001,7 @@ function summary(c) {
   const u = urg(c);
   return [`☕ ${c.mod} ${c.num} – ${c._orgao} (${c.mun}-${c.uf})`, `Prazo: ${fmtDate(c.fim)} (${u.lbl})`,
     `Café: ${c.tipos.join(', ')}${c.embs ? ' · ' + c.embs : ''}`,
-    `Valor estimado: ${c.vcafe != null ? BRL(c.vcafe) : '—'}${c.kg ? ' · ' + KG(c.kg) : ''}${c.rkg ? ' · ' + BRL(c.rkg) + '/kg' : ''}`,
+    `Valor estimado: ${c.vcafe != null ? BRL(c.vcafe) : '—'}${c.kg ? ' · ' + KG(c.kg) : ''}${rkV(c) ? ' · ' + BRL(rkV(c)) + '/kg' + (rkLbl(c) ? ' (' + rkLbl(c) + ')' : '') : ''}`,
     `ME/EPP: ${c.me}`, c.tags.length ? `Exigências: ${c.tags.join(', ')}` : '', `Enviar em: ${c.plat}`, `PNCP: ${c.link_pncp}`].filter(Boolean).join('\n');
 }
 function showTab(t) {
@@ -1150,7 +1172,8 @@ function init() {
   setInterval(checkUpdate, 15 * 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkUpdate(); renderKPIs(); renderQuick(); } });
   checkUpdate();
-  window.__cafe = {count: () => LAST.length, csvText, importText, undoImport, F: () => F};
+  window.__cafe = {count: () => LAST.length, csvText, importText, undoImport, F: () => F,
+    rkCheck: () => C.filter(c => c._rk && !c._rk.outros.length && c.rkg != null && Math.abs(c._rk.main.v - c.rkg) > 0.011).map(c => [c.chave, c.rkg, c._rk.main.v])};
 }
 init();
 })();
