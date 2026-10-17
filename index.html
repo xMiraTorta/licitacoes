@@ -369,6 +369,7 @@ footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint);fon
           <button id="expJson" role="menuitem">⬇️ Exportar backup (JSON)</button>
           <button id="impJson" role="menuitem">⬆️ Importar backup (JSON)</button>
           <button id="undoImp" role="menuitem">↩️ Desfazer última importação</button>
+          <button id="restMig" role="menuitem" hidden>🛟 Restaurar dados de antes da troca de nome</button>
           <input type="file" id="impFile" accept="application/json,.json" hidden>
         </div>
       </div>
@@ -485,7 +486,7 @@ function tcase(s) {
   }).join('');
 }
 
-/* ---------------- armazenamento local (chaves e formatos são contrato: não mudar) */
+/* ---------------- armazenamento local (chaves e formatos são contrato: mudar só com migração testada) */
 const LS = (() => { try { const k = '__t'; localStorage.setItem(k, 1); localStorage.removeItem(k); return localStorage; } catch (e) { return null; } })();
 const mem = {};
 /* Dado salvo ilegível: guarda uma cópia antes de seguir com o valor padrão, para nunca apagar
@@ -508,8 +509,43 @@ const lset = (k, v) => {
   if (LOCKED.has(k)) { toast('Não salvei: os dados antigos estão ilegíveis e não consegui guardar uma cópia.'); return; }
   const s = JSON.stringify(v); if (LS) { try { LS.setItem(k, s); } catch (e) { toast('Não foi possível salvar no navegador.'); } } else mem[k] = s;
 };
-const PREIMP = 'cafeBizinotto.antesDaImportacao.v1';
-const WFK = 'cafeBizinotto.meusDados.v1', UIK = 'cafeBizinotto.ui.v1', CLK = 'cafeBizinotto.checklist.v1';
+const PFX = 'monitorLicitacoes.', OLD_PFX = 'cafeBizinotto.';
+const PREIMP = PFX + 'antesDaImportacao.v1', MIGK = PFX + 'backupMigracao.v1';
+const WFK = PFX + 'meusDados.v1', UIK = PFX + 'ui.v1', CLK = PFX + 'checklist.v1';
+/* Migração única das chaves antigas (cafeBizinotto.*) para monitorLicitacoes.*: guarda backup de
+   recuperação com o texto exato de todas, copia, confere a cópia e só então apaga a antiga.
+   Se a chave nova já existir, ela vence (é mais recente); a antiga fica no backup. */
+const MIGRADAS = [];
+(function migrar() {
+  if (!LS) return;
+  let olds;
+  try { olds = Object.keys(LS).filter(k => k.startsWith(OLD_PFX)); } catch (e) { console.error('Migração: não consegui listar as chaves', e); return; }
+  if (!olds.length) return;
+  const bk = {migrado_em: new Date().toISOString(), chaves: {}};
+  try { const prev = LS.getItem(MIGK); if (prev) Object.assign(bk.chaves, JSON.parse(prev).chaves || {}); }
+  catch (e) { console.error('Migração: backup anterior ilegível, será substituído', e); }
+  olds.forEach(k => { bk.chaves[k] = LS.getItem(k); });
+  try { LS.setItem(MIGK, JSON.stringify(bk)); }
+  catch (e) { console.error('Migração adiada: sem espaço para o backup; chaves antigas mantidas', e); return; }
+  for (const k of olds) {
+    const nk = PFX + k.slice(OLD_PFX.length), v = LS.getItem(k);
+    try {
+      const had = LS.getItem(nk) != null;
+      if (!had) LS.setItem(nk, v);
+      if (!had && LS.getItem(nk) !== v) throw new Error('cópia diferente do original');
+      LS.removeItem(k); MIGRADAS.push(k);
+    } catch (e) { console.error('Migração de', k, 'falhou; chave antiga mantida', e); }
+  }
+})();
+function restaurarMigracao() {
+  const bk = lget(MIGK, null);
+  if (!bk || !bk.chaves || !Object.keys(bk.chaves).length) { toast('Não há backup da troca de nome para restaurar.'); return false; }
+  for (const [k, v] of Object.entries(bk.chaves)) if (v != null) LS.setItem(PFX + k.slice(OLD_PFX.length), v);
+  WF = lget(WFK, {});
+  renderAll();
+  toast(`Restaurado: dados de ${new Date(bk.migrado_em).toLocaleString('pt-BR', {timeZone: TZ, dateStyle: 'short', timeStyle: 'short'})}.`);
+  return true;
+}
 let WF = lget(WFK, {});
 function getW(c) {
   if (WF[c.chave]) return WF[c.chave];
@@ -1009,7 +1045,7 @@ function csvText() {
 }
 function exportCSV() { const {n, csv} = csvText(); download(`licitacoes-${todayYMD()}.csv`, csv, 'text/csv;charset=utf-8'); toast(`CSV com ${n} licitações exportado.`); }
 function exportJSON() {
-  const payload = {app: 'cafe-bizinotto-licitacoes', versao: 1, exportado_em: new Date().toISOString(), meus_dados: WF, checklist: lget(CLK, {})};
+  const payload = {app: 'monitor-licitacoes', versao: 1, exportado_em: new Date().toISOString(), meus_dados: WF, checklist: lget(CLK, {})};
   download(`backup-licitacoes-${todayYMD()}.json`, JSON.stringify(payload, null, 1), 'application/json');
   toast(`Backup exportado: ${Object.keys(WF).length} licitações com anotações.`);
 }
@@ -1105,6 +1141,11 @@ function bind() {
   $('#expJson').addEventListener('click', () => { $('#dataMenu').classList.remove('open'); exportJSON(); });
   $('#impJson').addEventListener('click', () => $('#impFile').click());
   $('#undoImp').addEventListener('click', () => { $('#dataMenu').classList.remove('open'); undoImport(); });
+  $('#restMig').hidden = !lget(MIGK, null);
+  $('#restMig').addEventListener('click', () => {
+    $('#dataMenu').classList.remove('open');
+    if (confirm('Voltar favoritos, status, notas e checklist para como estavam antes da troca de nome do monitor? O que você mudou depois disso será substituído.')) restaurarMigracao();
+  });
   $('#impFile').addEventListener('change', e => { $('#dataMenu').classList.remove('open'); if (e.target.files[0]) importJSON(e.target.files[0]); e.target.value = ''; });
   const fb = $('#fbody');
   fb.addEventListener('click', e => {
@@ -1259,7 +1300,7 @@ function init() {
   setInterval(checkUpdate, 15 * 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkUpdate(); renderKPIs(); renderQuick(); } });
   checkUpdate();
-  window.__cafe = {count: () => LAST.length, csvText, importText, undoImport, open: openDetail, F: () => F,
+  window.__monitor = {count: () => LAST.length, csvText, importText, undoImport, restaurarMigracao, open: openDetail, F: () => F,
     rkCheck: () => C.filter(c => c._rk && !c._rk.outros.length && c.rkg != null && Math.abs(c._rk.main.v - c.rkg) > 0.011).map(c => [c.chave, c.rkg, c._rk.main.v])};
 }
 init();

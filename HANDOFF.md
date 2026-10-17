@@ -18,6 +18,7 @@ Entregue e testado (112 testes, coleta real com 0 falhas, 39 min neste ambiente)
 - Distância por estrada desde Uberaba (OSRM, `coletor/distancias_uberaba.csv`), campo novo `dist_min`.
 - Redesenho total do site: lista + painel lateral, Minhas propostas (quadro por status), Agenda, Painel, Guia com progresso, tema escuro, celular sem rolagem lateral. Chaves do navegador preservadas.
 - Workflows `testes.yml` (PRs) e `avisar.yml` (avisos da reserva); coletor recupera velocidade após 429.
+- Chaves do navegador renomeadas para `monitorLicitacoes.*` a pedido do dono ("sempre faça tudo, não deixe nada pra trás"): migração automática na 1ª visita (backup exato em `monitorLicitacoes.backupMigracao.v1`, cópia conferida, chaves antigas apagadas) + botão de restauração; backup exportado agora `app:'monitor-licitacoes'` (arquivos antigos continuam aceitos). 116 testes.
 - Respostas ao dono: CNAEs 4611-7/00 e 7490-1/04 são intermediação, não permitem revenda em nome próprio (precisa CNAE de comércio, confirmar com contador). Varredura incremental: só ~1/3 mais rápida e com risco de perder compras, não implementada. Coleta no Claude Code: 12 a 39 min contra 59 min no GitHub; varia com o limite do PNCP, então o GitHub segue como principal.
 
 ## Feito e validado nesta sessão
