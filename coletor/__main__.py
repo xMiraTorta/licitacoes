@@ -3,6 +3,7 @@
     python -m coletor coletar [--destino .] [--forcar] [--sem-busca] [--novas novas.json]
     python -m coletor avisar --novas novas.json [--destino .]
     python -m coletor telegram-chat        # lista chats que falaram com o bot (para o TELEGRAM_CHAT_ID)
+    python -m coletor distancias           # recalcula distâncias por estrada (só se a origem mudar)
 
 Códigos de saída: 0 ok; 2 coleta/publicação bloqueada (dados publicados intactos); 3 falha no aviso.
 """
@@ -16,7 +17,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from coletor import coleta, publicar, telegram
+from coletor import coleta, distancias, publicar, telegram
 from coletor.pncp import ColetaErro
 
 
@@ -32,6 +33,7 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--destino", type=Path, default=Path("."))
     a.add_argument("--novas", type=Path, required=True)
     sub.add_parser("telegram-chat", help="mostra os chats que mandaram mensagem ao bot")
+    sub.add_parser("distancias", help="recalcula as distâncias por estrada a partir da origem (OSRM)")
     args = ap.parse_args(argv)
 
     logger.remove()
@@ -59,6 +61,10 @@ def main(argv: list[str] | None = None) -> int:
         except telegram.TelegramErro as e:
             logger.error("Aviso no Telegram falhou: {}", e)
             return 3
+        return 0
+
+    if args.cmd == "distancias":
+        distancias.calcular()
         return 0
 
     if args.cmd == "telegram-chat":

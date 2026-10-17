@@ -41,7 +41,8 @@ class Compra(_Base):
     nova: bool
     uf: str
     mun: str
-    dist: int | None
+    dist: int | None  # km por estrada a partir de Uberaba (OSRM)
+    dist_min: int | None = None  # minutos de viagem
     orgao: str
     unidade: str
     esfera: str

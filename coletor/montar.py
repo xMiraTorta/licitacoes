@@ -1,19 +1,13 @@
 """Monta os registros de compra no formato de data.json a partir das respostas do PNCP."""
 from __future__ import annotations
 
-import csv
 import html
-import math
 import re
-from functools import lru_cache
-from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from coletor import cafe
+from coletor import cafe, distancias
 
-ORIGEM = {"nome": "Sacramento-MG", "lat": -19.8622, "lon": -47.4508}
-MUNICIPIOS_CSV = Path(__file__).with_name("municipios.csv")
 
 ESFERAS = {"F": "Federal", "E": "Estadual", "M": "Municipal", "D": "Distrital", "N": "Não se aplica"}
 MODALIDADES = {"Pregão - Eletrônico": "Pregão Eletrônico", "Pregão - Presencial": "Pregão Presencial"}
@@ -63,22 +57,6 @@ ME_ITEM = {1: "Exclusivo", 2: "Não", 3: "Cota reservada", 4: "Não", 5: "Não s
 SIZES_F = {"500g": "500 g", "250g": "250 g", "1kg": "1 kg"}
 EMB_F = {"vácuo": "Vácuo", "almofada": "Almofada", "lata": "Lata", "sachê": "Sachê", "vidro/frasco": "Vidro/frasco",
          "c/ válvula": "C/ válvula", "granel": "Granel"}
-
-
-@lru_cache(maxsize=1)
-def municipios() -> dict[str, tuple[float, float]]:
-    with MUNICIPIOS_CSV.open(encoding="utf-8") as f:
-        return {r["codigo_ibge"]: (float(r["lat"]), float(r["lon"])) for r in csv.DictReader(f)}
-
-
-def distancia_km(codigo_ibge: str | None) -> int | None:
-    """Linha reta (haversine) de Sacramento-MG até a sede do município."""
-    p = municipios().get(str(codigo_ibge or ""))
-    if not p:
-        return None
-    la1, lo1, la2, lo2 = map(math.radians, (ORIGEM["lat"], ORIGEM["lon"], p[0], p[1]))
-    h = math.sin((la2 - la1) / 2) ** 2 + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2
-    return round(2 * 6371.0088 * math.asin(math.sqrt(h)))
 
 
 def plataforma(link: str | None, publicador: str | None) -> tuple[str, str, str]:
@@ -183,6 +161,7 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
         return None
     org, uni = c.get("orgaoEntidade") or {}, c.get("unidadeOrgao") or {}
     cnpj, ano, seq = org.get("cnpj", ""), c.get("anoCompra"), c.get("sequencialCompra")
+    km, minutos = distancias.estrada(uni.get("codigoIbge"))  # por estrada, a partir de Uberaba
     cafe_it = [i for i in itens if i["tipo"] != cafe.CESTA]
     cesta_it = [i for i in itens if i["tipo"] == cafe.CESTA]
     vts = [i["vt"] for i in cafe_it if i["vt"] is not None]
@@ -200,7 +179,7 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
         "abre": (c.get("dataAberturaProposta") or "")[:16] or None,
         "publicado": (c.get("dataPublicacaoPncp") or "")[:16] or None,
         "first_seen": None, "nova": False,
-        "uf": uni.get("ufSigla", ""), "mun": uni.get("municipioNome", ""), "dist": distancia_km(uni.get("codigoIbge")),
+        "uf": uni.get("ufSigla", ""), "mun": uni.get("municipioNome", ""), "dist": km, "dist_min": minutos,
         "orgao": org.get("razaoSocial", ""), "unidade": uni.get("nomeUnidade", ""),
         "esfera": ESFERAS.get(org.get("esferaId", "N"), "Não se aplica"),
         "mod": MODALIDADES.get(c.get("modalidadeNome", ""), c.get("modalidadeNome", "")),
