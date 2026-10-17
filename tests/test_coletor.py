@@ -269,5 +269,5 @@ def test_429_desacelera_e_insiste() -> None:
         return httpx.Response(200, json={"ok": 1}) if st == 200 else httpx.Response(429, text="limite")
     p = PNCP(httpx.Client(transport=httpx.MockTransport(handler)), espera_base=0, espera_429=0, intervalo_min=0.01)
     assert p.get_json("/x") == {"ok": 1}
-    assert p.intervalo_min == pytest.approx(0.8)  # 0,1 -> 0,2 -> 0,4 -> 0,8 após três 429
+    assert p.intervalo_min == pytest.approx(0.8 * 0.97)  # 0,1 -> 0,2 -> 0,4 -> 0,8 após três 429; -3% no sucesso
     assert p.stats.novas_tentativas == 3

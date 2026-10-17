@@ -1,0 +1,43 @@
+# Envia no Telegram as licitações novas de uma coleta feita FORA do GitHub Actions (ex.: a reserva
+# no Claude Code). Quem coletou grava avisos/pendentes.json e faz push; este workflow avisa e apaga o arquivo.
+name: Avisar licitações novas
+
+on:
+  push:
+    branches: [main]
+    paths: [avisos/pendentes.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-licitacoes
+  cancel-in-progress: false
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      PAINEL_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Instalar dependências
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --quiet -r requirements.txt
+      - name: Avisar e limpar
+        run: |
+          if [ ! -f avisos/pendentes.json ]; then echo "Nada pendente."; exit 0; fi
+          .venv/bin/python -m coletor avisar --novas avisos/pendentes.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -q avisos/pendentes.json
+          git commit -m "Avisos de licitações novas enviados no Telegram"
+          git push

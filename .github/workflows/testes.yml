@@ -1,0 +1,26 @@
+# Testes automáticos em cada pedido de mudança (PR) e sob demanda. Sem acesso ao PNCP: só dados locais.
+name: Testes
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Instalar dependências e navegador
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --quiet -r requirements.txt
+          .venv/bin/playwright install --with-deps chromium
+      - name: Testes (coletor, dados e site)
+        run: .venv/bin/python -m pytest -q
