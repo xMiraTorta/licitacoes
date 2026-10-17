@@ -91,7 +91,7 @@ def test_primeira_coleta_monta_registro_completo(destino: Path) -> None:
     assert (tm["kgu"], tm["kgt"], tm["rkg"], tm["tags"]) == (0.5, 500.0, 60.0, ["ABIC/pureza"])
     assert sol["sig"] is True and sol["vu"] is None and sol["vt"] is None  # sigiloso não vira zero
     assert c["vcafe"] == 30000.0 and c["kg"] == 502.0 and c["rkg"] == 60.0 and c["sig"] == "Sim"
-    assert c["plat"] == "BLL Compras" and c["dist"] == 0 and c["me"] == "Exclusivo ME/EPP"
+    assert c["plat"] == "BLL Compras" and c["dist"] == 76 and c["dist_min"] == 72 and c["me"] == "Exclusivo ME/EPP"
     assert c["first_seen"] == "2026-10-19" and c["nova"] is False  # primeira carga não marca "nova"
     assert r.novas == [CAFE["numeroControlePNCP"]]
     assert "Atualizado em <b>19/10/2026 09:00</b>" in (destino / "index.html").read_text(encoding="utf-8")
@@ -181,9 +181,11 @@ def test_plataforma(link: str | None, pub: str, esperado: tuple[str, str, str]) 
     assert montar.plataforma(link, pub) == esperado
 
 
-def test_distancia_confere_com_painel_original() -> None:
-    assert montar.distancia_km("3117108") == 189  # Conceição da Aparecida-MG
-    assert montar.distancia_km("9999999") is None
+def test_distancia_por_estrada_a_partir_de_uberaba() -> None:
+    from coletor import distancias
+    assert distancias.estrada("3156908") == (76, 72)  # Uberaba -> Sacramento por estrada (OSRM, 17/10/2026)
+    assert distancias.estrada("3106200")[0] == 480  # Belo Horizonte
+    assert distancias.estrada("9999999") == (None, None)
 
 
 def test_mensagens_telegram() -> None:
@@ -267,5 +269,5 @@ def test_429_desacelera_e_insiste() -> None:
         return httpx.Response(200, json={"ok": 1}) if st == 200 else httpx.Response(429, text="limite")
     p = PNCP(httpx.Client(transport=httpx.MockTransport(handler)), espera_base=0, espera_429=0, intervalo_min=0.01)
     assert p.get_json("/x") == {"ok": 1}
-    assert p.intervalo_min == pytest.approx(0.8)  # 0,1 -> 0,2 -> 0,4 -> 0,8 após três 429
+    assert p.intervalo_min == pytest.approx(0.8 * 0.97)  # 0,1 -> 0,2 -> 0,4 -> 0,8 após três 429; -3% no sucesso
     assert p.stats.novas_tentativas == 3

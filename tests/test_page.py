@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from playwright.sync_api import Page
+from playwright.sync_api import Locator, Page
 
 from tests.conftest import wait_ready
 
@@ -12,6 +12,11 @@ WFK = "cafeBizinotto.meusDados.v1"
 UIK = "cafeBizinotto.ui.v1"
 CLK = "cafeBizinotto.checklist.v1"
 FIRST = "18243295000192-1-000080/2026"  # torrado e moído 500 g, R$ 66,03/kg
+SOLUVEL_ONLY = "77402196000175-1-000046/2026"  # T&M sem peso + solúvel 0,5 kg a R$ 300/kg
+MIXED = "01612911000132-1-000128/2026"  # T&M R$ 46,94/kg (696,5 kg) + solúvel R$ 151,55/kg
+CAPSULE = "75458836000133-1-000147/2026"  # T&M 400 kg + cápsulas sem peso
+SIGILOSO = "95440517000108-1-000295/2026"
+DUP = "01612382000177-1-000090/2026"  # dup_of no conjunto de teste
 
 
 def ls(page: Page, key: str) -> Any:
@@ -19,33 +24,41 @@ def ls(page: Page, key: str) -> Any:
     return None if raw is None else json.loads(raw)
 
 
-def open_card(page: Page, chave: str) -> Any:
-    card = page.locator(f'article.card[data-ch="{chave}"]')
-    card.locator('[data-act="toggle"]').click()
-    return page.locator(f'article.card[data-ch="{chave}"]')
+def row(page: Page, chave: str) -> Locator:
+    return page.locator(f'#list .row[data-ch="{chave}"]')
+
+
+def open_detail(page: Page, chave: str) -> Locator:
+    row(page, chave).locator(".c-loc").click()
+    d = page.locator("#drawer.show")
+    d.wait_for()
+    return d
+
+
+def goto(page: Page, url: str) -> None:
+    page.goto(url + "/index.html")
+    wait_ready(page)
 
 
 def test_real_site_loads_without_errors(page: Page, real_url: str) -> None:
-    page.goto(real_url + "/index.html")
-    wait_ready(page)
+    goto(page, real_url)
     assert page.evaluate("window.__cafe.count()") > 0
-    for tab in ("charts", "check", "about", "list"):
+    for tab in ("mine", "agenda", "charts", "check", "about", "list"):
         page.click(f'[data-tab="{tab}"]')
-    page.click('[data-view="table"]')
-    assert page.locator("tr.r").count() > 0
+        assert page.locator(f"#tab-{tab}").is_visible()
+    assert page.locator("#list .row").count() > 0
+    assert "Café Bizinotto" not in page.content()
 
 
 def test_duplicates_hidden_by_default(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
+    goto(page, fixture_url)
     assert page.evaluate("window.__cafe.count()") == 8  # 9 compras, 1 duplicata oculta
     page.click('label.toggle:has-text("Ocultar possíveis duplicatas")')
     assert page.evaluate("window.__cafe.count()") == 9
 
 
 def test_search_and_quick_filter(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
+    goto(page, fixture_url)
     page.fill("#q", "conceicao aparecida")
     page.wait_for_function("window.__cafe.count() === 1")
     page.fill("#q", "")
@@ -55,17 +68,27 @@ def test_search_and_quick_filter(page: Page, fixture_url: str) -> None:
     assert 0 < mg < 8
 
 
+def test_detail_drawer_opens_closes_and_back_button(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
+    assert "Conceição da Aparecida" in d.inner_text()
+    assert page.url.endswith("#c=" + FIRST.replace("/", "%2F"))
+    page.go_back()
+    page.wait_for_function("!document.querySelector('#drawer').classList.contains('show')")
+    open_detail(page, FIRST)
+    page.keyboard.press("Escape")
+    page.wait_for_function("!document.querySelector('#drawer').classList.contains('show')")
+
+
 def test_personal_data_persists_after_reload(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
-    card = page.locator(f'article.card[data-ch="{FIRST}"]')
-    card.locator('[data-act="fav"]').click()
-    card = open_card(page, FIRST)
-    card.locator('[data-w="preco"]').fill("55,50")
-    card.locator('[data-w="status"]').select_option("Enviada")
-    card.locator('[data-w="resp"]').fill("Vinicius")
-    card.locator('[data-w="notas"]').fill("frete CIF")
-    card.locator('[data-w="notas"]').blur()
+    goto(page, fixture_url)
+    row(page, FIRST).locator('[data-act="fav"]').click()
+    d = open_detail(page, FIRST)
+    d.locator('[data-w="preco"]').fill("55,50")
+    d.locator('[data-w="status"]').select_option("Enviada")
+    d.locator('[data-w="resp"]').fill("Vinicius")
+    d.locator('[data-w="notas"]').fill("frete CIF")
+    d.locator('[data-w="notas"]').blur()
     page.wait_for_timeout(500)
     page.reload()
     wait_ready(page)
@@ -75,43 +98,66 @@ def test_personal_data_persists_after_reload(page: Page, fixture_url: str) -> No
     assert "★ Favoritos" in page.locator('[data-q="fav"]').inner_text()
 
 
-def test_price_input_parsing(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
+def test_my_proposals_board_groups_by_status(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    wf = {FIRST: {"fav": True, "upd": "x"}, MIXED: {"status": "Enviada", "upd": "x"}}
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps(wf)])
+    page.reload()
     wait_ready(page)
-    card = open_card(page, FIRST)
+    assert page.locator("#n-mine").inner_text() == "2"
+    page.click('[data-tab="mine"]')
+    cols = page.locator("#board .col")
+    assert "Favoritas sem status" in cols.nth(0).inner_text() and "Conceição" in cols.nth(0).inner_text()
+    enviada = page.locator('#board .col:has(h3:has-text("Enviada"))')
+    assert enviada.locator(f'.mini[data-ch="{MIXED}"]').count() == 1
+    enviada.locator(".mini").click()
+    page.locator("#drawer.show").wait_for()
+
+
+def test_agenda_lists_followed_deadlines(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({FIRST: {"fav": True, "upd": "x"}})])
+    page.reload()
+    wait_ready(page)
+    page.click('[data-tab="agenda"]')
+    assert page.locator("#agenda .row").count() == 1
+    page.click('[data-ag="1"]')
+    assert page.locator("#agenda .row").count() == 8
+
+
+def test_price_input_parsing(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
     for typed, expected in (("55,5", 55.5), ("1.234,56", 1234.56), ("R$ 60", 60.0)):
-        card.locator('[data-w="preco"]').fill(typed)
+        d.locator('[data-w="preco"]').fill(typed)
         page.wait_for_timeout(450)
         assert ls(page, WFK)[FIRST]["preco"] == expected, typed
 
 
 def test_margin_against_estimate(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
-    card = open_card(page, FIRST)
-    card.locator('[data-w="preco"]').fill("59,43")
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
+    d.locator('[data-w="preco"]').fill("59,43")
     page.wait_for_timeout(450)
-    calc = card.locator("[data-calc]").inner_text()
+    calc = d.locator("[data-calc]").inner_text()
     assert "+10%" in calc  # (66,03 - 59,43) / 66,03
     assert "R$ 359.076" in calc and "6.042 kg" in calc  # 59,43 × 6.042 kg
 
 
-def test_checklist_persists(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
+def test_checklist_persists_and_shows_progress(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
     page.click('[data-tab="check"]')
     page.click('[data-cl="0"]')
     assert ls(page, CLK) == {"0": 1}
+    assert "1 de " in page.locator("#gside").inner_text()
 
 
 def test_export_import_roundtrip(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
+    goto(page, fixture_url)
     backup = {"app": "cafe-bizinotto-licitacoes", "versao": 1, "exportado_em": "2026-10-17T12:00:00Z",
               "meus_dados": {FIRST: {"fav": True, "notas": "importada", "upd": "2026-10-17T12:00:00Z"}},
               "checklist": {"3": 1}}
-    n = page.evaluate("t => window.__cafe.importText(t)", json.dumps(backup))
-    assert n == 1
+    assert page.evaluate("t => window.__cafe.importText(t)", json.dumps(backup)) == 1
     assert ls(page, WFK)[FIRST]["notas"] == "importada"
     assert ls(page, CLK) == {"3": 1}
     # importação de entrada mais antiga não sobrescreve a mais nova
@@ -121,8 +167,7 @@ def test_export_import_roundtrip(page: Page, fixture_url: str) -> None:
 
 
 def test_csv_export(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
+    goto(page, fixture_url)
     csv = page.evaluate("window.__cafe.csvText()")
     assert csv["n"] == 8
     lines = csv["csv"].lstrip("﻿").split("\r\n")
@@ -131,30 +176,38 @@ def test_csv_export(page: Page, fixture_url: str) -> None:
 
 
 def test_secret_budget_shown_as_secret_not_zero(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
-    card = page.locator('article.card[data-ch="95440517000108-1-000295/2026"]')
-    assert "Sigiloso" in card.locator(".nums").inner_text()
-    assert "R$ 0" not in card.inner_text()
+    goto(page, fixture_url)
+    r = row(page, SIGILOSO)
+    assert "Sigiloso" in r.locator(".c-valor").inner_text()
+    assert "R$ 0" not in r.inner_text()
 
 
 def test_ui_state_saved(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
-    page.click('[data-view="table"]')
+    goto(page, fixture_url)
     page.select_option("#sort", "valor")
+    page.click('[data-tab="charts"]')
     ui = ls(page, UIK)
-    assert ui["view"] == "table" and ui["sort"] == "valor"
+    assert ui["sort"] == "valor" and ui["tab"] == "charts"
+    page.reload()
+    wait_ready(page)
+    assert page.locator("#tab-charts").is_visible()
+
+
+def test_theme_toggle_saved(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.click("#themeBtn")
+    theme = ls(page, UIK)["theme"]
+    assert theme in ("dark", "light")
+    assert page.evaluate("document.documentElement.dataset.theme") == theme
 
 
 def test_corrupted_storage_is_backed_up_not_erased(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
+    goto(page, fixture_url)
     broken = '{"A":{"fav":true},"B":{"notas":"importante"'
     page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, broken])
     page.reload()
     wait_ready(page)
-    page.locator(f'article.card[data-ch="{FIRST}"] [data-act="fav"]').click()
+    row(page, FIRST).locator('[data-act="fav"]').click()
     keys = page.evaluate("Object.keys(localStorage)")
     copies = [k for k in keys if k.startswith(WFK + ".ilegivel.")]
     assert len(copies) == 1
@@ -167,9 +220,8 @@ def test_corrupted_storage_is_backed_up_not_erased(page: Page, fixture_url: str)
 
 
 def test_undo_import_restores_previous_data(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
-    page.locator(f'article.card[data-ch="{FIRST}"] [data-act="fav"]').click()
+    goto(page, fixture_url)
+    row(page, FIRST).locator('[data-act="fav"]').click()
     page.click('[data-tab="check"]')
     page.click('[data-cl="2"]')
     before_wf, before_cl = ls(page, WFK), ls(page, CLK)
@@ -185,70 +237,62 @@ def test_undo_import_restores_previous_data(page: Page, fixture_url: str) -> Non
     assert "Nenhuma importação" in page.locator("#toast").inner_text()
 
 
-SOLUVEL_ONLY = "77402196000175-1-000046/2026"  # T&M sem peso + solúvel 0,5 kg a R$ 300/kg
-MIXED = "01612911000132-1-000128/2026"  # T&M R$ 46,94/kg (696,5 kg) + solúvel R$ 151,55/kg
-CAPSULE = "75458836000133-1-000147/2026"  # T&M 400 kg + cápsulas sem peso
-
-
-def card_nums(page: Page, chave: str) -> str:
-    return page.locator(f'article.card[data-ch="{chave}"] .nums').inner_text()
-
-
 def test_price_per_kg_separated_by_coffee_type(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
-    mixed = card_nums(page, MIXED)
-    assert "R$ 46,94" in mixed and "solúvel R$ 151,55" in mixed  # antes: R$ 61,10 misturado
-    sol = card_nums(page, SOLUVEL_ONLY).lower()
+    goto(page, fixture_url)
+    assert "R$ 46,94" in row(page, MIXED).locator(".c-rkg").inner_text()  # antes: R$ 61,10 misturado
+    sol = row(page, SOLUVEL_ONLY).locator(".c-rkg").inner_text().lower()
     assert "r$ 300,00" in sol and "solúvel" in sol  # identificado como solúvel, não como T&M
-    assert "R$ 66,03" in card_nums(page, FIRST)
+    d = open_detail(page, MIXED)
+    assert "solúvel R$ 151,55" in d.locator(".facts").inner_text()
 
 
 def test_median_and_sort_use_only_roast_and_ground(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
+    goto(page, fixture_url)
     kpi = page.locator('.kpi[data-k="rkg"]').inner_text()
     # T&M visíveis (sem a duplicata oculta): 66,03; 46,94; 58,42; 63,52. Com o solúvel (300) daria outra.
     assert "R$ 60,97" in kpi and "4 de torrado e moído" in kpi
     page.select_option("#sort", "rkg_desc")
-    first = page.locator("article.card").first.get_attribute("data-ch")
-    assert first != SOLUVEL_ONLY  # R$ 300/kg de solúvel não lidera a ordenação de T&M
+    assert page.locator("#list .row").first.get_attribute("data-ch") != SOLUVEL_ONLY
 
 
 def test_partial_volume_marked_when_item_has_no_weight(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
-    assert "≥ 400 kg" in card_nums(page, CAPSULE)
-    assert "≥" not in card_nums(page, FIRST)
+    goto(page, fixture_url)
+    assert "≥ 400 kg" in row(page, CAPSULE).locator(".c-valor").inner_text()
+    assert "≥" not in row(page, FIRST).locator(".c-valor").inner_text()
 
 
 def test_margin_uses_type_specific_price(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
-    card = open_card(page, MIXED)
-    card.locator('[data-w="preco"]').fill("42,25")
+    goto(page, fixture_url)
+    d = open_detail(page, MIXED)
+    d.locator('[data-w="preco"]').fill("42,25")
     page.wait_for_timeout(450)
-    calc = card.locator("[data-calc]").inner_text()
+    calc = d.locator("[data-calc]").inner_text()
     assert "R$ 46,94/kg (torrado e moído)" in calc and "+10%" in calc
     assert "só torrado e moído" in calc and "R$ 29.427" in calc and "697 kg" in calc  # 42,25 × 696,5 kg
 
 
 def test_single_type_price_matches_generator(page: Page, real_url: str) -> None:
-    """Onde há um só tipo com R$/kg, o valor recalculado na página bate com o do gerador."""
-    page.goto(real_url + "/index.html")
-    wait_ready(page)
-    bad = page.evaluate("""() => window.__cafe.rkCheck()""")
-    assert bad == [], bad
+    """Onde há um só tipo com R$/kg, o valor recalculado na página bate com o do coletor."""
+    goto(page, real_url)
+    assert page.evaluate("window.__cafe.rkCheck()") == []
 
 
 def test_duplicate_with_my_data_is_never_hidden(page: Page, fixture_url: str) -> None:
-    page.goto(fixture_url + "/index.html")
-    wait_ready(page)
-    dup = "01612382000177-1-000090/2026"  # dup_of no conjunto de teste
-    assert page.locator(f'article.card[data-ch="{dup}"]').count() == 0
+    goto(page, fixture_url)
+    assert row(page, DUP).count() == 0
     page.evaluate("([k, v]) => localStorage.setItem(k, v)",
-                  [WFK, json.dumps({dup: {"fav": True, "upd": "2026-10-17T12:00:00Z"}})])
+                  [WFK, json.dumps({DUP: {"fav": True, "upd": "2026-10-17T12:00:00Z"}})])
     page.reload()
     wait_ready(page)
-    assert page.locator(f'article.card[data-ch="{dup}"]').count() == 1
+    assert row(page, DUP).count() == 1
     assert page.evaluate("window.__cafe.count()") == 9
+
+
+def test_mobile_layout_has_no_horizontal_overflow(browser: Any, fixture_url: str) -> None:
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    pg = ctx.new_page()
+    goto(pg, fixture_url)
+    assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    box = pg.locator(f'#list .row[data-ch="{FIRST}"] .c-valor').bounding_box()
+    assert box and box["x"] + box["width"] <= 390  # valor visível, não cortado à direita
+    ctx.close()

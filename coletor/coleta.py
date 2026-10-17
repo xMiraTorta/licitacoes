@@ -15,7 +15,8 @@ from loguru import logger
 
 from coletor import publicar
 from coletor.cafe import norm
-from coletor.montar import ORIGEM, montar_compra
+from coletor.distancias import ORIGEM
+from coletor.montar import montar_compra
 from coletor.pncp import PNCP, ColetaErro
 
 TZ = ZoneInfo("America/Sao_Paulo")
@@ -117,7 +118,7 @@ def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: 
         "run_date": hoje,
         "seed_date": base.get("seed_date", hoje),
         "novas_desde": publicar.novas_desde(anterior, hoje),
-        "origem": base.get("origem", ORIGEM),
+        "origem": {k: ORIGEM[k] for k in ("nome", "lat", "lon")},
         "status_opcoes": base.get("status_opcoes", ["A analisar", "Em preparação", "Enviada", "Ganha", "Perdida", "Desistiu"]),
         "fonte": base.get("fonte", "PNCP – Portal Nacional de Contratações Públicas (pncp.gov.br)"),
         "editais_lidos": sum(1 for c in finais if c.get("edital_lido")),

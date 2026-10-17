@@ -3,18 +3,20 @@
 **Ao iniciar qualquer sessão: leia `HANDOFF.md` primeiro.** Atualize-o a cada etapa relevante concluída (não só no fim), com evidência do que foi testado.
 
 ## Objetivo
-Painel estático das licitações públicas (PNCP) que compram café, para a Café Bizinotto (Sacramento-MG), mais um coletor diário que atualiza os dados e avisa no Telegram. O dono usa para achar oportunidades, acompanhar propostas (favorito, status, preço, notas) e consultar o checklist de documentos. O dono não é programador: explique decisões em português simples.
+**Monitor de Licitações**: painel estático de compras públicas (PNCP) para o dono achar oportunidades de vender ao governo, mais um coletor diário que atualiza os dados e avisa no Telegram. Foco atual: só café (decisão do dono em 17/10/2026; ele está aberto a outros produtos no futuro). Não existe marca "Café Bizinotto": não use esse nome em nada visível. Origem para distâncias: Uberaba-MG. O dono usa para achar oportunidades, acompanhar propostas (favorito, status, preço, notas) e seguir o guia/checklist de documentos (nunca participou de licitação). O dono não é programador: explique decisões em português simples.
 
 ## Arquitetura
-- **Site** (GitHub Pages, sem build): `index.html` tem CSS + HTML + JS. **A linha que começa com `const DATA0 = ` contém uma cópia integral de `data.json`** (~860 KB). Não abra/imprima essa linha; leia o JS com `grep -v '^const DATA0'` ou por faixa de linhas, e os dados com `python3`/`json`. A página usa `DATA0` ao abrir e baixa `data.json` a cada 15 min; troca só se `gerado_em` for mais novo.
+- **Site** (GitHub Pages, sem build, repositório público por decisão do dono): `index.html` tem CSS + HTML + JS. Abas: Oportunidades (lista + painel lateral de detalhe, `#c=<chave>` na URL), Minhas propostas (quadro por status), Agenda, Painel, Guia da proposta, Sobre. Tema claro/escuro. **A linha que começa com `const DATA0 = ` contém uma cópia integral de `data.json`** (~860 KB). Não abra/imprima essa linha; leia o JS com `grep -v '^const DATA0'` ou por faixa de linhas, e os dados com `python3`/`json`. A página usa `DATA0` ao abrir e baixa `data.json` a cada 15 min; troca só se `gerado_em` for mais novo.
 - **Coletor** (`coletor/`, Python): `python -m coletor coletar` lista as compras com propostas abertas no PNCP (pregão eletrônico e dispensa), filtra candidatas pelo objeto + busca textual + já conhecidas, baixa os itens, classifica café (`cafe.py`), monta o registro (`montar.py`), junta com a coleta anterior e grava `data.json` e o `DATA0` do `index.html` (`publicar.py`). `python -m coletor avisar` manda as novas no Telegram.
-- **Automação**: `.github/workflows/atualizar.yml` (dias úteis 9h07 BRT + botão manual). Só funciona a partir da `main`.
-- `coletor/municipios.csv`: coordenadas IBGE (base kelvins/municipios-brasileiros, MIT); distância = linha reta (haversine) de Sacramento-MG. Confere com o painel original em 327/327.
+- **Automação**: `.github/workflows/atualizar.yml` (dias úteis 8h07 BRT, ~1 h no GitHub porque o PNCP limita forte os IPs do GitHub; + botão manual). `testes.yml` roda a suíte em PRs. `avisar.yml` envia no Telegram quando alguém faz push de `avisos/pendentes.json` (usado pela reserva).
+- **Reserva**: tarefa agendada do Claude Code na nuvem (dias úteis ~10h40 BRT): se a execução do dia no GitHub falhou, roda a coleta numa sessão de nuvem, faz push na `main` com `avisos/pendentes.json`, e o `avisar.yml` manda o Telegram. Custo: cota do plano Claude do dono, só nos dias de falha (e uma checagem curta nos outros).
+- `coletor/municipios.csv`: coordenadas IBGE (base kelvins/municipios-brasileiros, MIT).
+- `coletor/distancias_uberaba.csv`: km e minutos por estrada de Uberaba-MG até cada sede municipal (OSRM/OpenStreetMap, gratuito, calculado uma vez com `python -m coletor distancias`; recalcular só se a origem mudar). Google Maps/Waze descartados: pago com cartão / sem API pública.
 - `coletor/cache/sem_cafe.json`: candidatas já verificadas sem café (pula na próxima coleta se não mudaram no PNCP).
 
 ### Contratos que não podem quebrar
 - Identificador de compra: `chave` (= `numeroControlePNCP`, ex. `18243295000192-1-000080/2026`). Os dados pessoais do navegador são indexados por ele.
-- Chaves do `localStorage`: `cafeBizinotto.meusDados.v1` (`{chave: {fav,status,preco,resp,notas,upd}}`), `cafeBizinotto.ui.v1`, `cafeBizinotto.checklist.v1` (`{índice: 1}`, indexado pela **posição** em `checklist`: não reordene `checklist`), `cafeBizinotto.antesDaImportacao.v1` (retrato antes de importar), `*.ilegivel.<data>` (cópia de dado corrompido).
+- Chaves do `localStorage` (o prefixo antigo `cafeBizinotto.` fica: é invisível e trocar apagaria as anotações do dono): `cafeBizinotto.meusDados.v1` (`{chave: {fav,status,preco,resp,notas,upd}}`), `cafeBizinotto.ui.v1`, `cafeBizinotto.checklist.v1` (`{índice: 1}`, indexado pela **posição** em `checklist`: não reordene `checklist`), `cafeBizinotto.antesDaImportacao.v1` (retrato antes de importar), `*.ilegivel.<data>` (cópia de dado corrompido).
 - Backup exportado: `{app:'cafe-bizinotto-licitacoes', versao:1, exportado_em, meus_dados, checklist}`.
 - Formato de `data.json`: `coletor/modelos.py` (validado antes de gravar). Ausente/sigiloso é `null`, nunca 0. `vcafe` exclui cestas (vão em `vcesta`). `wf0` sempre vazio (é público).
 
@@ -24,6 +26,7 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m pytest -q                 # tudo, sem internet (página via Chromium headless)
 .venv/bin/python -m pytest -q tests/test_cafe.py tests/test_coletor.py tests/test_data.py   # sem navegador
 .venv/bin/python -m coletor coletar --novas novas.json   # coleta real (PNCP), grava data.json e index.html
+.venv/bin/python -m coletor distancias                   # recalcula distâncias por estrada (raramente)
 python -m http.server 8765                     # ver o site localmente
 ```
 No ambiente de nuvem do Claude Code o Chromium fica em `/opt/pw-browsers/chromium` (detectado em `tests/conftest.py`); em outra máquina: `.venv/bin/playwright install chromium` ou `PLAYWRIGHT_CHROMIUM_PATH`.
@@ -37,5 +40,6 @@ No ambiente de nuvem do Claude Code o Chromium fica em `/opt/pw-browsers/chromiu
 - Antes de qualquer migração de armazenamento: backup + recuperação implementados e testados.
 - Não apresentar inferência (categoria do edital, distância em linha reta, plataforma deduzida) como fato confirmado.
 - Uma coleta incompleta nunca pode sobrescrever dados válidos: as travas estão em `coletor/publicar.py`; não as afrouxe sem motivo registrado.
-- PNCP limita rajadas (HTTP 429): mantenha no máximo 3 chamadas simultâneas e o intervalo mínimo de `coletor/pncp.py`.
+- PNCP limita rajadas (HTTP 429), muito mais nos IPs do GitHub Actions: mantenha no máximo 3 chamadas simultâneas e a desaceleração automática de `coletor/pncp.py`.
+- Custos: tudo que for caro ou demorado no dia a dia (APIs pagas, coletas longas, mais chamadas ao PNCP) deve ser levado ao dono para decidir antes de implementar.
 - Preferências do dono: Python com `.venv`, type hints, loguru (nunca print), pytest, Pydantic, `requirements.txt` com `>=`. Nada de silenciar erros. Commits pequenos e descritivos. Sem travessão longo em textos para o dono.

@@ -24,8 +24,8 @@ RETRY_STATUS = {429, 500, 502, 503, 504}
 # O PNCP responde 429 ("Limite de requisições excedido") sem cabeçalho Retry-After quando há
 # rajadas, e limita bem mais os servidores do GitHub Actions do que outras máquinas (17/10/2026:
 # uma página falhou 5 vezes seguidas lá). Por isso: intervalo mínimo entre chamadas (somando todas
-# as threads), espera longa no 429 e, a cada 429, o intervalo dobra até INTERVALO_MAX (desacelera
-# e continua devagar até o fim da coleta).
+# as threads), espera longa no 429 e, a cada 429, o intervalo dobra até INTERVALO_MAX; cada resposta
+# boa reduz o intervalo em 3% até voltar ao mínimo.
 INTERVALO_MIN = 0.3
 INTERVALO_MAX = 4.0
 ESPERA_429 = 15.0
@@ -52,6 +52,7 @@ class PNCP:
         self.espera_base = espera_base
         self.limite_chamadas = limite_chamadas
         self.intervalo_min = intervalo_min
+        self.intervalo_base = intervalo_min
         self.espera_429 = espera_429
         self.stats = Estatisticas()
         self._lock = threading.Lock()
@@ -84,6 +85,8 @@ class PNCP:
                 if r.status_code == 204:
                     return []
                 if r.status_code == 200:
+                    with self._lock:  # recupera a velocidade aos poucos depois de um 429
+                        self.intervalo_min = max(self.intervalo_base, self.intervalo_min * 0.97)
                     try:
                         return r.json()
                     except ValueError as e:
