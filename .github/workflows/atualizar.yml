@@ -1,0 +1,95 @@
+# Coleta diária no PNCP, publica no GitHub Pages (commit na main) e avisa no Telegram.
+# Só roda a partir da branch padrão (main): agendamento e botão "Run workflow" do GitHub.
+# Segredos (Settings > Secrets and variables > Actions): TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID.
+name: Atualizar licitações
+
+on:
+  schedule:
+    - cron: "7 12 * * 1-5" # 9h07 de Brasília (UTC-3), segunda a sexta; o GitHub pode atrasar alguns minutos
+  workflow_dispatch:
+    inputs:
+      acao:
+        description: "O que fazer"
+        type: choice
+        options: [coletar, descobrir-chat-telegram]
+        default: coletar
+      forcar:
+        description: "Publicar mesmo se as travas de segurança dispararem"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write # pedir a republicação do site após o commit
+
+concurrency:
+  group: atualizar-licitacoes
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar dependências
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --quiet -r requirements.txt
+
+      - name: Descobrir chat do Telegram
+        if: github.event_name == 'workflow_dispatch' && inputs.acao == 'descobrir-chat-telegram'
+        run: .venv/bin/python -m coletor telegram-chat
+
+      - name: Testes do coletor (sem internet)
+        if: github.event_name == 'schedule' || inputs.acao == 'coletar'
+        run: .venv/bin/python -m pytest -q tests/test_cafe.py tests/test_coletor.py tests/test_data.py
+
+      - name: Coletar no PNCP
+        if: github.event_name == 'schedule' || inputs.acao == 'coletar'
+        run: .venv/bin/python -m coletor coletar --novas novas.json ${{ inputs.forcar && '--forcar' || '' }}
+
+      - name: Conferir dados gerados
+        if: github.event_name == 'schedule' || inputs.acao == 'coletar'
+        run: .venv/bin/python -m pytest -q tests/test_data.py
+
+      - name: Publicar (commit na main)
+        if: github.event_name == 'schedule' || inputs.acao == 'coletar'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json index.html coletor/cache/sem_cafe.json
+          if git diff --cached --quiet; then
+            echo "Nada mudou nos dados."
+          else
+            git commit -m "Atualiza licitações de café – $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M') (Brasília)"
+            git push
+            # Commits feitos com o GITHUB_TOKEN podem não disparar o GitHub Pages sozinhos: pede o build.
+            curl -sS -o /dev/null -w "Pages build: HTTP %{http_code}\n" -X POST \
+              -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
+              "${{ github.api_url }}/repos/${{ github.repository }}/pages/builds"
+          fi
+
+      - name: Avisar no Telegram
+        if: github.event_name == 'schedule' || inputs.acao == 'coletar'
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::warning::Telegram não configurado (faltam os segredos TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID). Dados publicados, aviso não enviado."
+          else
+            .venv/bin/python -m coletor avisar --novas novas.json
+          fi
+
+      - name: Avisar falha no Telegram
+        if: failure() && env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        run: |
+          curl -sS -o /dev/null -w "%{http_code}\n" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=⚠️ A atualização das licitações de café falhou. O painel continua com os dados anteriores. Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
