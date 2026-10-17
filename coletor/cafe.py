@@ -43,7 +43,7 @@ def _tipo(t: str, un: str) -> str:
         return CAPSULA
     if re.search(r"\bsoluvel\b", t):
         return SOLUVEL
-    if re.search(r"cafe (com leite )?pronto|pronto para (servir|consumo)|coado no momento|"
+    if re.search(r"cafe (com leite )?pronto|pronto para (servir|consumo)|coado no momento|bebida (de )?cafe|cafe liquido|"
                  r"liquido aquecido|garrafa (termica )?(de|com) ?\d+ ?(l|litros)", t) or norm(un) in {"litro", "l", "l (l)", "litros"}:
         return BEBIDA
     if re.search(r"em graos?\b|grao inteiro|torrado em grao|graos? (inteiros|para maquina)", t) and not re.search(r"moid|moagem|\bem po\b", t):

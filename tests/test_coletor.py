@@ -226,3 +226,34 @@ def test_descricao_limpa_html_e_usa_informacao_complementar() -> None:
     assert i is not None
     assert i["espec"] == "Café torrado e moído, categoria Superior TIPO ÚNICO | Inf. compl.: Pacote de 500g, vácuo"
     assert i["kgu"] == 0.5  # o peso só estava na informação complementar
+
+
+def test_duplicata_empate_mantem_visivel_a_de_antes() -> None:
+    a = montar.montar_compra(compra_api("11111111000111", 1, "café"), [item_api(1, "Café em pó 500g", 10, 30.0)])
+    b = montar.montar_compra(compra_api("11111111000111", 2, "café"), [item_api(1, "Café em pó 500g", 10, 30.0)])
+    assert a and b
+    montar.marcar_duplicatas([a, b], visiveis_antes={b["chave"]})
+    assert a["dup_of"] == b["chave"] and b["dup_of"] is None
+
+
+def test_duplicata_sem_valor_com_itens_iguais() -> None:
+    a = montar.montar_compra(compra_api("11111111000111", 1, "café"), [item_api(1, "Café em pó 500g", 10, None, sig=True)])
+    b = montar.montar_compra(compra_api("22222222000122", 2, "café"), [item_api(1, "Café em pó 500g", 10, None, sig=True)])
+    c = montar.montar_compra(compra_api("33333333000133", 3, "café"), [item_api(1, "Café em pó 250g", 99, None, sig=True)])
+    assert a and b and c
+    montar.marcar_duplicatas([a, b, c])
+    assert {a["dup_of"], b["dup_of"]} == {None, a["chave"]} or {a["dup_of"], b["dup_of"]} == {None, b["chave"]}
+    assert c["dup_of"] is None and c["dup"] == ""
+
+
+def test_busca_pula_pagina_com_falha() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        p = int(req.url.params["pagina"])
+        if p == 2:
+            return httpx.Response(503)
+        n = {1: "1", 3: "3"}.get(p)
+        items = [{"numero_controle_pncp": f"{n}-{i}"} for i in range(100 if p == 1 else 10)] if n else []
+        return httpx.Response(200, json={"total": 210, "items": items})
+    p = PNCP(httpx.Client(transport=httpx.MockTransport(handler)), tentativas=2, espera_base=0, intervalo_min=0)
+    achados = p.buscar("café")
+    assert len(achados) == 110 and len(p.stats.falhas) == 1  # página 2 pulada, página 3 lida

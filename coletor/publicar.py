@@ -72,7 +72,7 @@ def juntar(novas: list[dict[str, Any]], anterior: dict[str, Any] | None, falhara
     out.extend(mantidas)
     out = [c for c in out if not c.get("fim") or c["fim"] >= agora_min]
     out.sort(key=lambda c: (c.get("fim") or "9999", c["chave"]))
-    marcar_duplicatas(out)
+    marcar_duplicatas(out, {k for k, c in antigos.items() if c.get("dup") and not c.get("dup_of")})
     return out, primeira_vez
 
 

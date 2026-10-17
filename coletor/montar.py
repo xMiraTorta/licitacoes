@@ -229,18 +229,21 @@ def _completude(c: dict[str, Any]) -> tuple[int, ...]:
     return (int(c["edital_lido"]), int(bool(c["link_plat"])), int(c["kg"] is not None), len(c["itens"]), len(c["tags"]))
 
 
-def marcar_duplicatas(compras: list[dict[str, Any]]) -> None:
-    """Mesmo município/UF, mesmo valor de café e mesmo prazo final: provável mesma compra publicada duas vezes.
-    A versão mais completa fica visível; as outras recebem dup_of."""
+def marcar_duplicatas(compras: list[dict[str, Any]], visiveis_antes: set[str] = frozenset()) -> None:
+    """Mesmo município/UF, mesmo valor de café (ou, sem valor, mesmos itens) e mesmo dia de prazo final:
+    provável mesma compra publicada duas vezes. A mais completa fica visível; as outras recebem dup_of.
+    Em empate, mantém visível a que já era visível antes (não esconder favoritas), depois a mais recente."""
     grupos: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
     for c in compras:
         c["dup"], c["dup_of"], c["dup_group"] = "", None, []
-        if c["vcafe"] is not None and c["fim"]:
-            grupos.setdefault((c["uf"], c["mun"], round(c["vcafe"]), c["fim"][:10]), []).append(c)
+        if not c["fim"]:
+            continue
+        valor = round(c["vcafe"]) if c["vcafe"] is not None else ("sem valor", c["resumo"])
+        grupos.setdefault((c["uf"], c["mun"], valor, c["fim"][:10]), []).append(c)
     for g in grupos.values():
         if len(g) < 2:
             continue
-        g.sort(key=_completude, reverse=True)
+        g.sort(key=lambda c: (_completude(c), c["chave"] in visiveis_antes, c.get("publicado") or ""), reverse=True)
         for c in g:
             outros = [x["chave"] for x in g if x is not c]
             c["dup"] = "Possível duplicata de: " + ", ".join(outros)

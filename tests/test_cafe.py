@@ -17,6 +17,7 @@ from tests.conftest import ROOT
     ("Café torrado em grãos, 100% arábica, 1 kg", cafe.GRAO),
     ("CÁPSULA DE CAFÉ (COMPATÍVEL SISTEMA DOLCE GUSTO)", cafe.CAPSULA),
     ("CAFÉ PRONTO, GARRAFA DE 5 LITROS, coado no momento da entrega", cafe.BEBIDA),
+    ("BEBIDA CAFÉ: litro de café líquido sem leite para consumo em eventos", cafe.BEBIDA),
     ("Cafe em po 500 gramas para preparo de cafe coado", cafe.TM),
     ("CAFÉ DESCAFEINADO Café torrado e moído a vácuo, 250 gr", cafe.TM_DESCAF),
     ("CESTA BÁSICA: arroz 5kg; feijão 1kg; café 500g; açúcar 2kg", cafe.CESTA),

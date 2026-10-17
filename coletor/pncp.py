@@ -122,19 +122,29 @@ class PNCP:
             pagina += 1
 
     def buscar(self, termo: str, max_paginas: int = 15) -> set[str]:
-        """Números de controle encontrados pela busca textual (reforço; falhas só geram aviso)."""
+        """Números de controle encontrados pela busca textual. É só reforço da listagem: uma página
+        com falha é registrada e pulada; para após 2 falhas seguidas ou ao fim dos resultados."""
         achados: set[str] = set()
-        for p in range(1, max_paginas + 1):
+        total_pag, seguidas, p = max_paginas, 0, 1
+        while p <= total_pag:
             try:
                 d = self.get_json("/search/", {"q": termo, "tipos_documento": "edital", "ordenacao": "-data",
                                                 "pagina": p, "tam_pagina": 100, "status": "recebendo_proposta"})
             except ColetaErro as e:
-                logger.warning("Busca '{}' parou na página {}: {}", termo, p, e)
+                logger.warning("Busca '{}': página {} pulada: {}", termo, p, e)
                 self.stats.falhas.append(f"busca '{termo}' p{p}: {e}")
-                break
+                seguidas += 1
+                if seguidas >= 2:
+                    break
+                p += 1
+                continue
+            seguidas = 0
+            if p == 1 and d.get("total") is not None:
+                total_pag = min(max_paginas, -(-int(d["total"]) // 100))
             items = d.get("items") or []
             achados.update(i["numero_controle_pncp"] for i in items if i.get("numero_controle_pncp"))
-            if len(items) < 100:
+            if not items:
                 break
+            p += 1
         logger.info("Busca '{}': {} compras", termo, len(achados))
         return achados
