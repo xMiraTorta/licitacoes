@@ -6,6 +6,8 @@
     python -m coletor distancias           # recalcula distâncias por estrada (só se a origem mudar)
     python -m coletor reclassificar        # recalcula nível/nota de qualidade no data.json atual (sem PNCP)
     python -m coletor editais [--todas] [--textos DIR]   # lê edital/TR das compras do data.json atual
+    python -m coletor mercado              # preço do café verde por nível (CEPEA e Carvalhaes; semanal)
+    python -m coletor varejo               # preço de varejo das marcas de referência (semanal, varejo.yml)
     python -m coletor mapa                 # baixa o contorno dos estados (IBGE) e embute no index.html (raramente)
 
 Códigos de saída: 0 ok; 2 coleta/publicação bloqueada (dados publicados intactos); 3 falha no aviso.
@@ -20,10 +22,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import httpx
 from loguru import logger
 from pydantic import ValidationError
 
-from coletor import cafe, coleta, distancias, edital, mapa, montar, publicar, telegram
+from coletor import cafe, coleta, distancias, edital, mapa, marcas, mercado, montar, publicar, telegram, varejo
 from coletor.pncp import PNCP, ColetaErro
 
 
@@ -52,6 +55,10 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--destino", type=Path, default=Path("."))
     e.add_argument("--todas", action="store_true", help="relê todas (não só as nunca lidas, alteradas ou com falha)")
     e.add_argument("--textos", type=Path, help="grava aqui o texto extraído de cada compra (revisão manual)")
+    mc = sub.add_parser("mercado", help="atualiza o preço do café verde por nível (CEPEA, Carvalhaes) e republica")
+    mc.add_argument("--destino", type=Path, default=Path("."))
+    v = sub.add_parser("varejo", help="atualiza o preço de varejo das marcas (lojas online) e republica os dados")
+    v.add_argument("--destino", type=Path, default=Path("."))
     args = ap.parse_args(argv)
 
     logger.remove()
@@ -141,6 +148,38 @@ def main(argv: list[str] | None = None) -> int:
             publicar.gravar(data, args.destino, datetime.fromisoformat(data["gerado_em"]))
         except ValidationError as erro:
             logger.error("Leitura dos editais não gravada (dados publicados intactos): {}", erro)
+            return 2
+        return 0
+    if args.cmd == "mercado":
+        data = publicar.carregar(args.destino / "data.json")
+        if not data:
+            logger.error("Sem {}: nada para republicar", args.destino / "data.json")
+            return 2
+        try:
+            mercado.atualizar(datetime.now(coleta.TZ).strftime("%Y-%m-%d"))
+        except (httpx.HTTPError, ValueError) as erro:
+            logger.error("Preço do café verde NÃO atualizado (anterior mantido): {}", erro)
+            return 2
+        try:
+            publicar.gravar(data, args.destino, datetime.fromisoformat(data["gerado_em"]))
+        except ValidationError as erro:
+            logger.error("Dados não regravados (publicados intactos): {}", erro)
+            return 2
+        return 0
+    if args.cmd == "varejo":
+        data = publicar.carregar(args.destino / "data.json")
+        if not data:
+            logger.error("Sem {}: nada para republicar", args.destino / "data.json")
+            return 2
+        try:
+            varejo.atualizar(marcas.BASE, datetime.now(coleta.TZ).strftime("%Y-%m-%d"))
+        except RuntimeError as erro:
+            logger.error("Preços de varejo NÃO atualizados (anteriores mantidos): {}", erro)
+            return 2
+        try:
+            publicar.gravar(data, args.destino, datetime.fromisoformat(data["gerado_em"]))
+        except ValidationError as erro:
+            logger.error("Dados não regravados (publicados intactos): {}", erro)
             return 2
         return 0
     if args.cmd == "mapa":

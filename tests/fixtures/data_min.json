@@ -1160,5 +1160,163 @@
    "fim": "2026-11-06T09:00",
    "link": "https://pncp.gov.br/app/editais/87088670000190/2026/54"
   }
- ]
+ ],
+ "custos": {
+  "atualizado_em": "2026-10-18",
+  "aviso": "Premissas padrão do custo por oportunidade. O dono ajusta as dele no site (Dashboard > Meus custos); estas valem para quem não ajustou e para o Telegram. Estimativas, não orçamento.",
+  "perda_torra": 0.18,
+  "torra_rs_kg_verde": 5.0,
+  "embalagem_rs_kg": 5.0,
+  "frete": {
+   "fixo_por_envio": 180.0,
+   "rs_kg": 2.1,
+   "rs_kg_100km": 0.23,
+   "ad_valorem": 0.008,
+   "lotacao_fixo": 451.84,
+   "lotacao_rs_km": 4.0738,
+   "folga": 0.2,
+   "entregas": 1,
+   "entregas_registro_precos": 3
+  },
+  "pct_preco": {
+   "das": 0.045,
+   "financeiro": 0.026,
+   "perdas": 0.01
+  },
+  "por_licitacao": {
+   "plataforma": 129.0,
+   "laudo": 0.0,
+   "amostra_kg": 2.0
+  },
+  "fontes": {
+   "torra_embalagem_perda": "Informados pelo dono em 18/10/2026: torra terceirizada ~R$ 5/kg (de café verde) com perda de ~18%; empacotamento terceirizado ~R$ 5/kg. Perda de 13% (clara) a 20% (escura) na literatura (UEL, 2005).",
+   "grao": "coletor/mercado.json (semanal): CEPEA/ESALQ e Escritório Carvalhaes, receita de blend por nível pelas Resoluções SAA-SP 28, 30 e 31/2007. Café da fazenda entra pelo preço que se receberia vendendo.",
+   "frete_fracionado": "Ajuste sobre 42 cotações Jadlog Rodo saindo de Uberaba em 18/10/2026 (100 a 1.000 kg; erro médio 17%, até ~30% em alguns destinos). Ad valorem: mediana 0,8% da nota (0,7% a 2,4%).",
+   "frete_lotacao": "Piso mínimo de frete ANTT, carga geral, 2 eixos (Res. 6.084/2026 e Portaria SUROC 22/2026, vigente desde 30/09/2026); sem pedágio, lucro e tributos.",
+   "frete_folga": "20% de folga sugerida pela pesquisa (preço de balcão sem contrato, taxa de difícil entrega em prefeituras).",
+   "entregas": "Registro de preços costuma ter entregas parceladas; 3 entregas é premissa (cada entrega a mais custa ~R$ 180 no fracionado).",
+   "das": "Simples Nacional, Anexo II (industrialização por encomenda do próprio café verde, SC Cosit 212/2014), 1ª faixa 4,5% (até R$ 180 mil em 12 meses); 2ª faixa até 6,15% efetivo. Sem DIFAL em venda a órgão de outro estado; café torrado sem ST em MG. Confirmar com o contador.",
+   "financeiro": "1,5 mês até receber (estimativa) x 1,73% ao mês (capital de giro PJ, Banco Central, ago/2026). CNM dez/2025: 28,8% das prefeituras com pagamentos atrasados.",
+   "perdas": "1% (estimativa, sem dado público).",
+   "plataforma": "R$ 129 por processo (Portal de Compras Públicas, crédito avulso, 18/10/2026); Compras.gov.br grátis; BLL 1,5% do lote vencido até R$ 600; Licitanet R$ 98; BNC R$ 118,80; Licitar Digital R$ 138,90.",
+   "laudo": "Laudo sensorial/microscopia: sem preço público (orçar em laboratório credenciado); 0 até o dono informar.",
+   "amostra": "2 kg de produto por licitação (ex.: Prefeitura de SP pede 4 x 500 g), ao custo direto do café."
+  }
+ },
+ "mercado": {
+  "atualizado_em": "2026-10-18",
+  "perda_torra": 0.18,
+  "cepea": {
+   "arabica": {
+    "data": "2026-10-16",
+    "saca60": 1601.25
+   },
+   "robusta": {
+    "data": "2026-10-16",
+    "saca60": 963.28
+   }
+  },
+  "carvalhaes": {
+   "data": "2026-10-16",
+   "saca60": {
+    "cd_finos": [
+     1884.3,
+     1983.47
+    ],
+    "finos": [
+     1735.54,
+     1804.96
+    ],
+    "boa_qualidade": [
+     1685.95,
+     1735.54
+    ],
+    "duro_fraco": [
+     1487.6,
+     1537.19
+    ],
+    "riados": [
+     1338.84,
+     1388.43
+    ],
+    "rio": [
+     1289.26,
+     1338.84
+    ],
+    "consumo_dura": [
+     1289.26,
+     1338.84
+    ],
+    "consumo_riada": [
+     1239.67,
+     1289.26
+    ]
+   }
+  },
+  "niveis": {
+   "Tradicional": {
+    "saca60_min": 1158.87,
+    "saca60_max": 1338.84,
+    "kg_min": 19.31,
+    "kg_max": 22.31,
+    "kg_medio": 20.81,
+    "receita_min": {
+     "rio": 0.6,
+     "robusta": 0.4
+    },
+    "receita_max": {
+     "consumo_dura": 1.0
+    },
+    "regra": "Res. SAA-SP 28/2007: até tipo 8, bebida mole a rio (sem rio zona), até 20% de grãos pretos/verdes/ardidos; aceita conilon sem predominar (40% é premissa nossa, a norma não fixa)."
+   },
+   "Superior": {
+    "saca60_min": 1408.95,
+    "saca60_max": 1735.54,
+    "kg_min": 23.48,
+    "kg_max": 28.93,
+    "kg_medio": 26.2,
+    "receita_min": {
+     "duro_fraco": 0.85,
+     "robusta": 0.15
+    },
+    "receita_max": {
+     "boa_qualidade": 1.0
+    },
+    "regra": "Res. SAA-SP 30/2007: arábica tipos 2 a 6, bebida dura ou mole, até 15% de conilon, até 10% de defeitos."
+   },
+   "Gourmet/especial": {
+    "saca60_min": 1735.54,
+    "saca60_max": 1983.47,
+    "kg_min": 28.93,
+    "kg_max": 33.06,
+    "kg_medio": 30.99,
+    "receita_min": {
+     "finos": 1.0
+    },
+    "receita_max": {
+     "cd_finos": 1.0
+    },
+    "regra": "Res. SAA-SP 31/2007: 100% arábica, bebida apenas mole a estritamente mole, tipos 2 a 4, sem defeitos (pode exigir catação, que tira peso: não incluída)."
+   },
+   "Sem categoria": {
+    "saca60_min": 1158.87,
+    "saca60_max": 1338.84,
+    "kg_min": 19.31,
+    "kg_max": 22.31,
+    "kg_medio": 20.81,
+    "receita_min": {
+     "rio": 0.6,
+     "robusta": 0.4
+    },
+    "receita_max": {
+     "consumo_dura": 1.0
+    },
+    "regra": "Edital sem exigência: o blend mais simples que passa no mínimo legal (nota 4,5, Portaria MAPA 570/2022), igual ao Tradicional."
+   }
+  },
+  "fontes": {
+   "cepea": "https://www.cepea.org.br/br/indicador/cafe.aspx (CC BY-NC 4.0)",
+   "carvalhaes": "https://www.carvalhaes.com.br/cotacoes/cotacoes.asp"
+  }
+ }
 }

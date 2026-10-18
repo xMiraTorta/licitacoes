@@ -104,4 +104,4 @@ def resumo() -> dict[str, Any]:
         com_preco = [x for x in ls if x["min"] is not None]
         basica = min(com_preco, key=lambda x: (ORDEM_CAT.get(x["cat"] or "", 0), x["min"])) if com_preco else None
         out[m] = {"linhas": ls, "basica": basica}
-    return {"pesquisa_em": b["pesquisa_em"], "marcas": out}
+    return {"pesquisa_em": b.get("precos_em") or b["pesquisa_em"], "marcas": out}  # data dos preços (varejo.py, semanal)

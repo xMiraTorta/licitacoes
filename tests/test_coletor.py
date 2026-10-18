@@ -451,3 +451,25 @@ def test_so_cafe_torrado_entra(desc: str) -> None:
                                          ("PMCA 044/26", "PMCA 044/26"), ("90076/PE/NATURATINS", "90076/PE/NATURATINS/2026")])
 def test_numero_da_compra_sem_ano_repetido(n: str, esperado: str) -> None:
     assert montar.numero(n, 2026) == esperado
+
+
+def test_margem_estimada_no_telegram_e_contas() -> None:
+    from coletor import custos, mercado, referencia
+    c = montar.montar_compra(compra_api("11111111000111", 1, "café"), [item_api(1, "Café torrado e moído superior 500g", 1000, 35.0)])
+    assert c
+    c["dist"] = 500
+    i = referencia.item_principal(c)
+    mk = {"niveis": {"Superior": {"kg_medio": 26.0}}}
+    p = custos.premissas()
+    m = custos.margem(c, i, mk, p)
+    assert m is not None and i["rkg"] == 70.0
+    grao = 26.0 / 0.82
+    assert m["grao"] == round(grao, 2) and m["torra"] == round(5 / 0.82, 2)
+    frete = custos.frete_total(500.0, 500, 70.0, c["srp"] == "Sim", p) / 500
+    direto = grao + 5 / 0.82 + 5
+    custo = direto + frete + (129 + 2 * direto) / 500 + 70 * (0.045 + 0.026 + 0.01)
+    assert abs(m["custo"] - custo) < 0.01 and abs(m["margem_pct"] - (70 - custo) / 70) < 0.0001
+    assert custos.margem({**c, "dist": None}, i, mk, p) is None  # sem distância não estima
+    real = mercado.carregar()
+    if real.get("niveis"):
+        assert "Margem estimada ~" in telegram.cartao(c, {})
