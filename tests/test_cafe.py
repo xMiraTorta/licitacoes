@@ -133,8 +133,29 @@ def test_concordancia_com_painel_original() -> None:
         assert x is not None, i["espec"][:80]
         tipo_ok += x.tipo == i["tipo"]
         kgu_ok += x.kgu == i["kgu"]
-    assert tipo_ok >= len(data) - 1   # 1: "café pronto para servir" que o original chamou de torrado e moído
-    assert kgu_ok >= len(data) - 2    # 2: unidade "KG" com texto de 500 g; "CX" com peso único e preço plausível
+    # 3: "café pronto para servir" que o original chamou de torrado e moído; "café em pó, cesta básica" (2 vezes; cesta fica
+    # fora do escopo, decisão do dono em 18/10/2026)
+    assert tipo_ok >= len(data) - 3
+    # 4: unidade "KG" com texto de 500 g; "CX" com peso único e preço plausível; as 2 da cesta básica (sem peso)
+    assert kgu_ok >= len(data) - 4
+
+
+@pytest.mark.parametrize("objeto,cesta", [
+    ("Aquisição de cestas básicas para famílias em vulnerabilidade", True),
+    ("gêneros alimentícios para composição de cestas natalinas aos servidores", True),
+    ("fornecimento de cestas de alimentos e kits de alimentação", True),
+    ("gêneros alimentícios e produtos de limpeza para a concessão de benefícios eventuais", True),
+    ("O objeto da presente licitação é a aquisição de gêneros alimentícios - Cesta Básica.", True),
+    ("aquisição de café, açúcar e chá para as secretarias", False),
+    ("preços estimados a partir da formação de cesta de preços com três cotações", False),
+    ("aquisição de gêneros alimentícios para a merenda escolar", False),
+])
+def test_objeto_de_cesta(objeto: str, cesta: bool) -> None:
+    assert cafe.objeto_de_cesta(objeto) is cesta
+
+
+def test_item_de_cesta_basica() -> None:
+    assert cafe.eh_item_de_cafe("Café em pó torrado e moído, cesta básica - café tipo superior 500 g") == cafe.CESTA
 
 
 @pytest.mark.parametrize("texto,nota", [

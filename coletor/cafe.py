@@ -29,6 +29,21 @@ CRU = "Café cru (verde)"
 
 # "Café da manhã"/"coffee break" são serviços.
 _SERVICO = re.compile(r"cafe da manha|cafe colonial|coffee ?-?break|coffe ?-?break|cafe regional")
+# Cesta básica e parecidos (decisão do dono em 18/10/2026: fora do escopo, mesmo com o café em item próprio).
+# Vale para o objeto da compra ("aquisição de cestas básicas", "gêneros para composição de cestas natalinas",
+# "kits de alimentação", "concessão de benefícios eventuais") e para a descrição do item ("café em pó, cesta
+# básica"). "Formação de cesta de preços" (pesquisa de preços) e "kit lanche" de refeição não são cesta.
+_CESTA_OBJETO = re.compile(r"\bcestas?\s+(?:basicas?|de alimentos?|alimentares?|alimenticias?|natalinas?|de natal|nutricionais?|"
+                           r"de generos)\b|\bkits?\s+(?:de\s+)?(?:alimentos?|alimentacao|alimentares?|alimenticios?|lanches?|"
+                           r"natalinos?|de natal)\b|\b(?:composicao|formacao|montagem) de (?:cestas?|kits?)\b(?! de precos)|"
+                           r"\bbeneficios? eventua(?:l|is)\b")  # benefício eventual (assistência social) = cesta básica
+
+
+def objeto_de_cesta(objeto: str | None) -> bool:
+    """A compra é de cesta básica/kit de alimentos (pelo objeto): fica fora do monitoramento."""
+    return bool(_CESTA_OBJETO.search(norm(objeto)))
+
+
 _CESTA_INICIO = re.compile(r"^(\W|\d|item|lote|aquisicao( de)?)*\s*(cestas?|kits?)\b")
 _BASICOS = re.compile(r"\b(arroz|feijao|acucar|oleo|macarrao|farinha|fuba|sal|biscoito|leite em po|sardinha|extrato de tomate)\b")
 _TEM_CAFE = re.compile(r"\bcafe\b")
@@ -83,7 +98,8 @@ def eh_item_de_cafe(descricao: str) -> str | None:
     cabeca = t[:150]
     basicos = len(set(_BASICOS.findall(t)))
     if not _UTENSILIO.match(cabeca) and (
-            basicos >= 3 or (_CESTA_INICIO.match(cabeca) and re.search(r"cestas? (basica|de alimento|natalin)", cabeca))):
+            basicos >= 3 or (_CESTA_INICIO.match(cabeca) and re.search(r"cestas? (basica|de alimento|natalin)", cabeca))
+            or _CESTA_OBJETO.search(t)):  # "café em pó, cesta básica - ...": item de cesta
         return CESTA
     produto = _RUIDO.sub("", cabeca)
     if not _PRODUTO_CAFE.match(produto):

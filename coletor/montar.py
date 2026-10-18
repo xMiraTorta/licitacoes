@@ -198,7 +198,10 @@ def agregar(itens: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[str, Any] | None:
-    """Registro completo da compra, ou None se não houver item de café torrado em andamento."""
+    """Registro completo da compra, ou None se não houver item de café torrado em andamento
+    ou se a compra for de cesta básica/kit de alimentos (pelo objeto; fora do escopo do dono)."""
+    if cafe.objeto_de_cesta(c.get("objetoCompra")):
+        return None
     itens = [x for x in (montar_item(r) for r in itens_raw) if x]
     if not itens:
         return None
