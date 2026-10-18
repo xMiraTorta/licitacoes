@@ -436,6 +436,11 @@ def test_cartao_telegram_mostra_marcas_e_nivel_do_edital() -> None:
     assert "nível Superior (pelo edital)" in t and "Marcas de referência: Pilão, 3 Corações, Melitta, Caboclo e outras" in t
 
 
+def test_compra_de_cesta_basica_fica_fora() -> None:
+    c = compra_api("11111111000111", 1, "Registro de preços para aquisição de cestas básicas")
+    assert montar.montar_compra(c, [item_api(1, "Café torrado e moído 500g", 10, 15.0)]) is None
+
+
 @pytest.mark.parametrize("desc", ["Café solúvel 200g", "Cápsula de café espresso", "Café pronto para consumo, garrafa 1 litro",
                                   "Cesta básica com arroz, feijão, açúcar, óleo, macarrão e café", "Café cru em grãos, saca 60 kg"])
 def test_so_cafe_torrado_entra(desc: str) -> None:

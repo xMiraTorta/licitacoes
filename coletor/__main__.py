@@ -18,12 +18,17 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 from pydantic import ValidationError
 
 from coletor import cafe, coleta, distancias, edital, mapa, montar, publicar, telegram
 from coletor.pncp import PNCP, ColetaErro
+
+
+def _encerrada(c: dict[str, Any]) -> bool:
+    return bool(c.get("fim")) and c["fim"] < datetime.now(coleta.TZ).strftime("%Y-%m-%dT%H:%M")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -88,13 +93,13 @@ def main(argv: list[str] | None = None) -> int:
         sairam = []
         for c in data["compras"]:
             antes = len(c["itens"])
-            c["itens"] = [i for i in c["itens"] if vale(i)]
-            if not c["itens"]:
-                sairam.append(c["chave"])
+            c["itens"] = [i for i in c["itens"] if vale(i) and cafe.eh_item_de_cafe(i["espec"]) != cafe.CESTA]
+            if not c["itens"] or cafe.objeto_de_cesta(c["objeto"]) or _encerrada(c):  # sem café torrado, cesta básica
+                sairam.append(c["chave"])  # ou prazo encerrado (o monitor só mostra o que ainda está aberto)
             elif len(c["itens"]) != antes:
                 c.update(montar.agregar(c["itens"]))  # totais refeitos só com os itens que ficaram
         if sairam:
-            logger.warning("{} compras saem (sem item de café torrado em andamento): {}", len(sairam), sairam)
+            logger.warning("{} compras saem (sem café torrado em andamento, cesta básica ou prazo encerrado): {}", len(sairam), sairam)
             data["compras"] = [c for c in data["compras"] if c["chave"] not in sairam]
             montar.marcar_duplicatas(data["compras"], visiveis)  # duplicata que apontava para uma removida volta
         for c in data["compras"]:
@@ -114,6 +119,11 @@ def main(argv: list[str] | None = None) -> int:
         if not data:
             logger.error("Sem {}: nada para ler", args.destino / "data.json")
             return 2
+        if (fora := [c["chave"] for c in data["compras"] if _encerrada(c)]):
+            logger.info("{} compras com prazo encerrado saem antes da leitura: {}", len(fora), fora)
+            visiveis = {c["chave"] for c in data["compras"] if not c.get("dup_of")}
+            data["compras"] = [c for c in data["compras"] if c["chave"] not in fora]
+            montar.marcar_duplicatas(data["compras"], visiveis)
         p = PNCP()
         versoes: dict[str, str] = {}
 
