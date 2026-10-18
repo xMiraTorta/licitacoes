@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 
 from loguru import logger
+from pydantic import ValidationError
 
 from coletor import coleta, distancias, publicar, telegram
 from coletor.pncp import ColetaErro
@@ -42,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "coletar":
         try:
             r = coleta.coletar(args.destino, forcar=args.forcar, usar_busca=not args.sem_busca)
-        except (ColetaErro, publicar.PublicacaoBloqueada) as e:
+        except (ColetaErro, publicar.PublicacaoBloqueada, ValidationError) as e:
             logger.error("COLETA NÃO PUBLICADA (dados anteriores mantidos): {}", e)
             return 2
         if args.novas:
@@ -50,7 +51,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.cmd == "avisar":
-        data = publicar.carregar(args.destino / "data.json") or {}
+        data = publicar.carregar(args.destino / "data.json")
+        if not data:
+            logger.error("Sem {}: nada para avisar", args.destino / "data.json")
+            return 3
         chaves = set(json.loads(args.novas.read_text(encoding="utf-8")))
         por_chave = {c["chave"]: c for c in data.get("compras", [])}
         novas = [por_chave[k] for k in chaves if k in por_chave and not por_chave[k].get("dup_of")]

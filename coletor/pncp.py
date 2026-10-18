@@ -4,6 +4,8 @@ APIs usadas (verificadas em 17/10/2026):
 - Consulta: GET https://pncp.gov.br/api/consulta/v1/contratacoes/proposta
   lista compras com recebimento de propostas aberto, por modalidade. Página máx. 50.
 - Itens:    GET https://pncp.gov.br/api/pncp/v1/orgaos/{cnpj}/compras/{ano}/{seq}/itens
+- Compra:   GET https://pncp.gov.br/api/consulta/v1/orgaos/{cnpj}/compras/{ano}/{seq}
+  mesmo formato de um registro da listagem (verificado em 18/10/2026); confere compra que sumiu da listagem.
 - Busca:    GET https://pncp.gov.br/api/search/ (texto livre; paginação instável, usada só como reforço).
 """
 from __future__ import annotations
@@ -36,6 +38,16 @@ class ColetaErro(RuntimeError):
     """Falha definitiva numa chamada ao PNCP (após todas as tentativas)."""
 
 
+def _objeto(d: Any) -> dict[str, Any]:
+    """Resposta paginada da listagem/busca. HTTP 204 (sem conteúdo) chega como [] e significa "nada";
+    qualquer outro formato é erro do PNCP, não "nada"."""
+    if d == []:
+        return {}
+    if not isinstance(d, dict):
+        raise ColetaErro(f"resposta inesperada do PNCP (esperava objeto): {str(d)[:200]}")
+    return d
+
+
 @dataclass
 class Estatisticas:
     chamadas: int = 0
@@ -66,8 +78,9 @@ class PNCP:
         if espera > 0:
             time.sleep(espera)
 
-    def get_json(self, path: str, params: dict[str, Any] | None = None) -> Any:
-        """GET com novas tentativas (2 s, 4 s, 8 s...) em erro de rede, 429 e 5xx. 204 vira lista vazia."""
+    def get_json(self, path: str, params: dict[str, Any] | None = None, aceitar_404: bool = False) -> Any:
+        """GET com novas tentativas (2 s, 4 s, 8 s...) em erro de rede, 429 e 5xx. 204 vira lista vazia;
+        com aceitar_404, 404 (não existe) vira None."""
         url = path if path.startswith("http") else BASE + path
         ultimo = ""
         for n in range(1, self.tentativas + 1):
@@ -79,11 +92,13 @@ class PNCP:
             limitado = False
             try:
                 r = self.client.get(url, params=params)
-            except httpx.TransportError as e:
+            except httpx.RequestError as e:  # rede, timeout, resposta corrompida
                 ultimo = f"{type(e).__name__}: {e}"
             else:
                 if r.status_code == 204:
                     return []
+                if r.status_code == 404 and aceitar_404:
+                    return None
                 if r.status_code == 200:
                     with self._lock:  # recupera a velocidade aos poucos depois de um 429
                         self.intervalo_min = max(self.intervalo_base, self.intervalo_min * 0.97)
@@ -112,14 +127,24 @@ class PNCP:
         """Todas as compras da modalidade com propostas abertas. Erro em qualquer página -> ColetaErro."""
         path = "/consulta/v1/contratacoes/proposta"
         base = {"dataFinal": data_final, "codigoModalidadeContratacao": modalidade, "tamanhoPagina": 50}
-        primeira = self.get_json(path, {**base, "pagina": 1})
+        primeira = _objeto(self.get_json(path, {**base, "pagina": 1}))
         total_pag = int(primeira.get("totalPaginas") or 0)
         logger.info("Modalidade {}: {} compras abertas em {} páginas", modalidade, primeira.get("totalRegistros"), total_pag)
         yield from primeira.get("data") or []
         with ThreadPoolExecutor(max_workers=paralelo) as ex:
             futs = {ex.submit(self.get_json, path, {**base, "pagina": p}): p for p in range(2, total_pag + 1)}
             for f in as_completed(futs):
-                yield from f.result().get("data") or []
+                d = f.result()
+                if not isinstance(d, dict):  # página do meio vazia (204) = listagem incompleta, não "nada"
+                    raise ColetaErro(f"{path} página {futs[f]} veio sem conteúdo: {str(d)[:200]}")
+                yield from d.get("data") or []
+
+    def compra(self, chave: str) -> dict[str, Any] | None:
+        """Registro atual da compra pela chave (numeroControlePNCP, ex. 18243295000192-1-000080/2026)."""
+        cnpj, resto = chave.split("-", 1)
+        seq, ano = resto.split("-", 1)[1].split("/")
+        d = self.get_json(f"/consulta/v1/orgaos/{cnpj}/compras/{ano}/{int(seq)}", aceitar_404=True)
+        return d if isinstance(d, dict) and d else None
 
     def itens(self, cnpj: str, ano: int, seq: int) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
@@ -139,8 +164,8 @@ class PNCP:
         total_pag, seguidas, p = max_paginas, 0, 1
         while p <= total_pag:
             try:
-                d = self.get_json("/search/", {"q": termo, "tipos_documento": "edital", "ordenacao": "-data",
-                                                "pagina": p, "tam_pagina": 100, "status": "recebendo_proposta"})
+                d = _objeto(self.get_json("/search/", {"q": termo, "tipos_documento": "edital", "ordenacao": "-data",
+                                                "pagina": p, "tam_pagina": 100, "status": "recebendo_proposta"}))
             except ColetaErro as e:
                 logger.warning("Busca '{}': página {} pulada: {}", termo, p, e)
                 self.stats.falhas.append(f"busca '{termo}' p{p}: {e}")

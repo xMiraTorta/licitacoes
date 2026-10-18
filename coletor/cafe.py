@@ -51,10 +51,17 @@ def _tipo(t: str, un: str) -> str:
     return TM
 
 
+# Versão das regras de classificação. Mude ao alterar o que conta como café: o cache de compras
+# "sem café" (coletor/cache/sem_cafe.json) de outra versão é descartado e tudo é verificado de novo.
+VERSAO_REGRAS = 2
+
 # Ruído antes do nome do produto: "(COTA)", "[COTA RESERVADA ME/EPP] -", "Lote 1: Item 4 -", "(L3) 8910.10465-",
-# "GENEROS ALIMENTICIOS -".
+# "GENEROS ALIMENTICIOS -", e embalagem/verbo/rótulo: "Aquisição de", "Pacote de", "Pct de", "Produto:".
 _RUIDO = re.compile(r"^(?:[\W\d_]+|lote\b|item\b|unico\b|cota\b|ampla\b|concorrencia\b|reservada\b|exclusiv\w*|"
-                    r"me/epp\b|me\b|epp\b|generos?\b|alimenticios?\b|\(l\d+\)|l\d+\b)+")
+                    r"me/epp\b|me\b|epp\b|generos?\b|alimenticios?\b|\(l\d+\)|l\d+\b|"
+                    r"aquisicao\b|compra\b|fornecimento\b|pacotes?\b|pcts?\b|caixas?\b|cx\b|fardos?\b|embalage(?:m|ns)\b|"
+                    r"unidades?\b|produtos?\b|descricao\b|especificacao\b|objeto\b|nome\b|"
+                    r"material de (?:copa|consumo|expediente)(?: e cozinha)?\b|de\b|do\b|da\b)+")
 # O produto (começo da descrição, sem o ruído) precisa ser café.
 _PRODUTO_CAFE = re.compile(r"^(cafe\b|cafecafe|po (de |para )?cafe\b|capsulas?\b|bebida (de )?cafe\b)")
 
@@ -107,6 +114,8 @@ _UN_FARDO = re.compile(r"\b(fardo|fardos|fd|frd|caixa|cx|cxs|caixas)\b")
 
 
 def _kg(valor: str, unidade: str) -> float | None:
+    if not unidade.startswith(("k", "q")) and re.fullmatch(r"\d{1,3}\.\d{3}", valor):
+        valor = valor.replace(".", "")  # "1.000g": ponto de milhar, não decimal
     try:
         v = float(valor.replace(",", "."))
     except ValueError:

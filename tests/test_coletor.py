@@ -49,9 +49,18 @@ ITENS = {
 }
 
 
-def fake_pncp(lista: list[dict[str, Any]], itens: dict[str, Any], falhar: set[str] = frozenset()) -> PNCP:
+def fake_pncp(lista: list[dict[str, Any]], itens: dict[str, Any], falhar: set[str] = frozenset(),
+              no_pncp: dict[str, dict[str, Any]] | None = None) -> PNCP:
+    """no_pncp: compras que existem no PNCP (consulta direta pela chave) mesmo fora da listagem."""
     def handler(req: httpx.Request) -> httpx.Response:
         path = req.url.path
+        if "/consulta/v1/orgaos/" in path:
+            cnpj, _, ano, seq = path.split("/orgaos/")[1].split("/")
+            chave = f"{cnpj}-1-{int(seq):06d}/{ano}"
+            if chave in falhar:
+                return httpx.Response(503, text="indisponível")
+            c = (no_pncp or {}).get(chave)
+            return httpx.Response(200, json=c) if c else httpx.Response(404)
         if path.endswith("/contratacoes/proposta"):
             m = req.url.params["codigoModalidadeContratacao"]
             data = lista if m == "6" else []
@@ -77,7 +86,8 @@ def destino(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 def rodar(destino: Path, lista: list[dict[str, Any]], itens: dict[str, Any] = ITENS, agora: datetime = AGORA,
           **kw: Any) -> coleta.Resultado:
-    return coleta.coletar(destino, pncp=fake_pncp(lista, itens, kw.pop("falhar", set())), agora=agora, **kw)
+    return coleta.coletar(destino, pncp=fake_pncp(lista, itens, kw.pop("falhar", set()), kw.pop("no_pncp", None)),
+                          agora=agora, **kw)
 
 
 def test_primeira_coleta_monta_registro_completo(destino: Path) -> None:
@@ -157,9 +167,65 @@ def test_muitas_falhas_bloqueiam(destino: Path) -> None:
 def test_cache_evita_baixar_de_novo_sem_cafe(destino: Path) -> None:
     rodar(destino, [CAFE, OUTRA])
     cache = json.loads(coleta.CACHE.read_text())
-    assert OUTRA["numeroControlePNCP"] in cache and CAFE["numeroControlePNCP"] not in cache
+    assert cache["versao"] == coleta.VERSAO_REGRAS
+    assert OUTRA["numeroControlePNCP"] in cache["itens"] and CAFE["numeroControlePNCP"] not in cache["itens"]
     r = rodar(destino, [CAFE, OUTRA])
     assert r.candidatas == 1  # só a de café é baixada de novo
+
+
+def test_cache_de_outra_versao_das_regras_e_descartado(destino: Path) -> None:
+    coleta.CACHE.parent.mkdir()
+    coleta.CACHE.write_text(json.dumps({OUTRA["numeroControlePNCP"]: OUTRA["dataAtualizacaoGlobal"]}))  # formato v1
+    r = rodar(destino, [CAFE, OUTRA])
+    assert r.candidatas == 2  # verifica de novo com as regras atuais
+
+
+def test_compra_sem_itens_publicados_nao_vai_para_o_cache(destino: Path) -> None:
+    rodar(destino, [CAFE, PNEU | {"objetoCompra": "Aquisição de café"}])
+    assert PNEU["numeroControlePNCP"] not in json.loads(coleta.CACHE.read_text())["itens"]
+
+
+def test_compra_que_some_da_listagem_e_conferida_pela_chave(destino: Path) -> None:
+    nova = compra_api("55555555000155", 5, "Aquisição de café")
+    itens = {**ITENS, "55555555000155/compras/2026/5": [item_api(1, "Café torrado e moído 250g", 100, 18.0)]}
+    rodar(destino, [CAFE, nova], itens)
+    # Dia seguinte: a listagem pula "nova" (paginação), mas ela continua aberta no PNCP.
+    aberta = nova | {"situacaoCompraId": 1, "modalidadeId": 6}
+    r = rodar(destino, [CAFE], itens, agora=datetime(2026, 10, 20, 9, 0, tzinfo=coleta.TZ),
+              no_pncp={nova["numeroControlePNCP"]: aberta})
+    by = {c["chave"]: c for c in json.loads((destino / "data.json").read_text())["compras"]}
+    assert by[nova["numeroControlePNCP"]]["first_seen"] == "2026-10-19" and r.novas == []
+    # Revogada: sai do painel.
+    rodar(destino, [CAFE], itens, agora=datetime(2026, 10, 21, 9, 0, tzinfo=coleta.TZ),
+          no_pncp={nova["numeroControlePNCP"]: aberta | {"situacaoCompraId": 2, "situacaoCompraNome": "Revogada"}},
+          forcar=True)  # 2 -> 1 compra dispararia a trava de queda
+    assert nova["numeroControlePNCP"] not in {c["chave"] for c in json.loads((destino / "data.json").read_text())["compras"]}
+
+
+def test_compra_sumida_com_consulta_falhando_fica_como_antes(destino: Path) -> None:
+    rodar(destino, [CAFE])
+    r = rodar(destino, [], agora=datetime(2026, 10, 20, 9, 0, tzinfo=coleta.TZ), falhar={CAFE["numeroControlePNCP"]},
+              forcar=True)
+    c = json.loads((destino / "data.json").read_text())["compras"][0]
+    assert c["chave"] == CAFE["numeroControlePNCP"] and c["first_seen"] == "2026-10-19" and r.falhas
+
+
+def test_valor_que_arredonda_para_zero_vira_ausente(destino: Path) -> None:
+    simbolico = compra_api("55555555000155", 5, "Aquisição de café")
+    itens = {"55555555000155/compras/2026/5": [item_api(1, "Café torrado e moído 500g", 100, 0.0001, un="kg")]}
+    rodar(destino, [simbolico], itens)  # antes: rkg 0.0 derrubava a validação e nada era publicado
+    i = json.loads((destino / "data.json").read_text())["compras"][0]["itens"][0]
+    assert i["rkg"] is None and i["vt"] is None or i["vt"] > 0
+
+
+def test_texto_com_fim_de_script_nao_quebra_a_pagina(destino: Path) -> None:
+    perigosa = compra_api("55555555000155", 5, "Café </script><script>window.XSS=1</script> <!-- x")
+    itens = {"55555555000155/compras/2026/5": [item_api(1, "Café torrado 500g &lt;/script&gt;", 10, 30.0)]}
+    rodar(destino, [perigosa], itens)
+    html = (destino / "index.html").read_text(encoding="utf-8")
+    linha = next(x for x in html.splitlines() if x.startswith(publicar.DATA_PREFIX))
+    assert "</" not in linha and "<!--" not in linha
+    assert embedded_data(html)["compras"][0]["objeto"] == perigosa["objetoCompra"]
 
 
 def test_duplicatas_mesmo_municipio_valor_e_data() -> None:

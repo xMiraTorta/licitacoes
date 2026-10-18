@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 from loguru import logger
 
 from coletor import publicar
-from coletor.cafe import norm
+from coletor.cafe import VERSAO_REGRAS, norm
 from coletor.distancias import ORIGEM
 from coletor.montar import montar_compra
 from coletor.pncp import PNCP, ColetaErro
@@ -49,9 +49,26 @@ def _texto_objeto(c: dict[str, Any]) -> str:
 
 
 def _ler_cache() -> dict[str, str]:
+    """Compras já verificadas sem café: {chave: dataAtualizacaoGlobal}. Cache de outra versão das regras
+    de classificação é descartado (a compra pode ter café pelas regras novas)."""
     if not CACHE.exists():
         return {}
-    return json.loads(CACHE.read_text(encoding="utf-8"))
+    d = json.loads(CACHE.read_text(encoding="utf-8"))
+    if d.get("versao") != VERSAO_REGRAS:
+        logger.info("Cache sem_cafe de outra versão das regras ({}); verificando tudo de novo", d.get("versao"))
+        return {}
+    return d["itens"]
+
+
+def _gravar_cache(itens: dict[str, str]) -> None:
+    CACHE.parent.mkdir(exist_ok=True)
+    CACHE.write_text(json.dumps({"versao": VERSAO_REGRAS, "itens": itens}, ensure_ascii=False, sort_keys=True, indent=0),
+                     encoding="utf-8")
+
+
+def _ainda_aberta(c: dict[str, Any], agora_min: str) -> bool:
+    return (c.get("situacaoCompraId") == 1 and c.get("modalidadeId") in MODALIDADES
+            and (c.get("dataEncerramentoProposta") or "9999")[:16] >= agora_min)
 
 
 def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: PNCP | None = None,
@@ -71,6 +88,23 @@ def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: 
             if (c.get("dataEncerramentoProposta") or "9999")[:16] >= agora_min:
                 lista[c["numeroControlePNCP"]] = c
     logger.info("Listagem: {} compras com propostas abertas", len(lista))
+    falhas: dict[str, str] = {}
+
+    # 1b. Compra conhecida, ainda no prazo, que não veio na listagem: a paginação do PNCP é por posição
+    # e pode pular registros enquanto a lista muda. Confere uma a uma; revogada/suspensa sai do painel.
+    sumidas = sorted(k for k, c in ((c["chave"], c) for c in (anterior or {}).get("compras", []))
+                     if k not in lista and (not c.get("fim") or c["fim"] >= agora_min))
+    for k in sumidas:
+        try:
+            c = p.compra(k)
+        except ColetaErro as e:
+            falhas[k] = str(e)  # mantida da coleta anterior (ver publicar.juntar)
+            continue
+        if c and _ainda_aberta(c, agora_min):
+            lista[k] = c
+            logger.warning("{} não veio na listagem, mas continua aberta no PNCP: incluída", k)
+        else:
+            logger.info("{} saiu da listagem: {}", k, (c or {}).get("situacaoCompraNome") or "não encontrada no PNCP")
 
     # 2. Candidatas: objeto compatível + busca textual + já conhecidas.
     cand = {k for k, c in lista.items() if OBJETO_PODE_TER_CAFE.search(_texto_objeto(c))}
@@ -86,7 +120,6 @@ def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: 
 
     # 3. Itens de cada candidata.
     itens: dict[str, list[dict[str, Any]]] = {}
-    falhas: dict[str, str] = {}
 
     def baixar(k: str) -> None:
         c = lista[k]
@@ -98,7 +131,7 @@ def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: 
     with ThreadPoolExecutor(max_workers=3) as ex:
         list(ex.map(baixar, olhar))
     for k, e in falhas.items():
-        logger.error("Itens de {} não baixados: {}", k, e)
+        logger.error("Compra {} não verificada nesta coleta (fica a versão anterior, se houver): {}", k, e)
 
     # 4. Montagem.
     compras, sem_cafe = [], {}
@@ -106,10 +139,10 @@ def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: 
         reg = montar_compra(lista[k], its)
         if reg:
             compras.append(reg)
-        else:
+        elif its:  # sem itens publicados ainda: verifica de novo na próxima coleta
             sem_cafe[k] = lista[k].get("dataAtualizacaoGlobal") or ""
     finais, primeira_vez = publicar.juntar(compras, anterior, set(falhas), hoje, agora_min)
-    publicar.verificar_travas(finais, anterior, len(olhar), len(falhas), agora_min, forcar)
+    publicar.verificar_travas(finais, anterior, len(olhar) + len(sumidas), len(falhas), agora_min, forcar)
 
     # 5. Gravação.
     base = anterior or {}
@@ -135,11 +168,9 @@ def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: 
                    "novas_tentativas": p.stats.novas_tentativas, "segundos": round(time.monotonic() - t0)},
     }
     publicar.gravar(data, destino, agora)
-    novo_cache = {k: v for k, v in {**cache, **sem_cafe}.items() if k in lista}
-    CACHE.parent.mkdir(exist_ok=True)
-    CACHE.write_text(json.dumps(novo_cache, ensure_ascii=False, sort_keys=True, indent=0), encoding="utf-8")
+    _gravar_cache({k: v for k, v in {**cache, **sem_cafe}.items() if k in lista})
 
-    r = Resultado(len(finais), primeira_vez, len(olhar), list(falhas), p.stats.chamadas, round(time.monotonic() - t0))
+    r = Resultado(len(finais), primeira_vez, len(olhar) + len(sumidas), list(falhas), p.stats.chamadas, round(time.monotonic() - t0))
     logger.info("Coleta concluída: {} compras de café abertas, {} novas, {} falhas, {} chamadas, {} s",
                 r.compras, len(r.novas), len(r.falhas), r.chamadas, r.segundos)
     return r

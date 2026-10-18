@@ -61,18 +61,19 @@ def juntar(novas: list[dict[str, Any]], anterior: dict[str, Any] | None, falhara
         else:
             c["first_seen"] = hoje
             primeira_vez.append(c["chave"])
-        c["nova"] = hoje != seed and c["first_seen"] > ref
         out.append(c)
     vistos = {c["chave"] for c in out}
-    mantidas = [antigos[k] for k in falharam if k in antigos and k not in vistos
+    mantidas = [dict(antigos[k]) for k in sorted(falharam) if k in antigos and k not in vistos
                 and (not antigos[k].get("fim") or antigos[k]["fim"] >= agora_min)]
     if mantidas:
         logger.warning("{} compras conhecidas mantidas da coleta anterior porque os itens falharam: {}",
                        len(mantidas), [c["chave"] for c in mantidas])
     out.extend(mantidas)
     out = [c for c in out if not c.get("fim") or c["fim"] >= agora_min]
+    for c in out:
+        c["nova"] = hoje != seed and (c.get("first_seen") or hoje) > ref
     out.sort(key=lambda c: (c.get("fim") or "9999", c["chave"]))
-    marcar_duplicatas(out, {k for k, c in antigos.items() if c.get("dup") and not c.get("dup_of")})
+    marcar_duplicatas(out, {k for k, c in antigos.items() if not c.get("dup_of")})
     return out, primeira_vez
 
 
@@ -109,11 +110,15 @@ def _gravar_atomico(path: Path, texto: str) -> None:
 
 
 def embutir_no_html(html: str, data_json: str) -> str:
+    """Troca a linha `const DATA0 = ...;`. Textos do PNCP podem conter "</script>" ou "<!--", que
+    encerrariam o <script> da página (e rodariam código de terceiros): escapados como "<\\/" e
+    "<\\u0021--", que continuam JSON/JavaScript válidos e com o mesmo valor."""
+    seguro = data_json.replace("</", "<\\/").replace("<!--", "<\\u0021--")
     inicio = html.index("\n" + DATA_PREFIX) + 1
     fim = html.index("\n", inicio)
     if not html[inicio:fim].endswith(";"):
         raise ValueError("linha const DATA0 em index.html não termina com ';'")
-    return html[:inicio] + DATA_PREFIX + data_json + ";" + html[fim:]
+    return html[:inicio] + DATA_PREFIX + seguro + ";" + html[fim:]
 
 
 def atualizar_cabecalho(html: str, gerado_em: datetime) -> str:

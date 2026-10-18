@@ -4,6 +4,7 @@ from __future__ import annotations
 import html
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from typing import Any
 
 import httpx
@@ -31,7 +32,7 @@ def _valor(v: float | None, sig: str) -> str:
 
 def linha(c: dict[str, Any]) -> str:
     fim = c.get("fim") or ""
-    ano = f"/{fim[:4]}" if fim and fim[:4] != str(datetime.now().year) else ""
+    ano = f"/{fim[:4]}" if fim and fim[:4] != str(datetime.now(ZoneInfo("America/Sao_Paulo")).year) else ""
     prazo = f"{fim[8:10]}/{fim[5:7]}{ano} {fim[11:16]}" if fim else "sem prazo"
     bola = "🟢" if c["uf"] == "MG" else "🔵" if c["uf"] in ("SP", "GO") else "⚪"
     km = f" · {c['dist']} km" if c.get("dist") is not None else ""
