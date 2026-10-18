@@ -49,3 +49,18 @@ def test_grava_quando_tudo_ok(tmp_path: Path) -> None:
         return httpx.Response(200, content=(CEPEA if "cepea" in req.url.host else CARVALHAES).encode("utf-8" if "cepea" in req.url.host else "latin-1"))
     d = mercado.atualizar("2026-10-26", httpx.Client(transport=httpx.MockTransport(handler)), tmp_path / "m.json")
     assert d["atualizado_em"] == "2026-10-26" and (tmp_path / "m.json").exists()
+
+
+def test_cepea_bloqueado_usa_indicador_anterior(tmp_path: Path) -> None:
+    destino = tmp_path / "m.json"
+
+    def ok(req: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=CEPEA.encode("utf-8") if "cepea" in req.url.host else CARVALHAES.encode("latin-1"))
+    mercado.atualizar("2026-10-19", httpx.Client(transport=httpx.MockTransport(ok)), destino)
+
+    def bloqueado(req: httpx.Request) -> httpx.Response:
+        return httpx.Response(403) if "cepea" in req.url.host else httpx.Response(200, content=CARVALHAES.encode("latin-1"))
+    d = mercado.atualizar("2026-10-26", httpx.Client(transport=httpx.MockTransport(bloqueado)), destino)
+    assert d["atualizado_em"] == "2026-10-26" and d["cepea"]["robusta"] == {"data": "2026-10-16", "saca60": 963.28}
+    with pytest.raises(httpx.HTTPStatusError):  # sem indicador anterior, não inventa
+        mercado.atualizar("2026-10-26", httpx.Client(transport=httpx.MockTransport(bloqueado)), tmp_path / "novo.json")

@@ -19,7 +19,7 @@ O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge
 - Resultado hoje (premissas padrão): 131 de 153 licitações com estimativa dão lucro ao preço do órgão; margem típica ~21%.
 - Testes: 258 (`pytest -q`), incluindo site × coletor com a mesma margem, ajuste de custo gravado no GitHub simulado, leitura das páginas CEPEA/Carvalhaes e das lojas com respostas simuladas.
 - **Pendências do dono**: orçar laudo de qualidade (sensorial + microscopia) e informar em Meus custos; pedir 2 a 3 cotações de frete com o CNPJ para recalibrar a fórmula (R$ 180 + R$ 2,10/kg + R$ 0,23/kg a cada 100 km + 0,8%); confirmar com o contador o Anexo II e a faixa do Simples.
-- Não verificado: lojas e CEPEA respondendo a partir dos servidores do GitHub (1ª execução semanal: segunda 26/10/2026; dá para rodar antes pelo botão "Run workflow").
+- Execução manual do `precos.yml` no GitHub (18/10/2026, run 39103909258): varejo OK (11 lojas, 49 de 70 linhas); **CEPEA bloqueia os servidores do GitHub (403 do Cloudflare)**. Corrigido: sem CEPEA, o robusta (único dado do CEPEA usado na receita) fica com o último indicador gravado e a data dele; Carvalhaes atualiza o resto.
 
 ## Sessão 18/10/2026 (6): checagens pedidas pelo dono
 - **Cestas básicas fora** (pedido do dono): regra pelo objeto (`cafe.objeto_de_cesta`: cesta básica/de alimentos/natalina, kit de alimentação/lanche, composição de cestas, benefícios eventuais; "cesta de preços" não) e pela descrição do item ("café em pó, cesta básica"). Saíram 23 compras (22 com objeto de cesta + Turvo, "benefícios eventuais"). Revisados os 19 editais restantes que citam cesta no texto: citação de passagem (pesquisa de preços, nome de fornecedor, item de cesta separado do café): ficam.

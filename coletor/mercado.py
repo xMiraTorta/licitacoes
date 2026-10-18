@@ -105,12 +105,21 @@ def atualizar(hoje: str, cliente: httpx.Client | None = None, destino: Path = BA
     """Baixa CEPEA e Carvalhaes e grava mercado.json. Erro de download ou de leitura levanta exceção sem gravar
     (fica o arquivo anterior, com a data dele)."""
     cliente = cliente or httpx.Client(timeout=30, headers={"User-Agent": UA}, follow_redirects=True)
-    paginas = {}
-    for nome, url in (("cepea", CEPEA), ("carvalhaes", CARVALHAES)):
-        r = cliente.get(url)
+    r = cliente.get(CARVALHAES)
+    r.raise_for_status()
+    carv = ler_carvalhaes(r.content.decode("latin-1", "replace"))
+    # CEPEA (só o robusta entra na receita) bloqueia os servidores do GitHub (403 do Cloudflare, 18/10/2026):
+    # sem ele, vale o último indicador gravado, com a data dele, e o resto atualiza.
+    try:
+        r = cliente.get(CEPEA)
         r.raise_for_status()
-        paginas[nome] = r.content.decode("utf-8" if nome == "cepea" else "latin-1", "replace")
-    cepea, carv = ler_cepea(paginas["cepea"]), ler_carvalhaes(paginas["carvalhaes"])
+        cepea = ler_cepea(r.content.decode("utf-8", "replace"))
+    except (httpx.HTTPError, ValueError) as e:
+        anterior = json.loads(destino.read_text(encoding="utf-8")).get("cepea") if destino.exists() else None
+        if not anterior or "robusta" not in anterior:
+            raise
+        logger.warning("CEPEA indisponível ({}); usado o indicador anterior de {}", e, anterior["robusta"]["data"])
+        cepea = anterior
     dados = {"atualizado_em": hoje, "perda_torra": 0.18, "cepea": cepea, "carvalhaes": carv, "niveis": niveis(cepea, carv),
              "fontes": {"cepea": CEPEA + " (CC BY-NC 4.0)", "carvalhaes": CARVALHAES}}
     destino.write_text(json.dumps(dados, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
