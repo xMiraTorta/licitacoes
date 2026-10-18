@@ -162,9 +162,23 @@ def test_nota_qualidade_global(texto: str, nota: float | None) -> None:
     ("Café gourmet 250g", "Gourmet/especial"),
     ("Café torrado, nota de qualidade sensorial igual ou superior a 7,3", "Gourmet/especial"),
     ("Café em grãos torrados superior 1kg", "Superior"),
+    # pesquisa de 18/10/2026 (IN MAPA 8/2003, Portaria SDA 570/2022, editais reais)
+    ("Café torrado e moído, bebida mole a dura, tipo 6", "Sem exigência"),  # faixa que aceita café comercial
+    ("Café com classificação de bebida mole a rio", "Sem exigência"),
+    ("Café torrado bebida estritamente mole", "Gourmet/especial"),
+    ("Café torrado e moído, grupo especial, subgrupo empeliculado", "Sem exigência"),  # termo de classificação
+    ("Café torrado e moído, Melitta especial ou equivalente", "Sem exigência"),  # marca, não categoria
+    ("Café, cor padrão SCA 55, torra escura", "Sem exigência"),  # cor de torra, não nota
+    ("Café torrado e moído, padrões definidos pela BSCA/SCA, 100% arábica especial", "Gourmet/especial"),
     ("Café solúvel 200g", None),  # solúvel/cápsula/bebida não entram na comparação por qualidade
     ("Cápsula de café 100% arábica", None),
 ])
 def test_nivel_de_exigencia(desc: str, nivel: str | None) -> None:
     item = cafe.classificar(desc, "Pacote")
     assert item is not None and item.nivel == nivel
+
+
+def test_exigencias_que_mexem_no_custo() -> None:
+    assert "Sem PVA (grãos selecionados)" in cafe.exigencias(cafe.norm("isento de grãos pretos, verdes e ardidos"))
+    assert "Aceita conilon/blend" in cafe.exigencias(cafe.norm("blend de arábica e conilon"))
+    assert "Aceita conilon/blend" in cafe.exigencias(cafe.norm("predominantemente arábica"))

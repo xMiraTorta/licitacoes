@@ -90,7 +90,9 @@ def eh_item_de_cafe(descricao: str) -> str | None:
 
 # ---------------------------------------------------------------- categoria
 _CATS = [
-    ("Gourmet/especial", re.compile(r"\bgourmet\b|\bespecial\b|\bespeciais\b")),
+    # "especial" só quando qualifica o café ("café especial", "categoria especial", "arábica especial"):
+    # "grupo especial" (termo de classificação), "Melitta especial" (marca) e "farinha especial" não contam.
+    ("Gourmet/especial", re.compile(r"\bgourmet\b|\b(?:categoria|estilo|qualidade|cafes?|arabica|po|moido)\s+especia(?:l|is)\b")),
     ("Superior", re.compile(r"(?<!ou )(?<!e )\bsuperior\b(?! (a|ao|as|aos|ou|de)\b)")),
     ("Tradicional", re.compile(r"\btradicional\b")),
     ("Extraforte", re.compile(r"extra ?-?forte|\bintensa\b")),
@@ -195,6 +197,8 @@ _TAGS = [
     ("Sem glúten (rótulo)", r"gluten"),
     ("Amostra", r"\bamostras?\b"),
     ("Agric. familiar", r"agricultura familiar|agricultor(es)? familia"),
+    ("Sem PVA (grãos selecionados)", r"(isent[oa]s?|livres?|ausencia|sem) de (graos )?(defeitos )?(pretos|verdes|ardidos|pva|fermentados)"),
+    ("Aceita conilon/blend", r"conilon|robusta|canephora|predominantemente arabic|blend|arabica e (o )?conilon"),
 ]
 _VALIDADE = re.compile(
     r"validade[^.;]{0,60}?(?:minim[ao]|nao inferior a|superior a|de no minimo|minimo de|pelo menos|acima de)?\s*"
@@ -238,15 +242,20 @@ def nota_qg(t: str) -> float | None:
     return None
 
 
+# Bebida fina da classificação oficial (IN MAPA 8/2003): "mole"/"apenas mole" = Superior ou acima.
+# "Mole a dura", "mole a rio" são faixas que aceitam café comercial (padrão CEPEA: tipo 6, bebida dura).
+_MOLE = re.compile(r"bebida (?:\w+ )?(?:apenas |estritamente )?mole\b(?! (?:a|ou|ate) (?:dura|rio|riad|apenas|\w+ dura))")
+
+
 def nivel(t: str, tipo: str, cat: str, tags: list[str], qg: float | None) -> str | None:
     """Nível de qualidade pedido (inferido do texto; o maior que o item indicar). None para tipos sem
     comparação de preço por qualidade (solúvel, cápsula, bebida, cesta)."""
     if tipo not in _TIPOS_COM_NIVEL:
         return None
     cats = {x.rstrip("*") for x in cat.split("/")}  # "Superior*": categoria tirada do edital
-    if "Gourmet" in cats or "especial" in cats or (qg is not None and qg >= 7.3):
+    if "Gourmet" in cats or "especial" in cats or (qg is not None and qg >= 7.3) or "estritamente mole" in t:
         return "Gourmet/especial"
-    if "Superior" in cats or (qg is not None and qg >= 6.0) or re.search(r"bebida (estritamente )?mole", t):
+    if "Superior" in cats or (qg is not None and qg >= 6.0) or _MOLE.search(t):
         return "Superior"
     if cats & {"Tradicional", "Extraforte"} or qg is not None or {"ABIC/pureza", "PQC"} & set(tags):
         return "Tradicional"

@@ -211,11 +211,16 @@ def niveis_da_compra(itens: list[dict[str, Any]]) -> list[str]:
 
 
 def reclassificar_nivel(compra: dict[str, Any]) -> None:
-    """Recalcula nível e nota de qualidade a partir do texto e da categoria já gravados (sem PNCP)."""
+    """Recalcula categoria, exigências, nível e nota de qualidade a partir do texto já gravado (sem PNCP).
+    Item cuja categoria/exigências vieram do trecho do edital (usa_trecho) mantém essas duas."""
     for i in compra["itens"]:
         t = cafe.norm(i["espec"])
-        i["qg"] = cafe.nota_qg(t)
+        if not i.get("usa_trecho") and i["tipo"] != cafe.CESTA:
+            i["cat"], i["tags"] = cafe.categoria(t), cafe.exigencias(t)
+        i["qg"] = cafe.nota_qg(t) if i["tipo"] != cafe.CESTA else None
         i["nivel"] = cafe.nivel(t, i["tipo"], i["cat"], i["tags"], i["qg"])
+    compra["tags"] = _uniq([x for i in compra["itens"] for x in i["tags"]])
+    compra["cats"] = _uniq([x.rstrip("*") for i in compra["itens"] for x in i["cat"].split("/") if x]) or ["Não informada"]
     compra["niveis"] = niveis_da_compra(compra["itens"])
 
 
