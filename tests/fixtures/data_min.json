@@ -141,33 +141,29 @@
    "edital_lido": false,
    "trecho_edital": "",
    "tipos": [
-    "Torrado e moído",
-    "Solúvel"
+    "Torrado e moído"
    ],
    "cats": [
     "Tradicional",
-    "Extraforte",
-    "Gourmet",
-    "especial"
+    "Extraforte"
    ],
    "cat_do_edital": false,
-   "embs": "vácuo; 500g",
+   "embs": "vácuo",
    "emb_f": [
-    "Vácuo",
-    "500 g"
+    "Vácuo"
    ],
-   "vcafe": 23092.0,
+   "vcafe": 21592.0,
    "vcesta": null,
-   "kg": 5.0,
-   "kg_parcial": true,
-   "rkg": 300.0,
+   "kg": null,
+   "kg_parcial": false,
+   "rkg": null,
    "sig": "Não",
    "me": "Exclusivo ME/EPP",
    "me_f": [
     "Exclusiva ME/EPP (todos os itens)"
    ],
    "tags": [],
-   "resumo": "T&M vácuo ×800 Pacote G; Solúvel 500g ×10 Pacote G",
+   "resumo": "T&M vácuo ×800 Pacote G",
    "dup": "",
    "dup_of": null,
    "dup_group": [],
@@ -194,29 +190,6 @@
      "usa_trecho": false,
      "qg": null,
      "nivel": "Tradicional"
-    },
-    {
-     "n": 21,
-     "tipo": "Solúvel",
-     "cat": "Gourmet/especial/Tradicional",
-     "emb": "500g",
-     "kgu": 0.5,
-     "kg_src": "descrição do item",
-     "qtd": 10.0,
-     "un": "Pacote G",
-     "vu": 150.0,
-     "vt": 1500.0,
-     "sig": false,
-     "kgt": 5.0,
-     "rkg": 300.0,
-     "conferir": false,
-     "me": "Exclusivo",
-     "sit": "Em andamento",
-     "tags": [],
-     "espec": "Café Café, Apresentação:Solúvel Granulado, Intensidade:Média, Tipo:Tradicional Café solúvel liofilizado gourmet para máquina de café, em embalagens de 500 g. Obs.: Este insumo deve ser compatível com a máquina de café da marca SVAGO modelo 5S.",
-     "usa_trecho": false,
-     "qg": null,
-     "nivel": null
     }
    ],
    "niveis": [
@@ -257,24 +230,22 @@
    "edital_lido": true,
    "trecho_edital": "",
    "tipos": [
-    "Torrado e moído",
-    "Solúvel"
+    "Torrado e moído"
    ],
    "cats": [
     "Superior"
    ],
    "cat_do_edital": false,
-   "embs": "500g vácuo; 200g",
+   "embs": "500g vácuo",
    "emb_f": [
     "500 g",
-    "Vácuo",
-    "Outro tamanho"
+    "Vácuo"
    ],
-   "vcafe": 49212.66,
+   "vcafe": 32693.71,
    "vcesta": null,
-   "kg": 805.5,
+   "kg": 696.5,
    "kg_parcial": false,
-   "rkg": 61.1,
+   "rkg": 46.94,
    "sig": "Não",
    "me": "Exclusivo ME/EPP",
    "me_f": [
@@ -285,7 +256,7 @@
     "Premium/1ª qualidade (termo comercial)",
     "Validade ≥12 meses"
    ],
-   "resumo": "T&M 500g ×1393 UN; Solúvel 200g ×545 UN",
+   "resumo": "T&M 500g ×1393 UN",
    "dup": "",
    "dup_of": null,
    "dup_group": [],
@@ -316,31 +287,6 @@
      "usa_trecho": false,
      "qg": null,
      "nivel": "Superior"
-    },
-    {
-     "n": 45,
-     "tipo": "Solúvel",
-     "cat": "",
-     "emb": "200g",
-     "kgu": 0.2,
-     "kg_src": "descrição do item",
-     "qtd": 545.0,
-     "un": "UN",
-     "vu": 30.31,
-     "vt": 16518.95,
-     "sig": false,
-     "kgt": 109.0,
-     "rkg": 151.55,
-     "conferir": false,
-     "me": "Exclusivo",
-     "sit": "Em andamento",
-     "tags": [
-      "Validade ≥12 meses"
-     ],
-     "espec": "CAFÉ GRANULADO, SOLUVEL INSTANTÂNEO, EMBALAGEM DE 200 G, DEVE CONSTAR NA EMBALAGEM DATA DE FABRICAÇÃO E PRAZO DE VALIDADE DE NO MÍNIMO 12 MESES.",
-     "usa_trecho": false,
-     "qg": null,
-     "nivel": null
     }
    ],
    "niveis": [
@@ -382,12 +328,10 @@
    "edital_lido": true,
    "trecho_edital": "618302 - CAFÉ TORRADO E MOÍDO, TIPO TRADICIONAL 500GR - puro, acondicionado em EMBALAGEM A VÁCUO, íntegra e original do fabricante. O produto deverá possuir classificação mínima Tipo 8 ou superior e bebida mínima Dura ou superior, conforme prova de xícara oficial, apresentar umidade máxima de 5%, granulometria uniforme adequada para preparo coado/filtrado, sendo isento de impurezas, matérias estranhas, adulterações ou quaisquer substâncias nocivas à saúde. Deverá possuir Selo de Pureza da Associação Brasileira da Indústria de Café (ABIC) dentro da validade, atender integralmente às normas sani || da Indústria de Café (ABIC) dentro da validade, atender integralmente às normas sanitárias da Agência Nacional de Vigilância Sanitária (ANVISA) e aos padrões de classificação e qualidade estabelecidos pelo Ministério da Agricultura e Pecuária (MAPA), além de apresentar validade mínima de 06 (seis) meses na data da entrega.MARCAS REFERÊNCIA: MELITTA, 3 CORAÇÕES, PILÃO (OU QUALIDADE SEMELHANTE) ITEM 8 · Unid.: CAIXA · Qtd.: 140 · exigido amostra?: sim Valor Unitário: R$ 27,10 · valor total: R$",
    "tipos": [
-    "Torrado e moído",
-    "Cápsula"
+    "Torrado e moído"
    ],
    "cats": [
-    "Tradicional",
-    "Superior"
+    "Tradicional"
    ],
    "cat_do_edital": false,
    "embs": "500g",
@@ -397,7 +341,7 @@
    "vcafe": 27162.0,
    "vcesta": null,
    "kg": 400.0,
-   "kg_parcial": false,
+   "kg_parcial": true,
    "rkg": 58.42,
    "sig": "Não",
    "me": "Exclusivo em 1 de 2 itens",
@@ -408,10 +352,9 @@
     "ABIC/pureza",
     "Validade ≥6 meses",
     "Amostra",
-    "Marca ref.",
-    "100% arábica"
+    "Marca ref."
    ],
-   "resumo": "T&M 500g ×800 UND; Cápsula ×140 CX",
+   "resumo": "T&M 500g ×800 UND; T&M ×140 CX",
    "dup": "",
    "dup_of": null,
    "dup_group": [],
@@ -446,8 +389,8 @@
     },
     {
      "n": 12,
-     "tipo": "Cápsula",
-     "cat": "Superior/Tradicional*",
+     "tipo": "Torrado e moído",
+     "cat": "",
      "emb": "",
      "kgu": null,
      "kg_src": "",
@@ -461,131 +404,17 @@
      "conferir": false,
      "me": "Não se aplica",
      "sit": "Em andamento",
-     "tags": [
-      "100% arábica",
-      "ABIC/pureza",
-      "Validade ≥6 meses",
-      "Amostra",
-      "Marca ref."
-     ],
-     "espec": "CÁPSULA DE CAFÉ (COMPATÍVEL SISTEMA DOLCE GUSTO) 100% ARÁBICA",
+     "tags": [],
+     "espec": "Café torrado e moído, pacote (peso não informado)",
      "usa_trecho": true,
      "qg": null,
-     "nivel": null
+     "nivel": "Sem categoria"
     }
    ],
    "niveis": [
+    "Sem categoria",
     "Tradicional"
    ]
-  },
-  {
-   "chave": "01005727000124-1-000299/2026",
-   "fim": "2099-01-14T10:00",
-   "abre": "2026-10-06T11:00",
-   "publicado": "2026-10-06T18:34",
-   "first_seen": "2026-10-17",
-   "nova": false,
-   "uf": "GO",
-   "mun": "Aparecida de Goiânia",
-   "dist": 388,
-   "orgao": "MUNICIPIO DE APARECIDA DE GOIANIA",
-   "unidade": "PREFEITURA MUNICIPAL DE APARECIDA DE GOIANIA",
-   "esfera": "Municipal",
-   "mod": "Pregão Eletrônico",
-   "num": "114/2026/2026",
-   "plat": "Licitações-e (Banco do Brasil)",
-   "plat_src": "link de origem (PNCP)",
-   "plat_f": "Licitações-e (Banco do Brasil)",
-   "publicado_via": "Licitações-E BB",
-   "uasg": "",
-   "srp": "Não",
-   "objeto": "Aquisição de cestas básicas, conforme condições e especificações estabelecidas no edital e seus anexos.",
-   "link_pncp": "https://pncp.gov.br/app/editais/01005727000124/2026/299",
-   "link_plat": "https://licitacoes-e2.bb.com.br/aop-inter-estatico/visualizar-processo-publico/1101819",
-   "ed_tags": [],
-   "ed_pz": "",
-   "edital_lido": false,
-   "trecho_edital": "",
-   "tipos": [
-    "Cesta/kit"
-   ],
-   "cats": [
-    "Gourmet",
-    "especial",
-    "Tradicional"
-   ],
-   "cat_do_edital": false,
-   "embs": "",
-   "emb_f": [
-    "Vácuo",
-    "Almofada",
-    "Lata",
-    "Sachê"
-   ],
-   "vcafe": null,
-   "vcesta": 1215436.2,
-   "kg": null,
-   "kg_parcial": false,
-   "rkg": null,
-   "sig": "Não",
-   "me": "Ampla (sem exclusividade)",
-   "me_f": [
-    "Ampla concorrência"
-   ],
-   "tags": [],
-   "resumo": "Cesta/kit vácuo/almofada/lata ×7260 UNIDADE; Cesta/kit vácuo/almofada/lata/sachê ×660 UNIDADE",
-   "dup": "",
-   "dup_of": null,
-   "dup_group": [],
-   "itens": [
-    {
-     "n": 10001,
-     "tipo": "Cesta/kit",
-     "cat": "Gourmet/especial",
-     "emb": "vácuo/almofada/lata",
-     "kgu": null,
-     "kg_src": "",
-     "qtd": 7260.0,
-     "un": "UNIDADE",
-     "vu": 148.49,
-     "vt": 1078037.4,
-     "sig": false,
-     "kgt": null,
-     "rkg": null,
-     "conferir": false,
-     "me": "Não",
-     "sit": "Em andamento",
-     "tags": [],
-     "espec": "CESTA BASICA COM 15 ITENS Arroz agulhinha tipo 1 - polido, longo fino, grãos inteiros. 5kg; Feijão carioca, primeira linha, in natura, novo, grãos inteiros, aspecto brilhoso; Açúcar cristal granulado. 5kg; Óleo de soja, refinado. 900ml; Café torrado e moído tipo 1 - embalado a vácuo ou tipo almofada, com 100% de pureza. 2kg; Sal iodado refinado, sal fino seco, iodado para cozinha.1kg; Macarrão espaguete.500g; Extrato de tomate.minimo 300g; Biscoito rosquinha ou doce. Minimo 800g; Achocolatado em pó. Minimo 400g; Farinha de mandioca.500g; Farinha de trigo especial - enriquecida com ferro e ácido fólico.1kg; Bolacha de água e Sal ou Cream Cracker. Minimo 350g; Sardinha em lata. Lata 125g; Flocão de milho.1kg; Os itens deverão conter todas as especificações descritas no edital.",
-     "usa_trecho": false,
-     "qg": null,
-     "nivel": null
-    },
-    {
-     "n": 20001,
-     "tipo": "Cesta/kit",
-     "cat": "Gourmet/especial/Tradicional",
-     "emb": "vácuo/almofada/lata/sachê",
-     "kgu": null,
-     "kg_src": "",
-     "qtd": 660.0,
-     "un": "UNIDADE",
-     "vu": 208.18,
-     "vt": 137398.8,
-     "sig": false,
-     "kgt": null,
-     "rkg": null,
-     "conferir": false,
-     "me": "Não",
-     "sit": "Em andamento",
-     "tags": [],
-     "espec": "CESTAS BÁSICAS DE NATAL: Arroz agulhinha tipo 1 - polido, longo fino, grãos inteiros. 5kg; Feijão carioca, primeira linha, in natura, novo, grãos inteiros, aspecto brilhoso; Açúcar cristal granulado. 5kg; Óleo de soja, refinado. 900ml; Café torrado e moído tipo 1 - embalado a vácuo ou tipo almofada, com 100% de pureza. 2kg; Sal iodado refinado, sal fino seco, iodado para cozinha.1kg; Macarrão espaguete.500g; Extrato de tomate.minimo 300g; Biscoito rosquinha ou doce. Minimo 800g; Achocolatado em pó. Minimo 400g; Farinha de mandioca.500g; Farinha de trigo especial - enriquecida com ferro e ácido fólico.1kg; Bolacha de água e Sal ou Cream Cracker. Minimo 350g; Sardinha em lata. Lata 125g; Flocão de milho.1kg; Azeitona verde em conserva com caroço.Sachê 500g; Milho verde em conserva enlatado. Mínimo 170g; Panettone tradicional com frutas cristalizadas. Mínimo 400g; Leite condensado integral. Caixa 395g. Os itens deverão conter todas as especificações exigidas no edital.",
-     "usa_trecho": false,
-     "qg": null,
-     "nivel": null
-    }
-   ],
-   "niveis": []
   },
   {
    "chave": "96291141000180-1-006590/2026",
@@ -712,14 +541,13 @@
    "edital_lido": true,
    "trecho_edital": "Café solúvel, em pó, tradicional, embalagem Três Corações, 30 60865 pacote 437 SIM com no mínimo 200 g do produto Iguaçu, Nescafé 31 59103 Café torrado e moído ESPECIAL ou PREMIUM, pacote 3406 SIM Melitta, 3 Corações Intensidade 7, Certificado pureza e qualidade  || 31 59103 Café torrado e moído ESPECIAL ou PREMIUM, pacote 3406 SIM Melitta, 3 Corações Intensidade 7, Certificado pureza e qualidade ",
    "tipos": [
-    "Torrado e moído",
-    "Solúvel"
+    "Torrado e moído"
    ],
    "cats": [
     "Gourmet",
     "especial",
-    "Tradicional",
-    "Extraforte"
+    "Extraforte",
+    "Tradicional"
    ],
    "cat_do_edital": false,
    "embs": "500g vácuo",
@@ -730,7 +558,7 @@
    "vcafe": null,
    "vcesta": null,
    "kg": 4509.0,
-   "kg_parcial": true,
+   "kg_parcial": false,
    "rkg": null,
    "sig": "Sim",
    "me": "Não se aplica",
@@ -741,34 +569,11 @@
     "ABIC/pureza",
     "Premium/1ª qualidade (termo comercial)"
    ],
-   "resumo": "Solúvel ×437 PAC; T&M 500g ×3406 PAC; T&M 500g ×1675 PAC; T&M 500g ×3937 PAC",
+   "resumo": "T&M 500g ×3406 PAC; T&M 500g ×1675 PAC; T&M 500g ×3937 PAC",
    "dup": "",
    "dup_of": null,
    "dup_group": [],
    "itens": [
-    {
-     "n": 30,
-     "tipo": "Solúvel",
-     "cat": "Gourmet/especial/Tradicional*",
-     "emb": "",
-     "kgu": null,
-     "kg_src": "tamanho não informado",
-     "qtd": 437.0,
-     "un": "PAC",
-     "vu": null,
-     "vt": null,
-     "sig": true,
-     "kgt": null,
-     "rkg": null,
-     "conferir": false,
-     "me": "Não se aplica",
-     "sit": "Em andamento",
-     "tags": [],
-     "espec": "Café solúvel, em pó",
-     "usa_trecho": true,
-     "qg": null,
-     "nivel": null
-    },
     {
      "n": 31,
      "tipo": "Torrado e moído",
