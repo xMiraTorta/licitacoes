@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f766e">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22e%22%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%225.6%22/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2216%22%20fill%3D%22%2350b050%22/%3E%3Cpath%20d%3D%22M1.6%2016%2016%206.4%2030.4%2016%2016%2025.6z%22%20fill%3D%22%23fdea3d%22/%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%225.6%22%20fill%3D%22%233f51b5%22/%3E%3Cpath%20clip-path%3D%22url%28%23e%29%22%20d%3D%22M9.8%2013.4C14%2012.5%2018.4%2013.2%2022.4%2015.9L22.1%2017.9C18.4%2015.4%2014.2%2014.6%209.6%2015.2Z%22%20fill%3D%22%23fff%22/%3E%3C/svg%3E">
 <meta name="robots" content="noindex, nofollow">
 <title>Monitor de Licitações</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M9 22V10h3l4 7 4-7h3v12h-3v-7l-4 6-4-6v7z' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22e%22%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%225.6%22/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2216%22%20fill%3D%22%2350b050%22/%3E%3Cpath%20d%3D%22M1.6%2016%2016%206.4%2030.4%2016%2016%2025.6z%22%20fill%3D%22%23fdea3d%22/%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%225.6%22%20fill%3D%22%233f51b5%22/%3E%3Cpath%20clip-path%3D%22url%28%23e%29%22%20d%3D%22M9.8%2013.4C14%2012.5%2018.4%2013.2%2022.4%2015.9L22.1%2017.9C18.4%2015.4%2014.2%2014.6%209.6%2015.2Z%22%20fill%3D%22%23fff%22/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#f5f6f8; --surface:#fff; --surface-2:#f0f2f5; --surface-3:#e8ebef; --border:#e1e4e8; --border-2:#eceef1;
@@ -49,7 +50,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .brand{flex:none}
 .top-in{max-width:1440px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:10px 20px;padding-top:max(10px,env(safe-area-inset-top))}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
-.mark{width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;letter-spacing:-.02em;flex:none}
+.mark{width:32px;height:32px;flex:none;display:block}
+.mark svg{width:32px;height:32px;display:block}
 .brand h1{font-size:15.5px;margin:0;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
 .brand p{margin:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .search{flex:1;max-width:560px;position:relative;margin-left:auto}
@@ -118,10 +120,10 @@ main{max-width:1440px;margin:0 auto;padding:18px 20px 60px}
 .resbar b{color:var(--text)}
 /* ---------- layout lista + filtros */
 .layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;align-items:start}
-.filters{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);position:sticky;top:108px;max-height:calc(100vh - 124px);display:flex;flex-direction:column}
+.filters{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);display:flex;flex-direction:column}
 .f-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border-2)}
 .f-head h2{font-size:14px;margin:0}
-.f-body{overflow:auto;padding:4px 14px 14px}
+.f-body{padding:4px 14px 14px}
 .f-foot{display:none}
 .fsec{border-bottom:1px solid var(--border-2);padding:10px 0}
 .fsec:last-child{border-bottom:0}
@@ -248,9 +250,9 @@ blockquote{margin:8px 0 0;padding:8px 12px;border-left:3px solid var(--border);c
 .prop .pl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .prop .pl .sel-tags{margin-top:0}
 .prop .pn{margin:0;font-size:12.5px;color:var(--text-2);background:var(--surface-2);border-radius:8px;padding:6px 9px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.prop footer{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:auto;border-top:1px solid var(--border-2);padding-top:10px}
-.prop footer .pst{width:auto;flex:1;min-width:130px;padding:6px 8px}
-.prop footer .linkbtn{font-size:12.5px;color:var(--muted)}
+.prop footer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:auto;border-top:1px solid var(--border-2);padding-top:10px}
+.prop footer .pst{padding:6px 8px}
+.prop footer .linkbtn{font-size:12.5px;color:var(--muted);grid-column:1/-1;justify-self:start}
 .prop footer .linkbtn:hover{color:var(--red)}
 .hint{color:var(--muted);font-size:13px;margin:0 0 14px}
 /* ---------- agenda */
@@ -310,7 +312,7 @@ blockquote{margin:8px 0 0;padding:8px 12px;border-left:3px solid var(--border);c
 .about p,.about li{color:var(--text-2);font-size:14px}
 .note{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:10px 14px;font-size:13.5px;color:var(--text-2);margin-bottom:14px}
 .alert{border-left-color:var(--red);background:var(--red-bg);color:var(--text)}
-footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint);font-size:12px}
+body>footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint);font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:var(--r);font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:all .2s;z-index:90;max-width:calc(100vw - 32px)}
 .toast.show{opacity:1;transform:translateX(-50%)}
 /* ---------- nível de exigência, preço x mediana, piso */
@@ -391,6 +393,7 @@ footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint);fon
   .layout{grid-template-columns:1fr}
   .fbtn{display:inline-flex}
   .filters{position:fixed;left:0;right:0;bottom:0;top:auto;max-height:86vh;border-radius:16px 16px 0 0;z-index:65;transform:translateY(102%);transition:transform .22s;box-shadow:var(--sh-lg)}
+  .f-body{overflow:auto}
   .filters.show{transform:none}
   .f-foot{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--border-2);padding-bottom:max(12px,env(safe-area-inset-bottom))}
   .f-foot .btn{flex:1}
@@ -400,6 +403,8 @@ footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint);fon
 }
 @media (max-width:760px){
   .top-in{flex-wrap:wrap;gap:8px 10px;padding:10px 14px}
+  .nav-in{flex-wrap:wrap;overflow:visible;padding:0 8px;gap:0}
+  .tab{padding:9px 9px 8px;font-size:13px}
   .brand{flex:1;min-width:0}
   .brand p{font-size:11.5px}
   .tactions .ib{height:34px;min-width:34px;padding:0 8px}
@@ -408,16 +413,14 @@ footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint);fon
   .tactions .lbl{display:none}
   .filters{top:auto}
   main{padding:14px 14px 60px}
-  .kpis{display:flex;overflow-x:auto;gap:8px;margin:0 -14px 12px;padding:0 14px 2px;scrollbar-width:none}
-  .kpis::-webkit-scrollbar{display:none}
-  .kpi{flex:0 0 138px;padding:10px 12px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .kpi{padding:10px 12px}
   .kpi .v{font-size:18px}
   .lhead{display:none}
   .row{grid-template-columns:30px minmax(0,1fr) auto;grid-template-areas:"star loc prazo" "star cafe valor";gap:4px 10px;padding:12px}
   .row>div{min-width:0}
-  .toolbar{flex-wrap:nowrap}
-  .toolbar .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-14px;padding-right:14px}
-  .toolbar .chips::-webkit-scrollbar{display:none}
+  .toolbar{flex-wrap:wrap}
+  .toolbar .chips{flex-wrap:wrap}
   .qc{flex:none}
   .toolbar .grow{display:none}
   .toolbar .sel{position:absolute;left:-9999px}
@@ -453,7 +456,7 @@ footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint);fon
 <header class="top">
   <div class="top-in">
     <div class="brand">
-      <div class="mark" aria-hidden="true">ML</div>
+      <div class="mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><clipPath id="bandeira-e"><circle cx="16" cy="16" r="5.6"/></clipPath></defs><circle cx="16" cy="16" r="16" fill="#50b050"/><path d="M1.6 16 16 6.4 30.4 16 16 25.6z" fill="#fdea3d"/><circle cx="16" cy="16" r="5.6" fill="#3f51b5"/><path clip-path="url(#bandeira-e)" d="M9.8 13.4C14 12.5 18.4 13.2 22.4 15.9L22.1 17.9C18.4 15.4 14.2 14.6 9.6 15.2Z" fill="#fff"/></svg></div>
       <div style="min-width:0">
         <h1>Monitor de Licitações</h1>
         <p><span id="scope">Café</span> · <span id="upd">Atualizado em <b>17/10/2026 19:58</b> (horário de Brasília)</span></p>
@@ -1155,8 +1158,7 @@ function propHTML(k) {
     </div>
     ${c && c._niv ? `<div class="pl">${lvlHTML(c._niv)}${selosHTML(c)}</div>` : ''}
     ${w.notas ? `<p class="pn">${esc(w.notas)}</p>` : ''}
-    <footer><label class="sr" for="pst-${esc(k)}">Status</label>
-      <select class="inp pst" id="pst-${esc(k)}" data-st="${esc(k)}"><option value="">Sem status</option>${DATA.status_opcoes.map(s => `<option ${w.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
+    <footer><select class="inp pst" aria-label="Status" data-st="${esc(k)}"><option value="">Sem status</option>${DATA.status_opcoes.map(s => `<option ${w.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
       <button class="btn" data-open="${esc(k)}">Abrir</button>
       <button class="linkbtn" data-act="unfollow" title="Tira a estrela e o status; preço e notas continuam guardados">Parar de acompanhar</button></footer>
   </article>`;
