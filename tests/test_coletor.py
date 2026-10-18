@@ -254,13 +254,45 @@ def test_distancia_por_estrada_a_partir_de_uberaba() -> None:
     assert distancias.estrada("9999999") == (None, None)
 
 
+def _painel(compras: list[dict[str, Any]]) -> dict[str, Any]:
+    for i, c in enumerate(compras):
+        c["first_seen"] = "2026-10-19"
+    return {"gerado_em": "2026-10-19T09:00:00-03:00", "compras": compras}
+
+
+def _html_equilibrado(m: str) -> bool:
+    import re
+    abertas: list[str] = []
+    for fecha, tag in re.findall(r"<(/?)(b|i|a|blockquote)\b[^>]*>", m):
+        if fecha:
+            if not abertas or abertas.pop() != tag:
+                return False
+        else:
+            abertas.append(tag)
+    return not abertas
+
+
 def test_mensagens_telegram() -> None:
-    c = montar.montar_compra(compra_api("11111111000111", 1, "café"), [item_api(1, "Café em pó 500g", 1000, 30.0)])
-    assert c
-    msgs = telegram.mensagens([c] * 60, 300, "19/10")
-    assert len(msgs) > 1 and all(len(m) <= 4096 for m in msgs)
-    assert msgs[0].startswith("☕ <b>60 licitações novas") and "Sacramento-MG" in msgs[0]
-    assert "nenhuma licitação nova" in telegram.mensagens([], 300, "19/10")[0]
+    def compra(seq: int, uf: str, mun: str, vu: float, desc: str = "Café torrado e moído superior 500g") -> dict[str, Any]:
+        c = montar.montar_compra(compra_api(f"{seq:014d}", seq, "café", uf=uf, mun=mun),
+                                 [item_api(1, desc, 1000, vu)])
+        assert c
+        return c
+    base = [compra(i, "PR", "Curitiba", 40.0 + i) for i in range(1, 7)]  # mediana "Superior" ~R$ 87/kg
+    perto = compra(50, "MG", "Sacramento", 60.0)  # R$ 120/kg: acima da mediana
+    painel = _painel(base + [perto])
+    msgs = telegram.mensagens([perto, base[0]], painel)
+    m = msgs[0]
+    assert "<b>2 licitações novas</b>" in m and "Segunda, 19/10/2026" in m
+    assert m.index("PERTO DE VOCÊ") < m.index("Sacramento · MG") < m.index("DEMAIS ESTADOS") < m.index("Curitiba · PR")
+    assert "nível Superior" in m and "▲" in m and "acima da mediana do nível" in m
+    assert "#c=00000000000050-1-000050%2F2026" in m  # abre direto a licitação no monitor
+    assert _html_equilibrado(m)
+    muitas = telegram.mensagens([compra(100 + i, "BA", "Salvador", 30.0) for i in range(60)], painel)
+    assert len(muitas) > 1 and all(len(x) <= 4096 and _html_equilibrado(x) for x in muitas)
+    assert muitas[1].startswith("<i>(continuação)</i>")
+    vazio = telegram.mensagens([], painel)[0]
+    assert "Nenhuma licitação nova" in vazio and "7 abertas no monitor" in vazio and _html_equilibrado(vazio)
 
 
 def test_enviar_telegram_sem_vazar_token(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -337,3 +369,18 @@ def test_429_desacelera_e_insiste() -> None:
     assert p.get_json("/x") == {"ok": 1}
     assert p.intervalo_min == pytest.approx(0.8 * 0.97)  # 0,1 -> 0,2 -> 0,4 -> 0,8 após três 429; -3% no sucesso
     assert p.stats.novas_tentativas == 3
+
+
+def test_reclassificar_preenche_nivel_sem_pncp(destino: Path) -> None:
+    from coletor.__main__ import main
+    rodar(destino, [CAFE])
+    data = json.loads((destino / "data.json").read_text(encoding="utf-8"))
+    for c in data["compras"]:  # como os dados publicados antes do nível existir
+        c.pop("niveis")
+        for i in c["itens"]:
+            i.pop("nivel"), i.pop("qg")
+    (destino / "data.json").write_text(json.dumps(data), encoding="utf-8")
+    assert main(["reclassificar", "--destino", str(destino)]) == 0
+    c = json.loads((destino / "data.json").read_text(encoding="utf-8"))["compras"][0]
+    assert c["niveis"] == ["Tradicional"] and c["itens"][0]["nivel"] == "Tradicional"  # selo ABIC
+    assert embedded_data((destino / "index.html").read_text(encoding="utf-8")) == json.loads((destino / "data.json").read_text())

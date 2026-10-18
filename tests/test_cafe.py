@@ -135,3 +135,50 @@ def test_concordancia_com_painel_original() -> None:
         kgu_ok += x.kgu == i["kgu"]
     assert tipo_ok >= len(data) - 1   # 1: "café pronto para servir" que o original chamou de torrado e moído
     assert kgu_ok >= len(data) - 2    # 2: unidade "KG" com texto de 500 g; "CX" com peso único e preço plausível
+
+
+@pytest.mark.parametrize("texto,nota", [
+    ("com nota de qualidade global minima de 4,5 a 5,9 na escala", 4.5),
+    ("qualidade global igual ou superior a 6,0 pontos", 6.0),
+    ("pontuacao global minima de 70 (setenta) pontos", 7.0),  # escala 0-100
+    ("intervalo de notas da qualidade global: 7,2 - 6,0", 6.0),  # faixa: vale o mínimo
+    ("nota de qualidade global na faixa acima de 83 pontos na escala sensorial", 8.3),
+    ("nota: validade residual minima de 90 dias", None),
+    ("nota fiscal n 12345", None),
+    ("intensidade 7, certificado abic", None),
+])
+def test_nota_qualidade_global(texto: str, nota: float | None) -> None:
+    assert cafe.nota_qg(texto) == nota
+
+
+@pytest.mark.parametrize("desc,nivel", [
+    ("Café torrado e moído 500g", "Sem exigência"),
+    ("Café torrado e moído 500g, selo de pureza ABIC", "Tradicional"),
+    ("Café torrado e moído tradicional 500g", "Tradicional"),
+    ("Café torrado e moído, nota de qualidade global mínima de 4,5", "Tradicional"),
+    ("Café torrado e moído superior 500g", "Superior"),
+    ("Café torrado e moído, qualidade global igual ou superior a 6,0", "Superior"),
+    ("Café 100% arábica bebida mole 500g", "Superior"),
+    ("Café gourmet 250g", "Gourmet/especial"),
+    ("Café torrado, nota de qualidade sensorial igual ou superior a 7,3", "Gourmet/especial"),
+    ("Café em grãos torrados superior 1kg", "Superior"),
+    # pesquisa de 18/10/2026 (IN MAPA 8/2003, Portaria SDA 570/2022, editais reais)
+    ("Café torrado e moído, bebida mole a dura, tipo 6", "Sem exigência"),  # faixa que aceita café comercial
+    ("Café com classificação de bebida mole a rio", "Sem exigência"),
+    ("Café torrado bebida estritamente mole", "Gourmet/especial"),
+    ("Café torrado e moído, grupo especial, subgrupo empeliculado", "Sem exigência"),  # termo de classificação
+    ("Café torrado e moído, Melitta especial ou equivalente", "Sem exigência"),  # marca, não categoria
+    ("Café, cor padrão SCA 55, torra escura", "Sem exigência"),  # cor de torra, não nota
+    ("Café torrado e moído, padrões definidos pela BSCA/SCA, 100% arábica especial", "Gourmet/especial"),
+    ("Café solúvel 200g", None),  # solúvel/cápsula/bebida não entram na comparação por qualidade
+    ("Cápsula de café 100% arábica", None),
+])
+def test_nivel_de_exigencia(desc: str, nivel: str | None) -> None:
+    item = cafe.classificar(desc, "Pacote")
+    assert item is not None and item.nivel == nivel
+
+
+def test_exigencias_que_mexem_no_custo() -> None:
+    assert "Sem PVA (grãos selecionados)" in cafe.exigencias(cafe.norm("isento de grãos pretos, verdes e ardidos"))
+    assert "Aceita conilon/blend" in cafe.exigencias(cafe.norm("blend de arábica e conilon"))
+    assert "Aceita conilon/blend" in cafe.exigencias(cafe.norm("predominantemente arábica"))

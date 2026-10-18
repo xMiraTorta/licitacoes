@@ -4,6 +4,7 @@
     python -m coletor avisar --novas novas.json [--destino .]
     python -m coletor telegram-chat        # lista chats que falaram com o bot (para o TELEGRAM_CHAT_ID)
     python -m coletor distancias           # recalcula distâncias por estrada (só se a origem mudar)
+    python -m coletor reclassificar        # recalcula nível/nota de qualidade no data.json atual (sem PNCP)
 
 Códigos de saída: 0 ok; 2 coleta/publicação bloqueada (dados publicados intactos); 3 falha no aviso.
 """
@@ -18,7 +19,7 @@ from pathlib import Path
 from loguru import logger
 from pydantic import ValidationError
 
-from coletor import coleta, distancias, publicar, telegram
+from coletor import coleta, distancias, montar, publicar, telegram
 from coletor.pncp import ColetaErro
 
 
@@ -35,6 +36,8 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--novas", type=Path, required=True)
     sub.add_parser("telegram-chat", help="mostra os chats que mandaram mensagem ao bot")
     sub.add_parser("distancias", help="recalcula as distâncias por estrada a partir da origem (OSRM)")
+    r = sub.add_parser("reclassificar", help="recalcula nível/nota de qualidade no data.json publicado (sem PNCP)")
+    r.add_argument("--destino", type=Path, default=Path("."))
     args = ap.parse_args(argv)
 
     logger.remove()
@@ -58,13 +61,25 @@ def main(argv: list[str] | None = None) -> int:
         chaves = set(json.loads(args.novas.read_text(encoding="utf-8")))
         por_chave = {c["chave"]: c for c in data.get("compras", [])}
         novas = [por_chave[k] for k in chaves if k in por_chave and not por_chave[k].get("dup_of")]
-        hoje = datetime.fromisoformat(data["gerado_em"]).strftime("%d/%m")
-        abertas = sum(1 for c in data.get("compras", []) if not c.get("dup_of"))
         try:
-            telegram.enviar(telegram.mensagens(novas, abertas, hoje))
+            telegram.enviar(telegram.mensagens(novas, data))
         except telegram.TelegramErro as e:
             logger.error("Aviso no Telegram falhou: {}", e)
             return 3
+        return 0
+
+    if args.cmd == "reclassificar":
+        data = publicar.carregar(args.destino / "data.json")
+        if not data:
+            logger.error("Sem {}: nada para reclassificar", args.destino / "data.json")
+            return 2
+        for c in data["compras"]:
+            montar.reclassificar_nivel(c)
+        try:
+            publicar.gravar(data, args.destino, datetime.fromisoformat(data["gerado_em"]))
+        except ValidationError as e:
+            logger.error("Reclassificação não gravada (dados publicados intactos): {}", e)
+            return 2
         return 0
 
     if args.cmd == "distancias":
