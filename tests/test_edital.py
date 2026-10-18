@@ -147,3 +147,19 @@ def test_categoria_negada_ou_modo_de_preparo() -> None:
     assert cat("não será aceito o sabor extraforte") == ""
     assert cat("moagem adequada ao preparo tradicional por filtragem") == ""
     assert cat("café tradicional, torra média") == "Tradicional"
+
+
+FIXTURES = __import__("pathlib").Path(__file__).parent / "fixtures" / "editais"
+
+
+def test_rar_de_verdade() -> None:
+    """RAR5 (formato dos editais .rar vistos no PNCP), lido pela libarchive da máquina. Falha se ela faltar."""
+    import libarchive  # noqa: F401  (sem a biblioteca do sistema, este teste quebra de propósito)
+    t = edital.texto_de("edital.rar", (FIXTURES / "rar5-solid.rar").read_bytes())
+    assert "000" in t and "001" in t
+
+
+def test_pdf_protegido_aes() -> None:
+    """PDF com proteção AES e senha de abertura vazia: precisa do pacote cryptography."""
+    t = edital.texto_de("TR.pdf", (FIXTURES / "protegido-aes256.pdf").read_bytes())
+    assert "categoria superior" in t
