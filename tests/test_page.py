@@ -109,12 +109,16 @@ def test_my_proposals_board_groups_by_status(page: Page, fixture_url: str) -> No
     wait_ready(page)
     assert page.locator("#n-mine").inner_text() == "2"
     page.click('[data-tab="mine"]')
-    cols = page.locator("#board .col")
-    assert "Favoritas sem status" in cols.nth(0).inner_text() and "Conceição" in cols.nth(0).inner_text()
-    enviada = page.locator('#board .col:has(h3:has-text("Enviada"))')
-    assert enviada.locator(f'.mini[data-ch="{MIXED}"]').count() == 1
-    enviada.locator(".mini").click()
+    grupos = page.locator("#board .stage-g")
+    assert "favoritas sem status" in grupos.nth(0).inner_text().lower() and "Conceição" in grupos.nth(0).inner_text()
+    enviada = page.locator('#board .stage-g:has(h3:has-text("Enviada"))')
+    assert enviada.locator(f'.prop[data-ch="{MIXED}"]').count() == 1
+    page.click('#board [data-stage="Enviada"]')  # etapa escolhida: só ela aparece
+    assert page.locator("#board .prop").count() == 1
+    enviada.locator("[data-open]").click()
     page.locator("#drawer.show").wait_for()
+    sem_rolagem = page.evaluate("document.querySelector('#board').scrollWidth <= document.querySelector('#board').clientWidth")
+    assert sem_rolagem
 
 
 def test_agenda_lists_followed_deadlines(page: Page, fixture_url: str) -> None:
@@ -355,10 +359,10 @@ def test_followed_purchase_stays_on_board_after_leaving_data(page: Page, fixture
     page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
       j.compras = j.compras.filter(c => c.chave !== '%s'); window.__monitor.apply(j); }""" % FIRST)
     page.click('[data-tab="mine"]')
-    card = page.locator(f'#board .mini[data-ch="{FIRST}"]')
+    card = page.locator(f'#board .prop[data-ch="{FIRST}"]')
     assert "Fora dos dados" in card.inner_text() and "Conceição" in card.inner_text()
     assert page.locator("#n-mine").inner_text() == "1"
-    card.click()
+    card.locator("[data-open]").click()
     d = page.locator("#drawer.show")
     d.wait_for()
     d.locator('[data-w="status"]').select_option("Ganha")
@@ -578,3 +582,31 @@ def test_sync_connect_with_key_from_header(browser: Any, fixture_url: str) -> No
     a.click("#syncSave")
     espera_salvo(a)
     assert gh.doc["meus_dados"][FIRST]["fav"] is True and ls(a, SYNCK) == {"token": "boa"}
+
+
+def test_unfavorite_purchase_that_left_the_data(page: Page, fixture_url: str) -> None:
+    """Bug relatado: favorita que saiu dos dados ficava fixa em Minhas propostas (não havia ★ para tirar)."""
+    goto(page, fixture_url)
+    row(page, FIRST).locator('[data-act="fav"]').click()
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
+      j.compras = j.compras.filter(c => c.chave !== '%s'); window.__monitor.apply(j); }""" % FIRST)
+    page.click('[data-tab="mine"]')
+    page.locator(f'#board .prop[data-ch="{FIRST}"] [data-act="fav"]').click()
+    assert page.locator(f'#board .prop[data-ch="{FIRST}"]').count() == 0 and page.locator("#n-mine").inner_text() == "0"
+    assert not ls(page, WFK)[FIRST].get("fav")
+
+
+def test_status_on_card_and_stop_following(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    row(page, FIRST).locator('[data-act="fav"]').click()
+    d = open_detail(page, FIRST)
+    d.locator('[data-w="notas"]').fill("ligar")
+    page.keyboard.press("Escape")
+    page.click('[data-tab="mine"]')
+    page.locator(f'#board .prop[data-ch="{FIRST}"] select').select_option("Em preparação")
+    assert ls(page, WFK)[FIRST]["status"] == "Em preparação"
+    assert page.locator('#board .stage-g:has(h3:has-text("Em preparação")) .prop').count() == 1
+    page.locator(f'#board .prop[data-ch="{FIRST}"] [data-act="unfollow"]').click()
+    w = ls(page, WFK)[FIRST]
+    assert not w.get("fav") and not w.get("status") and w["notas"] == "ligar"  # notas ficam
+    assert page.locator("#board .prop").count() == 0 and page.locator("#n-mine").inner_text() == "0"

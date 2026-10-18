@@ -229,15 +229,29 @@ blockquote{margin:8px 0 0;padding:8px 12px;border-left:3px solid var(--border);c
 .dl dd .l2{white-space:normal}
 .copy{color:var(--accent);font-size:12px;font-weight:650;margin-left:6px;overflow-wrap:anywhere;text-align:left}
 /* ---------- propostas (quadro) */
-.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,1fr);gap:12px;overflow-x:auto;padding-bottom:8px}
-.col{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:10px;min-height:200px}
-.col h3{margin:2px 4px 10px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
-.col h3 i{font-style:normal;color:var(--muted);font-weight:600}
-.mini{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 11px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh)}
-.mini:hover{border-color:var(--accent)}
-.mini .t{font-weight:650;font-size:13.5px}
-.mini .m{font-size:12.5px;color:var(--muted);margin-top:2px}
-.mini .f{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12.5px}
+.board-sum{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 16px;margin-bottom:12px;font-size:13.5px;color:var(--text-2)}
+.stages{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.stages .qc.zero{opacity:.55}
+.stage-g{margin-bottom:18px}
+.stage-g h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 8px;display:flex;gap:8px;align-items:center}
+.stage-g h3 i{font-style:normal;background:var(--surface-3);color:var(--text-2);border-radius:20px;padding:0 8px;letter-spacing:0}
+.props{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.prop{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--sh);min-width:0}
+.prop:hover{border-color:var(--faint)}
+.prop header{display:flex;gap:8px;align-items:flex-start}
+.prop .pt{flex:1;display:flex;flex-direction:column}
+.prop .pt b{font-size:14.5px}
+.prop .pt span{font-size:12.5px;color:var(--muted)}
+.prop .star{margin:-4px 0 0 -6px;flex:none}
+.prop .pf{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px}
+.prop .pf small{display:block;font-size:11px;color:var(--muted);font-weight:600}
+.prop .pl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.prop .pl .sel-tags{margin-top:0}
+.prop .pn{margin:0;font-size:12.5px;color:var(--text-2);background:var(--surface-2);border-radius:8px;padding:6px 9px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.prop footer{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:auto;border-top:1px solid var(--border-2);padding-top:10px}
+.prop footer .pst{width:auto;flex:1;min-width:130px;padding:6px 8px}
+.prop footer .linkbtn{font-size:12.5px;color:var(--muted)}
+.prop footer .linkbtn:hover{color:var(--red)}
 .hint{color:var(--muted);font-size:13px;margin:0 0 14px}
 /* ---------- agenda */
 .day{margin-bottom:16px}
@@ -504,7 +518,7 @@ footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint);fon
     </div>
   </section>
   <section class="panel" id="tab-mine" hidden>
-    <p class="hint">Licitações que você marcou com ★ ou às quais deu um status. Abra uma para mudar o status, o preço e as notas.</p>
+    <p class="hint">Licitações que você marcou com ★ ou às quais deu um status. Mude o status direto no cartão; em “Abrir” você edita preço e notas.</p>
     <div class="board" id="board"></div>
   </section>
   <section class="panel" id="tab-agenda" hidden>
@@ -1031,6 +1045,7 @@ function detailHTML(c) {
         <div class="full"><label for="nt-${c._i}">Notas</label><textarea class="inp" id="nt-${c._i}" data-w="notas" placeholder="Frete, amostra, contato do pregoeiro…">${esc(w.notas || '')}</textarea></div>
       </div>
       <div class="calc" data-calc>${calcHTML(c, w)}</div>
+      ${follows(w) ? '<div style="margin-top:10px"><button class="linkbtn" data-act="unfollow">Parar de acompanhar (tira a ★ e o status; preço e notas ficam)</button></div>' : ''}
     </div>
     <div class="card"><h3>Itens de café (${c.itens.length})</h3>${c.itens.map(itemHTML).join('')}</div>
     <div class="card"><h3>Edital</h3>
@@ -1063,6 +1078,7 @@ function goneHTML(chave) {
   const w = WF[chave] || {}, r = w.ref || {}, i = 'g' + chave.replace(/\W/g, '');
   return `<div class="d-head" data-ch="${esc(chave)}">
     <div class="d-top"><div style="min-width:0"><h2>${r.mun ? esc(r.mun) + ' · ' + esc(r.uf) : esc(chave)}</h2><div class="org">${esc(r.orgao || '')}</div></div>
+      <button class="star ${w.fav ? 'on' : ''}" data-act="fav" aria-label="Favorito">${w.fav ? '★' : '☆'}</button>
       <button class="d-close" data-act="close" aria-label="Fechar">×</button></div>
     <div class="d-meta"><span class="pill closed"><span class="dot"></span>Fora dos dados</span><span class="l2">· prazo ${fmtDate(r.fim)}</span></div>
     <div class="d-actions"><a class="btn primary" href="${esc(r.link || pncpLink(chave))}" target="_blank" rel="noopener">Abrir no PNCP ↗</a></div>
@@ -1074,7 +1090,7 @@ function goneHTML(chave) {
       <div><label for="pr-${i}">Meu preço (R$/kg)</label><input class="inp num" id="pr-${i}" data-w="preco" inputmode="decimal" value="${w.preco != null ? NF2.format(w.preco) : ''}"></div>
       <div class="full"><label for="rs-${i}">Responsável</label><input class="inp" id="rs-${i}" data-w="resp" value="${esc(w.resp || '')}"></div>
       <div class="full"><label for="nt-${i}">Notas</label><textarea class="inp" id="nt-${i}" data-w="notas">${esc(w.notas || '')}</textarea></div>
-    </div></div>
+    </div>${follows(w) ? '<div style="margin-top:10px"><button class="linkbtn" data-act="unfollow">Parar de acompanhar (tira a ★ e o status; preço e notas ficam)</button></div>' : ''}</div>
     <div class="card"><h3>Dados</h3><dl class="dl"><dt>Chave PNCP</dt><dd>${esc(chave)} <button class="copy" data-copy="${esc(chave)}">copiar</button></dd>
       ${r.vcafe != null ? `<dt>Valor estimado (café)</dt><dd>${BRL0(r.vcafe)}</dd>` : ''}</dl></div>
   </div>`;
@@ -1119,27 +1135,51 @@ function refreshDetail() {
 }
 
 /* ---------------- minhas propostas (quadro por status) */
-function miniHTML(c) {
-  const u = urg(c), w = getW(c);
-  return `<div class="mini" data-ch="${esc(c.chave)}"><div class="t">${w.fav ? '<span style="color:#e0a100">★</span> ' : ''}${esc(c.mun)} · ${esc(c.uf)}</div>
-    <div class="m">${esc(c._orgao)}</div>
-    <div class="f"><span class="pill ${u.cls}">${u.lbl}</span><span class="num">${c.vcafe == null ? '' : BRLc(c.vcafe)}${w.preco ? ' · ' + BRL(w.preco) + '/kg' : ''}</span></div></div>`;
-}
-function goneMiniHTML(k) {
-  const w = WF[k], r = w.ref || {};
-  return `<div class="mini" data-ch="${esc(k)}"><div class="t">${w.fav ? '<span style="color:#e0a100">★</span> ' : ''}${r.mun ? esc(r.mun) + ' · ' + esc(r.uf) : esc(k)}</div>
-    <div class="m">${esc(r.orgao || '')}</div>
-    <div class="f"><span class="pill closed">Fora dos dados</span><span class="num">${r.vcafe == null ? '' : BRLc(r.vcafe)}${w.preco ? ' · ' + BRL(w.preco) + '/kg' : ''}</span></div></div>`;
-}
 const goneKeys = () => Object.keys(WF).filter(k => !BYK[k] && follows(WF[k]))
   .sort((a, b) => ((WF[a].ref || {}).fim || '').localeCompare((WF[b].ref || {}).fim || ''));
+/* Cartão de uma licitação acompanhada (aberta ou já fora dos dados). Ações: ★, status, abrir, parar de acompanhar. */
+function propHTML(k) {
+  const c = BYK[k], w = WF[k] || {}, r = w.ref || {};
+  const mun = c ? c.mun : r.mun, uf = c ? c.uf : r.uf, org = c ? c._orgao : r.orgao, val = c ? c.vcafe : r.vcafe;
+  const u = c ? urg(c) : {cls: 'closed', lbl: 'Fora dos dados'};
+  const x = c && c._cmp, m = c && w.preco ? margin(c, w) : null;
+  return `<article class="prop" data-ch="${esc(k)}">
+    <header><button class="star ${w.fav ? 'on' : ''}" data-act="fav" aria-label="${w.fav ? 'Remover dos favoritos' : 'Marcar como favorito'}">${w.fav ? '★' : '☆'}</button>
+      <div class="pt" style="min-width:0"><b>${mun ? esc(mun) + ' · ' + esc(uf) : esc(k)}</b><span>${esc(org || '')}</span></div>
+      <span class="pill ${u.cls}"><span class="dot"></span>${u.lbl}</span></header>
+    <div class="pf num">
+      <div><small>Prazo</small>${c ? fmtPrazo(c.fim) : fmtDate(r.fim)}</div>
+      <div><small>Valor (café)</small>${val != null ? BRLc(val) : '—'}</div>
+      <div><small>Órgão paga</small>${x ? BRL(x.i.rkg) + '/kg ' + pcHTML(c) : '—'}</div>
+      <div><small>Meu preço</small>${w.preco ? BRL(w.preco) + '/kg' + (m != null ? ` <span class="marg ${m >= 0 ? 'pos' : 'neg'}">${PCT(m)}</span>` : '') : '—'}</div>
+    </div>
+    ${c && c._niv ? `<div class="pl">${lvlHTML(c._niv)}${selosHTML(c)}</div>` : ''}
+    ${w.notas ? `<p class="pn">${esc(w.notas)}</p>` : ''}
+    <footer><label class="sr" for="pst-${esc(k)}">Status</label>
+      <select class="inp pst" id="pst-${esc(k)}" data-st="${esc(k)}"><option value="">Sem status</option>${DATA.status_opcoes.map(s => `<option ${w.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
+      <button class="btn" data-open="${esc(k)}">Abrir</button>
+      <button class="linkbtn" data-act="unfollow" title="Tira a estrela e o status; preço e notas continuam guardados">Parar de acompanhar</button></footer>
+  </article>`;
+}
+let BOARD_ST = null;  // etapa escolhida no quadro (null = todas)
 function renderBoard() {
-  const mine = C.filter(c => follows(getW(c))).sort((a, b) => (a._ms ?? 1e15) - (b._ms ?? 1e15));
-  const gone = goneKeys(), st = k => (WF[k] || {}).status || '';
-  const cols = [['Favoritas sem status', ''], ...DATA.status_opcoes.map(s => [s, s])].map(([t, s]) =>
-    [t, mine.filter(c => (getW(c).status || '') === s).map(miniHTML).concat(gone.filter(k => st(k) === s).map(goneMiniHTML))]);
-  $('#board').innerHTML = mine.length || gone.length ? cols.map(([t, L]) => `<div class="col"><h3>${esc(t)} <i>${L.length}</i></h3>${L.join('') || '<div class="l2" style="padding:6px 4px">—</div>'}</div>`).join('')
-    : `<div class="card empty" style="grid-column:1/-1"><p><b>Você ainda não acompanha nenhuma licitação.</b></p><p>Marque ★ nas oportunidades que interessam ou dê um status a elas: elas aparecem aqui, organizadas por etapa.</p></div>`;
+  const abertas = C.filter(c => follows(getW(c))).sort((a, b) => (a._ms ?? 1e15) - (b._ms ?? 1e15)).map(c => c.chave);
+  const todas = abertas.concat(goneKeys()), st = k => (WF[k] || {}).status || '';
+  const etapas = [['', 'Favoritas sem status'], ...DATA.status_opcoes.map(s => [s, s])];
+  if (BOARD_ST != null && !etapas.some(([s]) => s === BOARD_ST)) BOARD_ST = null;
+  if (!todas.length) {
+    $('#board').innerHTML = `<div class="card empty"><p><b>Você ainda não acompanha nenhuma licitação.</b></p><p>Marque ★ nas oportunidades que interessam ou dê um status a elas: elas aparecem aqui, organizadas por etapa.</p><button class="btn primary" data-go="list">Ver oportunidades</button></div>`;
+    return;
+  }
+  const val = abertas.reduce((a, k) => a + (BYK[k].vcafe || 0), 0), prox = abertas.find(k => isOpen(BYK[k]));
+  const resumo = `<div class="board-sum"><div><b>${todas.length}</b> acompanhada${todas.length === 1 ? '' : 's'}${todas.length > abertas.length ? ` <span class="l2">(${todas.length - abertas.length} fora dos dados)</span>` : ''}</div>
+    <div>Valor em café das abertas: <b>${BRLc(val)}</b></div>
+    ${prox ? `<div>Próximo prazo: <b>${esc(BYK[prox].mun)} · ${esc(BYK[prox].uf)}</b> <span class="pill ${urg(BYK[prox]).cls}">${urg(BYK[prox]).lbl}</span></div>` : ''}</div>`;
+  const chips = `<div class="stages" role="tablist" aria-label="Etapas"><button class="qc" data-stage="__all" aria-pressed="${BOARD_ST == null}">Todas<i>${todas.length}</i></button>${etapas.map(([s, t]) => {
+    const n = todas.filter(k => st(k) === s).length; return `<button class="qc ${n ? '' : 'zero'}" data-stage="${esc(s)}" aria-pressed="${BOARD_ST === s}">${esc(t)}<i>${n}</i></button>`; }).join('')}</div>`;
+  const grupos = etapas.filter(([s]) => BOARD_ST == null || BOARD_ST === s).map(([s, t]) => [t, todas.filter(k => st(k) === s)]).filter(([, L]) => L.length);
+  $('#board').innerHTML = resumo + chips + (grupos.length ? grupos.map(([t, L]) => `<section class="stage-g"><h3>${esc(t)} <i>${L.length}</i></h3><div class="props">${L.map(propHTML).join('')}</div></section>`).join('')
+    : '<div class="card empty"><p>Nenhuma licitação nesta etapa.</p></div>');
 }
 function renderNavCounts() {
   $('#n-list').textContent = NF0.format(C.filter(c => isOpen(c) && !c.dup_of).length);
@@ -1598,9 +1638,15 @@ function bind() {
       if (a === 'spec') { const p = act.previousElementSibling; p.classList.toggle('clamp'); act.textContent = p.classList.contains('clamp') ? 'Ver especificação completa' : 'Mostrar menos'; return; }
       if (!host) return;
       const ch = host.dataset.ch, c = BYK[ch];
+      if (a === 'unfollow') {
+        setW(ch, {fav: false, status: ''}); toast('Saiu de Minhas propostas (preço e notas continuam guardados)');
+        rerenderRow(ch); renderKPIs(); renderQuick(); renderNavCounts(); if (OPENED === ch) refreshDetail();
+        if (!$('#tab-mine').hidden) renderBoard();
+        return;
+      }
       if (a === 'fav') {
-        if (!c) return;
-        const on = !getW(c).fav; setW(ch, {fav: on}); toast(on ? '★ Adicionada aos favoritos' : 'Removida dos favoritos');
+        if (!c && !temAnotacao(WF[ch])) return;
+        const on = !(WF[ch] || {}).fav; setW(ch, {fav: on}); toast(on ? '★ Adicionada aos favoritos' : 'Removida dos favoritos');
         rerenderRow(ch); renderKPIs(); renderQuick(); renderNavCounts(); if (OPENED === ch) refreshDetail();
         if (!$('#tab-mine').hidden) renderBoard();
         return;
@@ -1616,6 +1662,18 @@ function bind() {
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('#dash [data-cf], #dash .orow')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', {bubbles: true})); }
     if (e.key === '/' && !e.target.closest('input,textarea,select')) { e.preventDefault(); $('#q').focus(); }
     if (e.key === 'Escape') { if (OPENED) closeDetail(); else openFilters(false); }
+  });
+  const board = $('#board');
+  board.addEventListener('click', e => {
+    const sg = e.target.closest('[data-stage]');
+    if (sg) { BOARD_ST = sg.dataset.stage === '__all' ? null : sg.dataset.stage; renderBoard(); return; }
+    const op = e.target.closest('[data-open]'); if (op) { openDetail(op.dataset.open); return; }
+    const g = e.target.closest('[data-go]'); if (g) showTab(g.dataset.go);
+  });
+  board.addEventListener('change', e => {
+    const k = e.target.dataset.st; if (!k) return;
+    setW(k, {status: e.target.value}); toast(e.target.value ? `Status: ${e.target.value}` : 'Status removido');
+    rerenderRow(k); renderKPIs(); renderQuick(); renderNavCounts(); renderBoard();
   });
   $('#agendaChips').addEventListener('click', e => { const b = e.target.closest('[data-ag]'); if (!b) return; UI.agendaAll = b.dataset.ag === '1'; saveUI(); renderAgenda(); });
   const drawer = $('#drawer');
