@@ -1,0 +1,38 @@
+# Publica o site no GitHub Pages. Desde 18/10/2026 a fonte do Pages é "GitHub Actions" (Settings > Pages):
+# sem este workflow, nada do que vai para a main aparece no site.
+# Roda a cada mudança nos arquivos publicados (coleta diária, preços de mercado, mudanças no site) e no botão manual.
+name: Publicar site
+
+on:
+  push:
+    branches: [main]
+    paths: [index.html, data.json, .nojekyll, .github/workflows/pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true # só a versão mais nova interessa
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Separar os arquivos do site
+        run: |
+          mkdir -p _site
+          cp index.html data.json .nojekyll _site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
