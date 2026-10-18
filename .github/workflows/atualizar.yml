@@ -33,9 +33,13 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      PAINEL_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
     steps:
       - uses: actions/checkout@v5
+
+      # Endereço do site para o link do Telegram. github.event.repository vem vazio no agendamento,
+      # então o nome sai de GITHUB_REPOSITORY ("dono/repo"); o domínio do Pages é em minúsculas.
+      - name: Endereço do site
+        run: echo "PAINEL_URL=https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
 
       - uses: actions/setup-python@v6
         with:
@@ -72,7 +76,10 @@ jobs:
             echo "Nada mudou nos dados."
           else
             git commit -m "Atualiza licitações de café – $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M') (Brasília)"
-            git push
+            # A coleta leva ~1 h; se a main mudou nesse tempo (outro commit), traz antes de enviar.
+            # Conflito nos dados (ex.: a reserva já publicou) faz o passo falhar e avisa: não sobrescreve.
+            git pull --rebase origin main
+            git push origin HEAD:main
             # Commits feitos com o GITHUB_TOKEN podem não disparar o GitHub Pages sozinhos: pede o build.
             curl -sS -o /dev/null -w "Pages build: HTTP %{http_code}\n" -X POST \
               -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
@@ -88,9 +95,11 @@ jobs:
             .venv/bin/python -m coletor avisar --novas novas.json
           fi
 
+      # Também quando o job estoura o tempo ou é cancelado. O texto não afirma se houve publicação:
+      # a falha pode ter sido antes (dados anteriores mantidos) ou depois (só o aviso falhou).
       - name: Avisar falha no Telegram
-        if: failure() && env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        if: (failure() || cancelled()) && env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
         run: |
-          curl -sS -o /dev/null -w "%{http_code}\n" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+          curl -sS -f -o /dev/null -w "Telegram: HTTP %{http_code}\n" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=⚠️ A atualização das licitações de café falhou. O painel continua com os dados anteriores. Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --data-urlencode "text=⚠️ A atualização das licitações falhou ou foi interrompida. Se a coleta não chegou a publicar, o painel segue com os dados anteriores e a reserva tenta de novo por volta de 10h40 nos dias úteis. Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
