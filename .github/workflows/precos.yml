@@ -1,11 +1,14 @@
-# Preços de mercado, uma vez por semana (decisão do dono em 18/10/2026), ~3 min, grátis:
-# café verde por nível (CEPEA e Carvalhaes, coletor/mercado.py) e varejo das marcas citadas nos editais
-# (lojas online, coletor/varejo.py). Cada parte que falhar mantém os valores anteriores; o que deu certo é publicado.
+# Preços de mercado (decisões do dono em 18/10/2026), grátis:
+# - café verde por nível (CEPEA e Carvalhaes, coletor/mercado.py): todo dia útil, 2 vezes (as cotações do mercado
+#   físico saem uma vez por dia, com o fechamento; a de 18h47 pega o fechamento do dia, a de 7h13 o que saiu tarde);
+# - varejo das marcas citadas nos editais (lojas online, coletor/varejo.py): uma vez por semana (segunda cedo).
+# Cada parte que falhar mantém os valores anteriores; o que deu certo é publicado.
 name: Atualizar preços de mercado
 
 on:
   schedule:
-    - cron: "23 9 * * 1" # segunda 6h23 de Brasília, antes da coleta diária (8h07)
+    - cron: "13 10 * * 1-5" # 7h13 de Brasília, seg a sex: café verde (e varejo na segunda), antes da coleta das 8h07
+    - cron: "47 21 * * 1-5" # 18h47 de Brasília, seg a sex: café verde com o fechamento do dia
   workflow_dispatch:
 
 permissions:
@@ -32,12 +35,16 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/pip install --quiet -r requirements.txt
+      - name: Dia da semana (1 = segunda)
+        run: echo "DIA_SEMANA=$(TZ=America/Sao_Paulo date +%u)" >> "$GITHUB_ENV"
       - name: Café verde por nível
         id: mercado
         continue-on-error: true
         run: .venv/bin/python -m coletor mercado
       - name: Varejo das marcas
         id: varejo
+        # semanal: só na rodada das 7h13 de segunda (ou no botão "Run workflow")
+        if: github.event_name == 'workflow_dispatch' || (github.event.schedule == '13 10 * * 1-5' && env.DIA_SEMANA == '1')
         continue-on-error: true
         run: .venv/bin/python -m coletor varejo
       - name: Conferir dados gerados
@@ -67,4 +74,4 @@ jobs:
         run: |
           curl -sS -f -o /dev/null -w "Telegram: HTTP %{http_code}\n" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=⚠️ A atualização semanal dos preços de mercado (café verde por nível ou varejo das marcas) falhou em parte. O que falhou segue com os valores anteriores, com a data deles. Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --data-urlencode "text=⚠️ A atualização dos preços de mercado (café verde por nível ou varejo das marcas) falhou em parte. O que falhou segue com os valores anteriores, com a data deles. Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

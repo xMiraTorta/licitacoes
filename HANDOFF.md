@@ -12,6 +12,10 @@ CNAEs do dono: 1081-3/02 (torrefação e moagem de café, principal), 4611-7/00 
 ## Escopo aprovado
 O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. Segredos do Telegram cadastrados pelo dono (confirmado pelo envio do aviso de falha do run #1). Não autorizado: ampliar para outros CNAEs.
 
+## Sessão 18/10/2026 (8): café verde todo dia
+- Pedido do dono: o preço do café muda todo dia (bolsa). `precos.yml` agora roda o café verde todo dia útil às 7h13 (antes da coleta das 8h07, que manda o Telegram com margem) e às 18h47 (fechamento do dia); varejo das marcas continua semanal (segunda 7h13). Fontes físicas (Carvalhaes, CEPEA) publicam uma cotação por dia, no fechamento; preço "a todo momento" só da bolsa de Nova York (contrato futuro, em US$), que não é o preço físico por tipo de bebida.
+- Site mostra a data da cotação (Carvalhaes), não só a data em que o arquivo foi gravado.
+
 ## Sessão 18/10/2026 (7): custo e margem, preços semanais (pedido do dono)
 - **Dados do dono**: grão da fazenda ou comprado (depende); torra terceirizada ~R$ 5/kg com perda ~18%; embalagem ~R$ 5/kg; empresa nova no Simples Nacional em MG; margem variável (quer ver a margem de cada oferta ao preço do órgão).
 - **3 pesquisas (agentes, ~640 mil tokens no total)**, guardadas em `docs/pesquisas/`: grão por nível (CEPEA + Carvalhaes; receita de blend pelas Res. SAA-SP 28/30/31-2007), frete (42 cotações Jadlog saindo de Uberaba + piso ANTT Res. 6.084/2026), impostos e outros custos (Simples Anexo II 4,5%, sem DIFAL, sem ST em MG; plataformas; custo financeiro; perdas).
