@@ -482,10 +482,22 @@ class FakeGitHub:
         self.sha = 0
         self.puts = 0
         self.conflitos = conflitos  # quantos PUTs responder 409 (alguém gravou no meio)
+        self.branch = False  # a branch "dados" só existe depois que o site a cria
 
     def handler(self, route: Any) -> None:
         req = route.request
         auth = req.headers.get("authorization", "")
+        if "/branches/dados" in req.url:
+            route.fulfill(status=200 if self.branch else 404, json={"name": "dados"} if self.branch else {"message": "Branch not found"})
+            return
+        if "/git/ref/heads/main" in req.url:
+            route.fulfill(status=200, json={"object": {"sha": "abc"}})
+            return
+        if req.url.endswith("/git/refs"):
+            assert json.loads(req.post_data or "{}")["ref"] == "refs/heads/dados"
+            self.branch = True
+            route.fulfill(status=201, json={"ref": "refs/heads/dados"})
+            return
         if "/contents/" not in req.url:  # GET /repos/dono/repo (teste da chave)
             ok = auth == "Bearer boa"
             route.fulfill(status=200 if ok else 401, json={"permissions": {"push": True}} if ok else {"message": "Bad credentials"})
@@ -503,6 +515,8 @@ class FakeGitHub:
         elif self.conflitos or (self.doc is not None and body.get("sha") != str(self.sha)):
             self.conflitos = max(0, self.conflitos - 1)
             route.fulfill(status=409, json={"message": "conflict"})
+        elif body.get("branch") != "dados" or not self.branch:
+            route.fulfill(status=404, json={"message": "Branch not found"})
         else:
             self.doc = json.loads(base64.b64decode(body["content"]).decode())
             self.sha += 1
@@ -531,7 +545,7 @@ def test_sync_saves_to_github_and_second_device_sees_it(browser: Any, fixture_ur
     a = aparelho(browser, fixture_url, gh)
     row(a, FIRST).locator('[data-act="fav"]').click()
     espera_salvo(a)
-    assert gh.doc and gh.doc["meus_dados"][FIRST]["fav"] is True
+    assert gh.doc and gh.doc["meus_dados"][FIRST]["fav"] is True and gh.branch  # criou a branch "dados"
     assert "Salvo no GitHub" in a.locator("#syncLbl").inner_text()
     b = aparelho(browser, fixture_url, gh)  # outro aparelho, navegador vazio
     b.wait_for_function(f"document.querySelector('#list .row[data-ch=\"{FIRST}\"] .star.on')")

@@ -1359,16 +1359,17 @@ function renderAbout() {
    <li>${naoPlat} sem plataforma identificada automaticamente (aparece “ver edital”).</li>
    <li>${semEd} sem edital lido: só a descrição do item está disponível.</li>
    <li>${dup} marcadas como possível duplicata (${dupH} ficam ocultas por padrão).</li></ul></div>
-  <div class="card"><h3>Seus dados</h3><p>Favoritos, status, preços, responsável, notas, checklist e pisos são gravados <b>sozinhos no GitHub</b>, no arquivo <code>${esc(SYNC_PATH)}</code> deste repositório (público: qualquer pessoa pode ver), e sincronizam entre celular e computador. Cada gravação fica no histórico do GitHub, de onde dá para recuperar versões antigas. Para gravar, cada aparelho precisa da sua chave de acesso uma vez: botão no topo da página (“Só neste aparelho” / “Salvo no GitHub”).</p></div>`;
+  <div class="card"><h3>Seus dados</h3><p>Favoritos, status, preços, responsável, notas, checklist e pisos são gravados <b>sozinhos no GitHub</b>, no arquivo <code>${esc(SYNC_PATH)}</code> da branch <code>${SYNC_BRANCH}</code> deste repositório (público: qualquer pessoa pode ver), e sincronizam entre celular e computador. Cada gravação fica no histórico do GitHub, de onde dá para recuperar versões antigas. Para gravar, cada aparelho precisa da sua chave de acesso uma vez: botão no topo da página (“Só neste aparelho” / “Salvo no GitHub”).</p></div>`;
 }
 
 /* ---------------- gravação automática das anotações no GitHub
-   Arquivo dados/meus-dados.json na branch main deste repositório (público por decisão do dono: as anotações
-   ficam visíveis). Grava pela API do GitHub com uma chave de acesso que fica SÓ neste navegador.
+   Arquivo dados/meus-dados.json na branch "dados" deste repositório (público por decisão do dono: as anotações
+   ficam visíveis). Branch própria porque cada gravação na main reconstruiria o GitHub Pages (limite de ~10 por
+   hora), o que poderia atrasar a publicação diária dos dados. O próprio site cria a branch na primeira gravação. Grava pela API do GitHub com uma chave de acesso que fica SÓ neste navegador.
    Junta aparelhos por item: vale a alteração mais recente (campo upd); remoção vira {upd} (marca de removido).
    Checklist e pisos: vale o conjunto alterado por último (upd em SYNCMETA). */
 const SYNCK = PFX + 'github.v1', SYNCMETA = PFX + 'sync.v1', PRESYNC = PFX + 'antesDaSincronizacao.v1';
-const SYNC_PATH = 'dados/meus-dados.json', SYNC_ATRASO = 2000, MARCA_DIAS = 180;
+const SYNC_PATH = 'dados/meus-dados.json', SYNC_BRANCH = 'dados', SYNC_ATRASO = 3000, MARCA_DIAS = 180;
 const REPO = (() => {
   const h = location.hostname.match(/^([\w-]+)\.github\.io$/i), p = location.pathname.split('/').filter(Boolean)[0];
   if (h && p) return h[1] + '/' + p;
@@ -1410,12 +1411,22 @@ function aplicar(j) {
 }
 const b64enc = s => { const b = new TextEncoder().encode(s); let r = ''; for (let i = 0; i < b.length; i += 8192) r += String.fromCharCode.apply(null, b.subarray(i, i + 8192)); return btoa(r); };
 const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g, '')), c => c.charCodeAt(0)));
-async function gh(method, body) {
+async function gh(method, body, caminho = `contents/${SYNC_PATH}`) {
   const h = {Accept: 'application/vnd.github+json'};
   if (SY.token) h.Authorization = 'Bearer ' + SY.token;
   if (body) h['Content-Type'] = 'application/json';
-  return fetch(`https://api.github.com/repos/${REPO}/contents/${SYNC_PATH}` + (method === 'GET' ? '?ref=main&t=' + Date.now() : ''),
-    {method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store'});
+  const q = method === 'GET' && caminho.startsWith('contents/') ? `?ref=${SYNC_BRANCH}&t=${Date.now()}` : '';
+  return fetch(`https://api.github.com/repos/${REPO}/${caminho}${q}`, {method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store'});
+}
+/* Cria a branch "dados" a partir da main, se ainda não existir (primeira gravação). */
+async function garantirBranch() {
+  const b = await gh('GET', null, `branches/${SYNC_BRANCH}`);
+  if (b.ok) return;
+  if (b.status !== 404) throw new Error(b.status === 401 || b.status === 403 ? 'chave' : 'HTTP ' + b.status);
+  const m = await gh('GET', null, 'git/ref/heads/main');
+  if (!m.ok) throw new Error('HTTP ' + m.status);
+  const r = await gh('POST', {ref: 'refs/heads/' + SYNC_BRANCH, sha: (await m.json()).object.sha}, 'git/refs');
+  if (!r.ok && r.status !== 422) throw new Error(r.status === 401 || r.status === 403 ? 'chave' : 'HTTP ' + r.status);  // 422: já existe
 }
 async function lerRemoto() {
   const r = await gh('GET');
@@ -1441,7 +1452,8 @@ async function syncAgora(soLer = false) {
       SY.estado = 'salvando'; syncUI();
       const novo = {app: 'monitor-licitacoes', versao: 2, atualizado_em: agoraISO(), meus_dados: j.md,
         checklist: {itens: j.cl, upd: j.clu}, pisos: {valores: j.pi, upd: j.piu}};
-      const r = await gh('PUT', {message: 'Minhas anotações (salvo pelo site)', content: b64enc(JSON.stringify(novo, null, 1) + '\n'), branch: 'main', ...(sha ? {sha} : {})});
+      if (!sha) await garantirBranch();
+      const r = await gh('PUT', {message: 'Minhas anotações (salvo pelo site)', content: b64enc(JSON.stringify(novo, null, 1) + '\n'), branch: SYNC_BRANCH, ...(sha ? {sha} : {})});
       if (r.ok) {
         SY.quando = agoraISO(); SY.erro = '';
         if (SY.mudancas === feitas) { META.pendente = false; lset(SYNCMETA, META); SY.estado = 'ok'; }
@@ -1467,11 +1479,11 @@ function syncUI() {
   const lbl = {ok: 'Salvo no GitHub', salvando: 'Salvando…', erro: 'Erro ao salvar', local: 'Só neste aparelho'}[st];
   $('#syncDot').className = 'sdot ' + st; $('#syncLbl').textContent = lbl;
   $('#syncBtn').title = lbl + (SY.quando ? ' · ' + new Date(SY.quando).toLocaleString('pt-BR', {timeZone: TZ, dateStyle: 'short', timeStyle: 'short'}) : '');
-  const hist = REPO ? `https://github.com/${REPO}/commits/main/${SYNC_PATH}` : '';
+  const hist = REPO ? `https://github.com/${REPO}/commits/${SYNC_BRANCH}/${SYNC_PATH}` : '';
   $('#syncPop').innerHTML = !REPO ? `<small>Gravação no GitHub disponível só no site publicado. Aqui as anotações ficam neste navegador.</small>`
     : `<small><b>${esc(lbl)}</b>${SY.quando ? ' em ' + esc(new Date(SY.quando).toLocaleString('pt-BR', {timeZone: TZ, dateStyle: 'short', timeStyle: 'short'})) : ''}.
       ${SY.erro ? '<br>' + esc(SY.erro) : ''}
-      Favoritos, status, preços, notas, checklist e pisos são gravados sozinhos em <code>${esc(SYNC_PATH)}</code> no repositório (visível ao público).
+      Favoritos, status, preços, notas, checklist e pisos são gravados sozinhos em <code>${esc(SYNC_PATH)}</code>, na branch <code>${SYNC_BRANCH}</code> do repositório (visível ao público; não apague essa branch).
       Cada gravação fica no <a href="${esc(hist)}" target="_blank" rel="noopener">histórico</a>, então dá para recuperar versões antigas.</small>
     ${SY.token ? `<button id="syncNow">↻ Sincronizar agora</button><button id="syncOff">Desconectar este aparelho</button>`
       : `<div class="sync-form"><label for="syncTok">Chave de acesso do GitHub (só fica neste aparelho)</label>
