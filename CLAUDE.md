@@ -12,11 +12,11 @@
 - **Reserva**: tarefa agendada do Claude Code na nuvem (dias úteis ~10h40 BRT): se a execução do dia no GitHub falhou, roda a coleta numa sessão de nuvem, faz push na `main` com `avisos/pendentes.json`, e o `avisar.yml` manda o Telegram. Custo: cota do plano Claude do dono, só nos dias de falha (e uma checagem curta nos outros).
 - `coletor/municipios.csv`: coordenadas IBGE (base kelvins/municipios-brasileiros, MIT).
 - `coletor/distancias_uberaba.csv`: km e minutos por estrada de Uberaba-MG até cada sede municipal (OSRM/OpenStreetMap, gratuito, calculado uma vez com `python -m coletor distancias`; recalcular só se a origem mudar). Google Maps/Waze descartados: pago com cartão / sem API pública.
-- `coletor/cache/sem_cafe.json`: candidatas já verificadas sem café (pula na próxima coleta se não mudaram no PNCP).
+- `coletor/cache/sem_cafe.json`: `{versao, itens}` com as candidatas já verificadas sem café (pula na próxima coleta se não mudaram no PNCP). Mudou a regra do que é café? Suba `VERSAO_REGRAS` em `cafe.py` (o cache antigo é descartado).
 
 ### Contratos que não podem quebrar
 - Identificador de compra: `chave` (= `numeroControlePNCP`, ex. `18243295000192-1-000080/2026`). Os dados pessoais do navegador são indexados por ele.
-- Chaves do `localStorage`: `monitorLicitacoes.meusDados.v1` (`{chave: {fav,status,preco,resp,notas,upd}}`), `monitorLicitacoes.ui.v1`, `monitorLicitacoes.checklist.v1` (`{índice: 1}`, indexado pela **posição** em `checklist`: não reordene `checklist`), `monitorLicitacoes.antesDaImportacao.v1` (retrato antes de importar), `*.ilegivel.<data>` (cópia de dado corrompido).
+- Chaves do `localStorage`: `monitorLicitacoes.meusDados.v1` (`{chave: {fav,status,preco,resp,notas,upd,ref}}`; `ref` = retrato mun/uf/orgao/fim/vcafe/link para o quadro mostrar a proposta depois que a compra sai dos dados), `monitorLicitacoes.ui.v1`, `monitorLicitacoes.checklist.v1` (`{índice: 1}`, indexado pela **posição** em `checklist`: não reordene `checklist`), `monitorLicitacoes.antesDaImportacao.v1` (retrato antes de importar), `*.ilegivel.<data>` (cópia de dado corrompido).
 - Backup exportado: `{app:'monitor-licitacoes', versao:1, exportado_em, meus_dados, checklist}`. A importação aceita qualquer arquivo com `meus_dados`.
 - Formato de `data.json`: `coletor/modelos.py` (validado antes de gravar). Ausente/sigiloso é `null`, nunca 0. `vcafe` exclui cestas (vão em `vcesta`).
 

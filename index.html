@@ -468,9 +468,9 @@ const todayYMD = () => dFmt.format(new Date());
 function fmtPrazo(iso, withWd = true) {
   if (!iso) return '—';
   const d = new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)));
-  return (withWd ? WD[d.getUTCDay()] + ' ' : '') + iso.slice(8, 10) + '/' + iso.slice(5, 7) + (iso.length > 10 ? ' ' + iso.slice(11, 16) : '');
+  return esc((withWd ? WD[d.getUTCDay()] + ' ' : '') + iso.slice(8, 10) + '/' + iso.slice(5, 7) + (iso.length > 10 ? ' ' + iso.slice(11, 16) : ''));
 }
-const fmtDate = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) + (iso.length > 10 ? ' ' + iso.slice(11, 16) : '') : '—';
+const fmtDate = iso => iso ? esc(iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) + (iso.length > 10 ? ' ' + iso.slice(11, 16) : '')) : '—';
 const fmtMin = m => m == null ? '' : m < 60 ? m + ' min' : Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0');
 const SMALL = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'a', 'o', 'na', 'no', 'nas', 'nos', 'para', 'por', 'com']);
 const KEEP = /^(MG|SP|GO|RJ|BA|PR|SC|RS|ES|MT|MS|DF|PE|CE|PI|PA|AM|AP|RR|RO|AC|TO|MA|RN|PB|AL|SE|II|III|IV|VI|VII|VIII|IX|XI|XII|XIII|UFMG|UFU|UFTM|IFTM|SAAE|DMAE|CRAS|SESC|SENAI|SEBRAE|UASG|ME|EPP|PMMG|CBMMG|TRT|TRE|TJ|MPF|INSS|IBGE|UF|UFV|UFLA|CEFET|COPASA|SUS|SAMU|CIS|CISA|UPA|APAE|CEMIG|IF|HC|EBSERH|FUNASA|IFMG|IFSP|IFGO|USP|UNESP|UNICAMP|UFG|UFBA|UFPE|UFRJ|UFF|UNB)$/;
@@ -512,12 +512,16 @@ const PFX = 'monitorLicitacoes.';
 const PREIMP = PFX + 'antesDaImportacao.v1';
 const WFK = PFX + 'meusDados.v1', UIK = PFX + 'ui.v1', CLK = PFX + 'checklist.v1';
 let WF = lget(WFK, {});
-const getW = c => WF[c.chave] || {};
+const getW = c => (c && WF[c.chave]) || {};
+/* "ref": retrato da licitação (local, órgão, prazo) para o quadro "Minhas propostas" continuar
+   mostrando a proposta depois que ela sai dos dados (prazo encerrado, revogada, suspensa). */
+const refOf = c => ({mun: c.mun, uf: c.uf, orgao: c._orgao, fim: c.fim, vcafe: c.vcafe, link: c.link_pncp});
 function setW(chave, patch) {
   const c = BYK[chave];
-  const w = Object.assign({}, getW(c), patch, {upd: new Date().toISOString()});
+  const w = Object.assign({}, WF[chave] || {}, patch, {upd: new Date().toISOString()});
+  if (c) w.ref = refOf(c);
   for (const k of Object.keys(w)) if (w[k] === '' || w[k] == null || w[k] === false) delete w[k];
-  if (Object.keys(w).filter(k => k !== 'upd').length) WF[chave] = w; else delete WF[chave];
+  if (Object.keys(w).some(k => k !== 'upd' && k !== 'ref')) WF[chave] = w; else delete WF[chave];
   lset(WFK, WF);
 }
 const follows = w => !!(w.fav || w.status);
@@ -754,12 +758,14 @@ function renderList() {
   $('#sort').value = UI.sort; $('#sort2').value = UI.sort;
 }
 function rerenderRow(chave) {
-  const el = $(`.row[data-ch="${CSS.escape(chave)}"]`); if (!el) return;
-  const t = document.createElement('div'); t.innerHTML = rowHTML(BYK[chave]); el.replaceWith(t.firstElementChild);
+  if (!BYK[chave]) return;
+  $$(`.row[data-ch="${CSS.escape(chave)}"]`).forEach(el => {  // a mesma compra pode estar na lista e na agenda
+    const t = document.createElement('div'); t.innerHTML = rowHTML(BYK[chave]); el.replaceWith(t.firstElementChild);
+  });
 }
 
 /* ---------------- detalhe (painel lateral) */
-let OPENED = null;
+let OPENED = null, flushSave = () => {};  // flushSave: grava o que foi digitado e ainda espera o atraso
 function itemHTML(i) {
   const long = i.espec.length > 280;
   return `<div class="item"><div class="item-h"><span class="n">Item ${esc(i.n)}</span>${esc(i.tipo)}${i.cat ? ` · ${esc(i.cat)}` : ''}${i.emb ? ` · ${esc(i.emb)}` : ''}</div>
@@ -786,6 +792,7 @@ function calcHTML(c, w) {
   if (m != null) s += `<br>Margem vs estimado: <span class="marg ${m >= 0 ? 'pos' : 'neg'}">${PCT(m)}</span> ${m >= 0 ? '(meu preço está abaixo do estimado ✓)' : '(meu preço está acima do estimado)'}`;
   if (c._rk && c._rk.outros.length) s += `<br>Proposta aprox. (só ${esc(c._rk.main.t.toLowerCase())}): <b>${BRL0(w.preco * c._rk.main.kg)}</b> para ${KG(c._rk.main.kg)} (estimado ${BRL0(c._rk.main.v * c._rk.main.kg)})`;
   else if (c.kg) s += `<br>Proposta total aprox.: <b>${BRL0(w.preco * c.kg)}</b> para ${c._parcial ? '≥ ' : ''}${KG(c.kg)}${c.vcafe ? ` (estimado ${BRL0(c.vcafe)})` : ''}`;
+  if (c.itens.some(i => i.conferir && i.kgt != null)) s += '<br><span class="l2">Atenção: há item com provável erro de unidade no edital (marcado "conferir"); confira o volume antes de usar este total.</span>';
   return s;
 }
 function linkBtns(c) {
@@ -848,27 +855,66 @@ function detailHTML(c) {
     </dl></div>
   </div>`;
 }
+const pncpLink = k => { const m = k.match(/^(\d{14})-\d+-(\d+)\/(\d{4})$/); return m ? `https://pncp.gov.br/app/editais/${m[1]}/${m[3]}/${+m[2]}` : 'https://pncp.gov.br/'; };
+/* Licitação acompanhada que não está mais nos dados: só as minhas anotações, editáveis. */
+function goneHTML(chave) {
+  const w = WF[chave] || {}, r = w.ref || {}, i = 'g' + chave.replace(/\W/g, '');
+  return `<div class="d-head" data-ch="${esc(chave)}">
+    <div class="d-top"><div style="min-width:0"><h2>${r.mun ? esc(r.mun) + ' · ' + esc(r.uf) : esc(chave)}</h2><div class="org">${esc(r.orgao || '')}</div></div>
+      <button class="d-close" data-act="close" aria-label="Fechar">×</button></div>
+    <div class="d-meta"><span class="pill closed"><span class="dot"></span>Fora dos dados</span><span class="l2">· prazo ${fmtDate(r.fim)}</span></div>
+    <div class="d-actions"><a class="btn primary" href="${esc(r.link || pncpLink(chave))}" target="_blank" rel="noopener">Abrir no PNCP ↗</a></div>
+  </div>
+  <div class="d-body" data-ch="${esc(chave)}">
+    <div class="note">Esta licitação saiu do monitor (prazo encerrado, revogada ou suspensa). Suas anotações continuam aqui: atualize o status quando souber o resultado.</div>
+    <div class="card"><h3>Minha proposta</h3><div class="mine-grid">
+      <div><label for="st-${i}">Status</label><select class="inp" id="st-${i}" data-w="status"><option value="">—</option>${DATA.status_opcoes.map(s => `<option ${w.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
+      <div><label for="pr-${i}">Meu preço (R$/kg)</label><input class="inp num" id="pr-${i}" data-w="preco" inputmode="decimal" value="${w.preco != null ? NF2.format(w.preco) : ''}"></div>
+      <div class="full"><label for="rs-${i}">Responsável</label><input class="inp" id="rs-${i}" data-w="resp" value="${esc(w.resp || '')}"></div>
+      <div class="full"><label for="nt-${i}">Notas</label><textarea class="inp" id="nt-${i}" data-w="notas">${esc(w.notas || '')}</textarea></div>
+    </div></div>
+    <div class="card"><h3>Dados</h3><dl class="dl"><dt>Chave PNCP</dt><dd>${esc(chave)} <button class="copy" data-copy="${esc(chave)}">copiar</button></dd>
+      ${r.vcafe != null ? `<dt>Valor estimado (café)</dt><dd>${BRL0(r.vcafe)}</dd>` : ''}</dl></div>
+  </div>`;
+}
+const canOpen = k => !!(BYK[k] || WF[k]);
 function openDetail(chave, push = true) {
-  const c = BYK[chave]; if (!c) return;
+  if (!canOpen(chave)) return;
+  const c = BYK[chave];
+  if (OPENED && OPENED !== chave) flushSave();
+  const wasOpen = !!OPENED;
   OPENED = chave;
-  const d = $('#drawer'); d.innerHTML = detailHTML(c); d.classList.add('show'); d.setAttribute('aria-hidden', 'false');
+  const d = $('#drawer'); d.innerHTML = c ? detailHTML(c) : goneHTML(chave); d.classList.add('show'); d.setAttribute('aria-hidden', 'false');
   $('#scrim').classList.add('show'); document.body.style.overflow = 'hidden';
   $$('.row.sel-row').forEach(r => r.classList.remove('sel-row'));
-  const row = $(`.row[data-ch="${CSS.escape(chave)}"]`); if (row) row.classList.add('sel-row');
-  if (push && location.hash !== '#c=' + encodeURIComponent(chave)) history.pushState(null, '', '#c=' + encodeURIComponent(chave));
+  $$(`.row[data-ch="${CSS.escape(chave)}"]`).forEach(r => r.classList.add('sel-row'));
+  const h = '#c=' + encodeURIComponent(chave);
+  // Entrada no histórico só ao abrir pelo site; trocar de compra com o painel aberto (duplicata) substitui,
+  // para o × e o voltar fecharem o painel de uma vez.
+  if (push && location.hash !== h) { if (wasOpen) history.replaceState(history.state, '', h); else history.pushState({drawer: true}, '', h); }
   $('.d-close', d).focus({preventScroll: true});
 }
 function closeDetail(pop = false) {
   if (!OPENED) return;
+  flushSave();
   const ch = OPENED; OPENED = null;
   const d = $('#drawer'); d.classList.remove('show'); d.setAttribute('aria-hidden', 'true');
   $('#scrim').classList.remove('show'); if (!$('#filters').classList.contains('show')) document.body.style.overflow = '';
-  if (!pop && location.hash.startsWith('#c=')) history.back();
+  if (!pop && location.hash.startsWith('#c=')) {
+    // Só volta no histórico se a entrada foi criada pelo site; aberto por link direto, só limpa o endereço.
+    if (history.state && history.state.drawer) history.back(); else history.replaceState(null, '', location.pathname + location.search);
+  }
   renderKPIs(); renderQuick(); rerenderRow(ch); renderNavCounts();
   if (!$('#tab-mine').hidden) renderBoard();
   if (!$('#tab-agenda').hidden) renderAgenda();
 }
-function refreshDetail() { if (OPENED) { const st = $('.d-body', $('#drawer'))?.scrollTop; $('#drawer').innerHTML = detailHTML(BYK[OPENED]); const b = $('.d-body', $('#drawer')); if (b && st) b.scrollTop = st; } }
+function refreshDetail() {
+  if (!OPENED) return;
+  if (!canOpen(OPENED)) { closeDetail(); return; }
+  const st = $('.d-body', $('#drawer'))?.scrollTop;
+  $('#drawer').innerHTML = BYK[OPENED] ? detailHTML(BYK[OPENED]) : goneHTML(OPENED);
+  const b = $('.d-body', $('#drawer')); if (b && st) b.scrollTop = st;
+}
 
 /* ---------------- minhas propostas (quadro por status) */
 function miniHTML(c) {
@@ -877,15 +923,25 @@ function miniHTML(c) {
     <div class="m">${esc(c._orgao)}</div>
     <div class="f"><span class="pill ${u.cls}">${u.lbl}</span><span class="num">${c.vcafe == null ? '' : BRLc(c.vcafe)}${w.preco ? ' · ' + BRL(w.preco) + '/kg' : ''}</span></div></div>`;
 }
+function goneMiniHTML(k) {
+  const w = WF[k], r = w.ref || {};
+  return `<div class="mini" data-ch="${esc(k)}"><div class="t">${w.fav ? '<span style="color:#e0a100">★</span> ' : ''}${r.mun ? esc(r.mun) + ' · ' + esc(r.uf) : esc(k)}</div>
+    <div class="m">${esc(r.orgao || '')}</div>
+    <div class="f"><span class="pill closed">Fora dos dados</span><span class="num">${r.vcafe == null ? '' : BRLc(r.vcafe)}${w.preco ? ' · ' + BRL(w.preco) + '/kg' : ''}</span></div></div>`;
+}
+const goneKeys = () => Object.keys(WF).filter(k => !BYK[k] && follows(WF[k]))
+  .sort((a, b) => ((WF[a].ref || {}).fim || '').localeCompare((WF[b].ref || {}).fim || ''));
 function renderBoard() {
   const mine = C.filter(c => follows(getW(c))).sort((a, b) => (a._ms ?? 1e15) - (b._ms ?? 1e15));
-  const cols = [['Favoritas sem status', mine.filter(c => !getW(c).status)], ...DATA.status_opcoes.map(s => [s, mine.filter(c => getW(c).status === s)])];
-  $('#board').innerHTML = mine.length ? cols.map(([t, L]) => `<div class="col"><h3>${esc(t)} <i>${L.length}</i></h3>${L.map(miniHTML).join('') || '<div class="l2" style="padding:6px 4px">—</div>'}</div>`).join('')
+  const gone = goneKeys(), st = k => (WF[k] || {}).status || '';
+  const cols = [['Favoritas sem status', ''], ...DATA.status_opcoes.map(s => [s, s])].map(([t, s]) =>
+    [t, mine.filter(c => (getW(c).status || '') === s).map(miniHTML).concat(gone.filter(k => st(k) === s).map(goneMiniHTML))]);
+  $('#board').innerHTML = mine.length || gone.length ? cols.map(([t, L]) => `<div class="col"><h3>${esc(t)} <i>${L.length}</i></h3>${L.join('') || '<div class="l2" style="padding:6px 4px">—</div>'}</div>`).join('')
     : `<div class="card empty" style="grid-column:1/-1"><p><b>Você ainda não acompanha nenhuma licitação.</b></p><p>Marque ★ nas oportunidades que interessam ou dê um status a elas: elas aparecem aqui, organizadas por etapa.</p></div>`;
 }
 function renderNavCounts() {
   $('#n-list').textContent = NF0.format(C.filter(c => isOpen(c) && !c.dup_of).length);
-  $('#n-mine').textContent = NF0.format(C.filter(c => follows(getW(c))).length);
+  $('#n-mine').textContent = NF0.format(C.filter(c => follows(getW(c))).length + goneKeys().length);
 }
 
 /* ---------------- agenda de prazos */
@@ -996,7 +1052,11 @@ function csvText() {
   const H = ['Chave PNCP', 'Prazo final', 'Dias restantes', 'UF', 'Município', 'Distância (km, estrada)', 'Órgão', 'Modalidade', 'Número', 'Onde enviar', 'ME/EPP', 'Tipo', 'Categoria', 'Embalagem', 'Qtd café (kg)', 'Valor estimado café (R$)', 'R$/kg estimado', 'Exigências', 'Edital menciona', 'Objeto', 'Nova', 'Possível duplicata', 'Link PNCP', 'Link plataforma', 'Favorito', 'Status', 'Meu preço R$/kg', 'Margem vs estimado', 'Responsável', 'Notas', 'R$/kg refere-se a', 'Tempo de viagem (min)'];
   const rows = LAST.map(c => { const w = getW(c), u = urg(c), m = margin(c, w);
     return [c.chave, fmtDate(c.fim), u.d ?? '', c.uf, c.mun, c.dist ?? '', c._orgao, c.mod, c.num, c.plat, c.me, c.tipos.join('; '), c.cats.join('; '), c.embs, num(c.kg), num(c.vcafe), num(rkV(c)), c.tags.join('; '), c.ed_tags.join('; '), c.objeto, c._new ? 'Sim' : '', c.dup ? 'Sim' : '', c.link_pncp, c.link_plat, w.fav ? 'Sim' : '', w.status || '', num(w.preco), m != null ? NF1.format(m * 100) + '%' : '', w.resp || '', w.notas || '', c._rk ? c._rk.main.t : '', c.dist_min ?? '']; });
-  const q = v => { v = String(v ?? ''); return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const q = v => {
+    v = String(v ?? '');
+    if (/^[=+\-@\t\r]/.test(v) && !/^-?[\d.,]+%?$/.test(v)) v = "'" + v;  // não deixa o Excel tratar como fórmula
+    return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  };
   return {n: rows.length, csv: '﻿' + [H, ...rows].map(r => r.map(q).join(';')).join('\r\n')};
 }
 function exportCSV() { const {n, csv} = csvText(); download(`licitacoes-${todayYMD()}.csv`, csv, 'text/csv;charset=utf-8'); toast(`CSV com ${n} licitações exportado.`); }
@@ -1005,18 +1065,26 @@ function exportJSON() {
   download(`backup-licitacoes-${todayYMD()}.json`, JSON.stringify(payload, null, 1), 'application/json');
   toast(`Backup exportado: ${Object.keys(WF).length} licitações com anotações.`);
 }
+const CHAVE_RX = /^\d{14}-\d+-\d{6}\/\d{4}$/;
 function importText(text) {
-  const j = JSON.parse(text), md = j.meus_dados || j;
+  const j = JSON.parse(text);
+  if (!j || typeof j !== 'object' || Array.isArray(j)) throw new Error('formato');
+  if (j.compras && !j.meus_dados) throw new Error('é o arquivo de dados do site, não um backup');
+  const md = j.meus_dados || j;
   if (typeof md !== 'object' || Array.isArray(md)) throw new Error('formato');
+  const ok = Object.entries(md).filter(([k, v]) => CHAVE_RX.test(k) && v && typeof v === 'object' && !Array.isArray(v));
+  if (!ok.length && Object.keys(md).length) throw new Error('nenhuma anotação reconhecida');
   lset(PREIMP, {salvo_em: new Date().toISOString(), meus_dados: WF, checklist: lget(CLK, {})});
   let n = 0;
-  for (const [k, v] of Object.entries(md)) {
-    if (!v || typeof v !== 'object' || Array.isArray(v)) continue;
+  for (const [k, v] of ok) {
     const cur = WF[k];
     if (!cur || !cur.upd || (v.upd && v.upd > cur.upd)) { WF[k] = v; n++; }
   }
   lset(WFK, WF);
-  if (j.checklist && typeof j.checklist === 'object') lset(CLK, Object.assign(lget(CLK, {}), j.checklist));
+  if (j.checklist && typeof j.checklist === 'object' && !Array.isArray(j.checklist)) {
+    const cl = Object.fromEntries(Object.entries(j.checklist).filter(([k, v]) => /^\d+$/.test(k) && v === 1));
+    lset(CLK, Object.assign(lget(CLK, {}), cl));
+  }
   renderAll();
   return n;
 }
@@ -1147,7 +1215,7 @@ function bind() {
     if (e.target.closest('#fbody,#quick,#kpis,.menu')) return;
     const cp = e.target.closest('[data-copy]'); if (cp) { copy(cp.dataset.copy); return; }
     const go = e.target.closest('[data-goto]');
-    if (go) { F = Object.assign(DEF(), {hideDup: false, hideClosed: false}); setQ(''); showTab('list'); render(); openDetail(go.dataset.goto); return; }
+    if (go) { openDetail(go.dataset.goto); return; }
     const act = e.target.closest('[data-act]');
     const host = e.target.closest('[data-ch]');
     if (act) {
@@ -1157,12 +1225,13 @@ function bind() {
       if (!host) return;
       const ch = host.dataset.ch, c = BYK[ch];
       if (a === 'fav') {
+        if (!c) return;
         const on = !getW(c).fav; setW(ch, {fav: on}); toast(on ? '★ Adicionada aos favoritos' : 'Removida dos favoritos');
         rerenderRow(ch); renderKPIs(); renderQuick(); renderNavCounts(); if (OPENED === ch) refreshDetail();
         if (!$('#tab-mine').hidden) renderBoard();
         return;
       }
-      if (a === 'share') { copy(summary(c)); return; }
+      if (a === 'share') { if (c) copy(summary(c)); return; }
       return;
     }
     if (host && e.target.closest('.row,.mini')) openDetail(host.dataset.ch);
@@ -1175,19 +1244,21 @@ function bind() {
   $('#agendaChips').addEventListener('click', e => { const b = e.target.closest('[data-ag]'); if (!b) return; UI.agendaAll = b.dataset.ag === '1'; saveUI(); renderAgenda(); });
   const drawer = $('#drawer');
   const saveField = el => {
-    const ch = OPENED; if (!ch) return; const c = BYK[ch], k = el.dataset.w;
+    const ch = el.closest('[data-ch]')?.dataset.ch; if (!ch || !canOpen(ch)) return;
+    const c = BYK[ch], k = el.dataset.w;
     let v = el.value;
     if (k === 'preco') {
       const s = v.trim().replace(/[^\d,.]/g, '');
       v = s ? parseFloat(s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s) : null;
-      if (v != null && !(v > 0)) return;
+      if (v != null && !(v > 0)) { toast('Preço não salvo: digite um valor maior que zero (ex.: 45,50).'); return; }
     }
     setW(ch, {[k]: v});
-    const calc = $('[data-calc]', drawer); if (calc) calc.innerHTML = calcHTML(c, getW(c));
+    const calc = $('[data-calc]', drawer); if (calc && c && OPENED === ch) calc.innerHTML = calcHTML(c, getW(c));
   };
-  let st;
-  drawer.addEventListener('input', e => { if (e.target.dataset.w) { clearTimeout(st); const el = e.target; st = setTimeout(() => saveField(el), 350); } });
-  drawer.addEventListener('change', e => { if (e.target.dataset.w) { clearTimeout(st); saveField(e.target); if (e.target.dataset.w === 'status') { renderNavCounts(); toast('Status salvo'); } } });
+  let st = null, stEl = null;
+  flushSave = () => { if (st) { clearTimeout(st); st = null; saveField(stEl); } };
+  drawer.addEventListener('input', e => { if (e.target.dataset.w) { if (st && stEl !== e.target) flushSave(); clearTimeout(st); stEl = e.target; st = setTimeout(() => { st = null; saveField(stEl); }, 350); } });
+  drawer.addEventListener('change', e => { if (e.target.dataset.w) { if (stEl === e.target) { clearTimeout(st); st = null; } saveField(e.target); if (e.target.dataset.w === 'status') { renderNavCounts(); if (!$('#tab-mine').hidden) renderBoard(); toast('Status salvo'); } } });
   $('#moreWrap').addEventListener('click', e => { if (e.target.id === 'more') { LIMIT += 50; renderList(); } });
   $('#charts').addEventListener('click', e => {
     const r = e.target.closest('[data-cf]'); if (!r) return; const s = r.dataset.cf, p = s.indexOf('|'), f = s.slice(0, p), v = s.slice(p + 1);
@@ -1203,7 +1274,7 @@ function bind() {
   });
   window.addEventListener('popstate', () => {
     const m = location.hash.match(/^#c=(.+)$/);
-    if (m && BYK[decodeURIComponent(m[1])]) openDetail(decodeURIComponent(m[1]), false); else closeDetail(true);
+    if (m && canOpen(decodeURIComponent(m[1]))) openDetail(decodeURIComponent(m[1]), false); else closeDetail(true);
   });
 }
 
@@ -1213,7 +1284,8 @@ function tick() {
   $$('.cd[data-ms]').forEach(el => { el.textContent = countdown(+el.dataset.ms); });
   const d = todayYMD();
   const editing = document.activeElement && document.activeElement.closest('.drawer,.filters,.search');
-  if (d !== lastDay) { lastDay = d; if (!editing) render(); }
+  if (d !== lastDay) { if (!editing) { lastDay = d; render(); } }
+  else if (PENDING && !editing) applyData(PENDING);
   else if (Date.now() - lastMin > 60000 && !editing) { lastMin = Date.now(); renderKPIs(); renderQuick(); }
 }
 async function checkUpdate() {
@@ -1225,10 +1297,17 @@ async function checkUpdate() {
     j = await r.json();
   } catch (e) { console.warn('Sem atualização agora (rede ou arquivo):', e); return; }
   if (j && j.gerado_em && j.compras && j.gerado_em > DATA.gerado_em) {
-    DATA = j; prep(); renderAll(); updHeader();
-    const nov = C.filter(c => c._new && isOpen(c)).length;
-    toast(`Dados atualizados${nov ? `: ${nov} novas` : ''}`);
+    offerData(j);
   }
+}
+let PENDING = null;
+// Redesenhar o painel tiraria o foco e o texto em digitação: espera sair do campo (ver tick).
+function offerData(j) { if (document.activeElement && document.activeElement.closest('.drawer')) PENDING = j; else applyData(j); }
+function applyData(j) {
+  PENDING = null;
+  DATA = j; prep(); renderAll(); updHeader();
+  const nov = C.filter(c => c._new && isOpen(c)).length;
+  toast(`Dados atualizados${nov ? `: ${nov} novas` : ''}`);
 }
 function updHeader() { $('#upd').innerHTML = `Atualizado em <b>${fmtDate(DATA.gerado_em.slice(0, 16))}</b> (horário de Brasília)`; }
 
@@ -1245,12 +1324,13 @@ function init() {
     $('#kpis').insertAdjacentHTML('beforebegin', `<div class="note alert" role="alert" id="badData"><b>Atenção:</b> os dados salvos neste navegador estavam ilegíveis. ${LOCKED.size ? 'Bloqueei a gravação para não apagar nada.' : 'Guardei uma cópia intacta e comecei do zero.'} Se tiver um backup, use <b>Meus dados → Importar</b>. <button class="linkbtn" id="badDataOk">Entendi</button></div>`);
     $('#badDataOk').addEventListener('click', () => $('#badData').remove());
   }
-  const m = location.hash.match(/^#c=(.+)$/); if (m && BYK[decodeURIComponent(m[1])]) openDetail(decodeURIComponent(m[1]), false);
+  const m = location.hash.match(/^#c=(.+)$/); if (m && canOpen(decodeURIComponent(m[1]))) openDetail(decodeURIComponent(m[1]), false);
   setInterval(tick, 1000);
   setInterval(checkUpdate, 15 * 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkUpdate(); renderKPIs(); renderQuick(); } });
   checkUpdate();
   window.__monitor = {count: () => LAST.length, csvText, importText, undoImport, open: openDetail, F: () => F,
+    data: () => DATA, apply: applyData, offer: offerData,
     rkCheck: () => C.filter(c => c._rk && !c._rk.outros.length && c.rkg != null && Math.abs(c._rk.main.v - c.rkg) > 0.011).map(c => [c.chave, c.rkg, c._rk.main.v])};
 }
 init();
