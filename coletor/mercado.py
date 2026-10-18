@@ -120,13 +120,30 @@ def atualizar(hoje: str, cliente: httpx.Client | None = None, destino: Path = BA
             raise
         logger.warning("CEPEA indisponível ({}); usado o indicador anterior de {}", e, anterior["robusta"]["data"])
         cepea = anterior
-    dados = {"atualizado_em": hoje, "perda_torra": 0.18, "cepea": cepea, "carvalhaes": carv, "niveis": niveis(cepea, carv),
+    nv = niveis(cepea, carv)
+    dados = {"atualizado_em": hoje, "perda_torra": 0.18, "cepea": cepea, "carvalhaes": carv, "niveis": nv,
+             "historico": historico(destino, carv["data"], cepea, nv),
              "fontes": {"cepea": CEPEA + " (CC BY-NC 4.0)", "carvalhaes": CARVALHAES}}
     destino.write_text(json.dumps(dados, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     logger.info("Mercado do café verde ({}): arábica CEPEA R$ {}, robusta R$ {}; níveis {}", hoje,
                 cepea["arabica"]["saca60"], cepea["robusta"]["saca60"],
                 {n: (v["saca60_min"], v["saca60_max"]) for n, v in dados["niveis"].items()})
     return dados
+
+
+HISTORICO_MAX = 400  # ~1,5 ano de dias úteis
+
+
+def historico(destino: Path, data: str, cepea: dict[str, Any], nv: dict[str, Any]) -> list[dict[str, Any]]:
+    """Uma linha por data de cotação (R$/saca médio de cada nível e os indicadores do CEPEA), para o site
+    mostrar a evolução do café verde. A cotação do dia substitui a entrada da mesma data."""
+    anterior = json.loads(destino.read_text(encoding="utf-8")).get("historico", []) if destino.exists() else []
+    linha = {"data": data, "arabica": (cepea.get("arabica") or {}).get("saca60"), "robusta": (cepea.get("robusta") or {}).get("saca60"),
+             "niveis": {n: round((v["saca60_min"] + v["saca60_max"]) / 2, 2) for n, v in nv.items()}}
+    hist = [h for h in anterior if isinstance(h, dict) and h.get("data") and h["data"] != data]
+    hist.append(linha)
+    hist.sort(key=lambda h: h["data"])
+    return hist[-HISTORICO_MAX:]
 
 
 def carregar() -> dict[str, Any]:

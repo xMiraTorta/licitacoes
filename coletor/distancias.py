@@ -35,6 +35,36 @@ def estrada(codigo_ibge: str | None) -> tuple[int | None, int | None]:
     return tabela().get(str(codigo_ibge or ""), (None, None))
 
 
+@lru_cache(maxsize=1)
+def _sedes() -> tuple[dict[str, tuple[float, float]], dict[tuple[str, str], tuple[float, float]]]:
+    """Coordenadas da sede de cada município (IBGE): por código e por (nome normalizado, UF)."""
+    import unicodedata
+
+    def nrm(s: str) -> str:
+        return "".join(ch for ch in unicodedata.normalize("NFD", s) if unicodedata.category(ch) != "Mn").lower().strip()
+    por_codigo: dict[str, tuple[float, float]] = {}
+    por_nome: dict[tuple[str, str], tuple[float, float]] = {}
+    with MUNICIPIOS.open(encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            pt = (float(r["lat"]), float(r["lon"]))
+            por_codigo[r["codigo_ibge"]] = pt
+            por_nome[(nrm(r["nome"]), r["uf"].upper())] = pt
+    return por_codigo, por_nome
+
+
+def sede(codigo_ibge: str | None) -> tuple[float | None, float | None]:
+    """(lat, lon) da sede do município pelo código IBGE; (None, None) se desconhecido."""
+    return _sedes()[0].get(str(codigo_ibge or ""), (None, None))
+
+
+def sede_por_nome(mun: str | None, uf: str | None) -> tuple[float | None, float | None]:
+    """(lat, lon) pelo nome do município e UF (para preencher dados publicados antes do campo existir)."""
+    import unicodedata
+
+    nome = "".join(ch for ch in unicodedata.normalize("NFD", mun or "") if unicodedata.category(ch) != "Mn").lower().strip()
+    return _sedes()[1].get((nome, (uf or "").upper()), (None, None))
+
+
 def calcular(client: httpx.Client | None = None, pausa: float = 1.0) -> int:
     """Consulta o OSRM em lotes e grava o CSV. Município sem rota (ilhas) fica em branco."""
     cli = client or httpx.Client(timeout=60, headers={"User-Agent": "licitacoes-monitor/1.0"})
