@@ -121,7 +121,7 @@ def montar_item(raw: dict[str, Any]) -> dict[str, Any] | None:
     if (compl := limpar_texto(raw.get("informacaoComplementar"))) and compl not in espec:
         espec += f" | Inf. compl.: {compl}"  # mesmo formato do painel original; às vezes o peso só está aqui
     c = cafe.classificar(espec, un, vu)
-    if c is None:
+    if c is None or c.tipo not in cafe.TIPOS_TORRADOS:  # só café torrado (moído ou em grão) interessa ao dono
         return None
     qtd = _num(raw.get("quantidade"))
     # "or None": um valor que arredonda para 0 (ex.: preço simbólico de R$ 0,01) é tratado como ausente.
@@ -132,7 +132,7 @@ def montar_item(raw: dict[str, Any]) -> dict[str, Any] | None:
         "qtd": qtd, "un": un, "vu": vu, "vt": vt, "sig": sig, "kgt": kgt, "rkg": rkg,
         "conferir": cafe.precisa_conferir(rkg), "me": ME_ITEM.get(raw.get("tipoBeneficio"), "Não se aplica"),
         "sit": raw.get("situacaoCompraItemNome") or "", "tags": c.tags, "espec": espec,
-        "usa_trecho": False, "nivel": c.nivel, "qg": c.qg,
+        "usa_trecho": False, "ed_trecho": "", "nivel": c.nivel, "qg": c.qg,
     }
 
 
@@ -175,25 +175,37 @@ def _resumo(i: dict[str, Any]) -> str:
     return f"{ABREV.get(i['tipo'], i['tipo'])}{' ' + tam if tam else ''} ×{qtd} {i['un']}".strip()
 
 
+def agregar(itens: list[dict[str, Any]]) -> dict[str, Any]:
+    """Campos da compra que dependem só dos itens de café (para montar e para reaplicar regras sem o PNCP)."""
+    vts = [i["vt"] for i in itens if i["vt"] is not None]
+    kgs = [i["kgt"] for i in itens if i["kgt"] is not None]
+    rk = [i for i in itens if i["rkg"] is not None and not i["conferir"]]
+    kg = (round(sum(kgs), 4) or None) if kgs else None
+    me, me_f = _me(itens)
+    embs = _uniq([i["emb"] for i in itens])
+    # Como no painel original, "Gourmet/especial" vira duas opções de filtro: "Gourmet" e "especial".
+    cats = _uniq([p.rstrip("*") for i in itens for p in i["cat"].split("/")])
+    return {
+        "tipos": sorted(_uniq([i["tipo"] for i in itens]), key=lambda t: ORDEM_TIPOS.get(t, 99)), "cats": cats or ["Não informada"],
+        "embs": "; ".join(embs), "emb_f": _emb_f(embs),
+        "vcafe": (round(sum(vts), 2) or None) if vts else None, "vcesta": None,
+        "kg": kg, "kg_parcial": kg is not None and any(i["kgt"] is None for i in itens),
+        "rkg": (round(sum(i["vt"] for i in rk) / sum(i["kgt"] for i in rk), 2) or None) if rk else None,
+        "sig": "Sim" if any(i["sig"] for i in itens) else "Não",
+        "me": me, "me_f": me_f, "tags": _uniq([t for i in itens for t in i["tags"]]), "niveis": niveis_da_compra(itens),
+        "resumo": "; ".join(_resumo(i) for i in itens),
+    }
+
+
 def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[str, Any] | None:
-    """Registro completo da compra, ou None se não houver item de café."""
+    """Registro completo da compra, ou None se não houver item de café torrado em andamento."""
     itens = [x for x in (montar_item(r) for r in itens_raw) if x]
     if not itens:
         return None
     org, uni = c.get("orgaoEntidade") or {}, c.get("unidadeOrgao") or {}
     cnpj, ano, seq = org.get("cnpj", ""), c.get("anoCompra"), c.get("sequencialCompra")
     km, minutos = distancias.estrada(uni.get("codigoIbge"))  # por estrada, a partir de Uberaba
-    cafe_it = [i for i in itens if i["tipo"] != cafe.CESTA]
-    cesta_it = [i for i in itens if i["tipo"] == cafe.CESTA]
-    vts = [i["vt"] for i in cafe_it if i["vt"] is not None]
-    kgs = [i["kgt"] for i in itens if i["kgt"] is not None]
-    rk = [i for i in itens if i["rkg"] is not None and not i["conferir"]]
-    kg = (round(sum(kgs), 4) or None) if kgs else None
     plat, plat_src, plat_f = plataforma(c.get("linkSistemaOrigem"), c.get("usuarioNome"))
-    me, me_f = _me(itens)
-    embs = _uniq([i["emb"] for i in itens])
-    # Como no painel original, "Gourmet/especial" vira duas opções de filtro: "Gourmet" e "especial".
-    cats = _uniq([p for i in itens for p in i["cat"].split("/")])
     return {
         "chave": c["numeroControlePNCP"],
         "fim": (c.get("dataEncerramentoProposta") or "")[:16] or None,
@@ -209,17 +221,8 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
         "uasg": str(uni.get("codigoUnidade") or "") if plat == "Compras.gov.br" else "",
         "srp": "Sim" if c.get("srp") else "Não", "objeto": (c.get("objetoCompra") or "").strip(),
         "link_pncp": f"https://pncp.gov.br/app/editais/{cnpj}/{ano}/{seq}", "link_plat": c.get("linkSistemaOrigem") or "",
-        "ed_tags": [], "ed_pz": "", "edital_lido": False, "trecho_edital": "",
-        "tipos": sorted(_uniq([i["tipo"] for i in itens]), key=lambda t: ORDEM_TIPOS.get(t, 99)), "cats": cats or ["Não informada"], "cat_do_edital": False,
-        "embs": "; ".join(embs), "emb_f": _emb_f(embs),
-        "vcafe": (round(sum(vts), 2) or None) if vts else None,
-        "vcesta": (round(sum(i["vt"] for i in cesta_it if i["vt"] is not None), 2) or None) if any(i["vt"] for i in cesta_it) else None,
-        "kg": kg,
-        "kg_parcial": kg is not None and any(i["kgt"] is None and i["tipo"] != cafe.CESTA for i in itens),
-        "rkg": (round(sum(i["vt"] for i in rk) / sum(i["kgt"] for i in rk), 2) or None) if rk else None,
-        "sig": "Sim" if any(i["sig"] for i in itens) else "Não",
-        "me": me, "me_f": me_f, "tags": _uniq([t for i in itens for t in i["tags"]]), "niveis": niveis_da_compra(itens),
-        "resumo": "; ".join(_resumo(i) for i in itens),
+        "ed_tags": [], "ed_pz": "", "edital_lido": False, "trecho_edital": "", "cat_do_edital": False,
+        **agregar(itens),
         "dup": "", "dup_of": None, "dup_group": [],
         "itens": itens,
     }
@@ -238,21 +241,44 @@ def niveis_da_compra(itens: list[dict[str, Any]]) -> list[str]:
     return [n for n in cafe.NIVEIS if n in ns]
 
 
+CAT_POR_NOTA = ((7.3, "Gourmet"), (6.0, "Superior"), (4.5, "Tradicional"))
+
+
+def _cat_do_edital(te: str) -> list[str]:
+    """Categoria escrita no trecho do edital; sem ela, a da faixa da nota mínima (6,0 -> Superior etc.)."""
+    cats = [x for x in cafe.categoria(te).split("/") if x]
+    if not cats and (qg := cafe.nota_qg(te)) is not None:
+        cats = [nome for corte, nome in CAT_POR_NOTA if qg >= corte][:1]
+    return cats
+
+
 def reclassificar_nivel(compra: dict[str, Any]) -> None:
     """Recalcula categoria, exigências, nível e nota de qualidade a partir do texto já gravado (sem PNCP).
-    Item cuja categoria/exigências vieram do trecho do edital (usa_trecho) mantém essas duas."""
+    A descrição do item vem primeiro; o que falta nela sai do trecho do edital daquele item (`ed_trecho`),
+    e a categoria tirada do edital leva * ("Superior*"). Itens antigos com usa_trecho e sem ed_trecho
+    (leitura anterior, só a categoria guardada) mantêm o que tinham."""
     for i in compra["itens"]:
         t = cafe.norm(i["espec"])
-        if i["tipo"] != cafe.CESTA:
-            if i.get("usa_trecho"):  # categoria/exigências do edital ficam; soma o que o texto do item traz
-                velhas = {x.rstrip("*") for x in i["cat"].split("/") if x}
-                novas = [x for x in cafe.categoria(t).split("/") if x and x not in velhas]
-                i["cat"] = "/".join([x for x in i["cat"].split("/") if x] + novas)
-                i["tags"] = _uniq(cafe.exigencias(t) + i["tags"])
-            else:
-                i["cat"], i["tags"] = cafe.categoria(t), cafe.exigencias(t)
-        i["qg"] = cafe.nota_qg(t) if i["tipo"] != cafe.CESTA else None
-        i["nivel"] = cafe.nivel(t, i["tipo"], i["cat"], i["tags"], i["qg"])
+        te = cafe.norm(i.get("ed_trecho") or "")
+        if te:
+            cats = [x for x in cafe.categoria(t).split("/") if x]
+            qg = cafe.nota_qg(t)
+            if not cats and qg is None:
+                cats = [x + "*" for x in _cat_do_edital(te)]
+            i["cat"] = "/".join(cats)
+            i["tags"] = _uniq(cafe.exigencias(t) + cafe.exigencias(te))
+            i["qg"] = qg if qg is not None else cafe.nota_qg(te)
+            i["usa_trecho"] = True
+        elif i.get("usa_trecho"):
+            velhas = {x.rstrip("*") for x in i["cat"].split("/") if x}
+            novas = [x for x in cafe.categoria(t).split("/") if x and x not in velhas]
+            i["cat"] = "/".join([x for x in i["cat"].split("/") if x] + novas)
+            i["tags"] = _uniq(cafe.exigencias(t) + i["tags"])
+            i["qg"] = cafe.nota_qg(t)
+        else:
+            i["cat"], i["tags"], i["qg"] = cafe.categoria(t), cafe.exigencias(t), cafe.nota_qg(t)
+        i["nivel"] = cafe.nivel(f"{t} {te}", i["tipo"], i["cat"], i["tags"], i["qg"])
+    compra["cat_do_edital"] = any("*" in i["cat"] for i in compra["itens"])
     compra["tags"] = _uniq([x for i in compra["itens"] for x in i["tags"]])
     compra["cats"] = _uniq([x.rstrip("*") for i in compra["itens"] for x in i["cat"].split("/") if x]) or ["Não informada"]
     compra["niveis"] = niveis_da_compra(compra["itens"])
@@ -287,7 +313,8 @@ def marcar_duplicatas(compras: list[dict[str, Any]], visiveis_antes: set[str] = 
 
 
 # Campos que vieram da leitura de editais pelo painel original e que este coletor ainda não refaz.
-CAMPOS_EDITAL = ("ed_tags", "ed_pz", "edital_lido", "trecho_edital", "cat_do_edital")
+CAMPOS_EDITAL = ("ed_tags", "ed_pz", "edital_lido", "trecho_edital", "cat_do_edital", "edital_status", "edital_docs",
+                 "marcas", "edital_lido_em", "edital_ver")
 
 
 def herdar_do_anterior(novo: dict[str, Any], antigo: dict[str, Any]) -> None:
@@ -303,7 +330,10 @@ def herdar_do_anterior(novo: dict[str, Any], antigo: dict[str, Any]) -> None:
     velhos = {i.get("n"): i for i in antigo.get("itens", [])}
     for i in novo["itens"]:
         v = velhos.get(i["n"])
-        if v and v.get("usa_trecho"):
+        if v and v.get("ed_trecho"):
+            i["ed_trecho"] = v["ed_trecho"]
+            i["usa_trecho"] = True
+        elif v and v.get("usa_trecho"):
             i["usa_trecho"] = True
             i["cat"] = v.get("cat", i["cat"])
             i["tags"] = _uniq(i["tags"] + list(v.get("tags", [])))

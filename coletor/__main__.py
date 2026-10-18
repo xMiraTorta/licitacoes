@@ -5,6 +5,7 @@
     python -m coletor telegram-chat        # lista chats que falaram com o bot (para o TELEGRAM_CHAT_ID)
     python -m coletor distancias           # recalcula distâncias por estrada (só se a origem mudar)
     python -m coletor reclassificar        # recalcula nível/nota de qualidade no data.json atual (sem PNCP)
+    python -m coletor editais [--todas] [--textos DIR]   # lê edital/TR das compras do data.json atual
     python -m coletor mapa                 # baixa o contorno dos estados (IBGE) e embute no index.html (raramente)
 
 Códigos de saída: 0 ok; 2 coleta/publicação bloqueada (dados publicados intactos); 3 falha no aviso.
@@ -14,14 +15,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
 from loguru import logger
 from pydantic import ValidationError
 
-from coletor import coleta, distancias, mapa, montar, publicar, telegram
-from coletor.pncp import ColetaErro
+from coletor import cafe, coleta, distancias, edital, mapa, montar, publicar, telegram
+from coletor.pncp import PNCP, ColetaErro
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -41,6 +43,10 @@ def main(argv: list[str] | None = None) -> int:
     m.add_argument("--destino", type=Path, default=Path("."))
     r = sub.add_parser("reclassificar", help="recalcula nível/nota de qualidade no data.json publicado (sem PNCP)")
     r.add_argument("--destino", type=Path, default=Path("."))
+    e = sub.add_parser("editais", help="lê o edital/TR das compras do data.json publicado e grava o que achou")
+    e.add_argument("--destino", type=Path, default=Path("."))
+    e.add_argument("--todas", action="store_true", help="relê todas (não só as nunca lidas, alteradas ou com falha)")
+    e.add_argument("--textos", type=Path, help="grava aqui o texto extraído de cada compra (revisão manual)")
     args = ap.parse_args(argv)
 
     logger.remove()
@@ -76,20 +82,24 @@ def main(argv: list[str] | None = None) -> int:
         if not data:
             logger.error("Sem {}: nada para reclassificar", args.destino / "data.json")
             return 2
-        ok = montar.item_gravado_em_andamento
-        sairam = [c["chave"] for c in data["compras"] if not any(ok(i) for i in c["itens"])]
-        parciais = [c["chave"] for c in data["compras"] if c["chave"] not in sairam and not all(ok(i) for i in c["itens"])]
-        if sairam:
-            logger.warning("{} compras saem: todos os itens de café cancelados/concluídos no PNCP: {}", len(sairam), sairam)
-        if parciais:
-            logger.warning("{} compras com parte dos itens fora de andamento; totais só são refeitos na próxima coleta: {}",
-                           len(parciais), parciais)
+        # Itens que não valem mais: fora de andamento no PNCP ou fora do escopo (só café torrado).
+        vale = lambda i: montar.item_gravado_em_andamento(i) and i["tipo"] in cafe.TIPOS_TORRADOS  # noqa: E731
         visiveis = {c["chave"] for c in data["compras"] if not c.get("dup_of")}
-        data["compras"] = [c for c in data["compras"] if c["chave"] not in sairam]
-        if sairam:  # uma duplicata que apontava para a compra removida volta a aparecer
-            montar.marcar_duplicatas(data["compras"], visiveis)
+        sairam = []
+        for c in data["compras"]:
+            antes = len(c["itens"])
+            c["itens"] = [i for i in c["itens"] if vale(i)]
+            if not c["itens"]:
+                sairam.append(c["chave"])
+            elif len(c["itens"]) != antes:
+                c.update(montar.agregar(c["itens"]))  # totais refeitos só com os itens que ficaram
+        if sairam:
+            logger.warning("{} compras saem (sem item de café torrado em andamento): {}", len(sairam), sairam)
+            data["compras"] = [c for c in data["compras"] if c["chave"] not in sairam]
+            montar.marcar_duplicatas(data["compras"], visiveis)  # duplicata que apontava para uma removida volta
         for c in data["compras"]:
             montar.reclassificar_nivel(c)
+            c.update(montar.agregar(c["itens"]))
             n, _, ano = c["num"].rpartition("/")  # "114/2026/2026" (ano repetido em coletas antigas) -> "114/2026"
             c["num"] = montar.numero(n, ano) if n else c["num"]
         try:
@@ -99,6 +109,30 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         return 0
 
+    if args.cmd == "editais":
+        data = publicar.carregar(args.destino / "data.json")
+        if not data:
+            logger.error("Sem {}: nada para ler", args.destino / "data.json")
+            return 2
+        p = PNCP()
+        versoes: dict[str, str] = {}
+
+        def versao(k: str) -> None:  # data da última alteração no PNCP (a coleta diária relê se mudar)
+            try:
+                versoes[k] = ((p.compra(k) or {}).get("dataAtualizacaoGlobal")) or ""
+            except ColetaErro as erro:
+                logger.warning("{}: versão no PNCP não consultada ({}); a coleta diária vai reler", k, erro)
+        with ThreadPoolExecutor(max_workers=3) as ex:
+            list(ex.map(versao, [c["chave"] for c in data["compras"]]))
+        edital.ler_varias(p, data["compras"], versoes, datetime.now(coleta.TZ).strftime("%Y-%m-%d"),
+                          limite=None, todas=args.todas, salvar_em=args.textos)
+        data["editais_lidos"] = sum(1 for c in data["compras"] if c.get("edital_lido"))
+        try:
+            publicar.gravar(data, args.destino, datetime.fromisoformat(data["gerado_em"]))
+        except ValidationError as erro:
+            logger.error("Leitura dos editais não gravada (dados publicados intactos): {}", erro)
+            return 2
+        return 0
     if args.cmd == "mapa":
         mapa.gerar(args.destino)
         return 0

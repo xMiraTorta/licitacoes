@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo
 
 from loguru import logger
 
-from coletor import publicar
+from coletor import edital, publicar
 from coletor.cafe import VERSAO_REGRAS, norm
 from coletor.distancias import ORIGEM
 from coletor.montar import montar_compra
@@ -72,7 +72,7 @@ def _ainda_aberta(c: dict[str, Any], agora_min: str) -> bool:
 
 
 def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: PNCP | None = None,
-            agora: datetime | None = None) -> Resultado:
+            agora: datetime | None = None, ler_editais: bool = True) -> Resultado:
     t0 = time.monotonic()
     agora = agora or datetime.now(TZ)
     hoje, agora_min = agora.strftime("%Y-%m-%d"), agora.strftime("%Y-%m-%dT%H:%M")
@@ -143,6 +143,11 @@ def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: 
             sem_cafe[k] = lista[k].get("dataAtualizacaoGlobal") or ""
     finais, primeira_vez = publicar.juntar(compras, anterior, set(falhas), hoje, agora_min)
     publicar.verificar_travas(finais, anterior, len(olhar) + len(sumidas), len(falhas), agora_min, forcar)
+
+    # 4b. Edital/TR de cada compra (novas, alteradas no PNCP ou sem documentos ainda): especificação de cada
+    # item, marcas de referência e prazo de entrega. Não bloqueia a publicação: falha fica para a próxima.
+    if ler_editais:
+        edital.ler_varias(p, finais, {k: c.get("dataAtualizacaoGlobal") or "" for k, c in lista.items()}, hoje)
 
     # 5. Gravação.
     base = anterior or {}

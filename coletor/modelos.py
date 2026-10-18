@@ -30,6 +30,7 @@ class Item(_Base):
     tags: list[str]
     espec: str
     usa_trecho: bool
+    ed_trecho: str = ""  # especificação deste item no edital/TR (lida pelo coletor)
     nivel: Literal["Sem categoria", "Tradicional", "Superior", "Gourmet/especial"] | None = None  # inferido
     qg: float | None = Field(default=None, ge=4, le=10)  # nota mínima de Qualidade Global exigida (0-10)
 
@@ -66,6 +67,11 @@ class Compra(_Base):
     tipos: list[str] = Field(min_length=1)
     cats: list[str]
     cat_do_edital: bool
+    edital_status: str = ""  # lido / sem documentos / sem texto (escaneado) / sem café no texto / falha ao baixar
+    edital_docs: list[str] = []
+    edital_lido_em: str = ""
+    edital_ver: str = ""  # dataAtualizacaoGlobal do PNCP na leitura (mudou: lê de novo)
+    marcas: list[str] = []  # marcas citadas no edital como referência
     embs: str
     emb_f: list[str]
     vcafe: PositiveFloat | None

@@ -4,3 +4,4 @@ loguru>=0.7
 pydantic>=2.7
 pytest>=8
 playwright>=1.48
+pypdf>=5.0
