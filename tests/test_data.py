@@ -1,4 +1,4 @@
-"""Integridade de data.json e da cópia embutida em index.html (dados reais do repositório)."""
+"""Integridade de data.json (dados reais do repositório)."""
 from __future__ import annotations
 
 import json
@@ -6,16 +6,17 @@ from typing import Any
 
 import pytest
 
-from tests.conftest import ROOT, embedded_data
+from tests.conftest import ROOT
 
 DATA: dict[str, Any] = json.loads((ROOT / "data.json").read_text(encoding="utf-8"))
 COMPRAS: list[dict[str, Any]] = DATA["compras"]
 ITENS = [(c["chave"], i) for c in COMPRAS for i in c["itens"]]
 
 
-def test_embedded_copy_matches_data_json() -> None:
-    html = (ROOT / "index.html").read_text(encoding="utf-8")
-    assert embedded_data(html) == DATA
+def test_data_json_validates_against_model() -> None:
+    from coletor.modelos import Painel
+
+    Painel.model_validate(DATA)
 
 
 def test_required_top_level_fields() -> None:
