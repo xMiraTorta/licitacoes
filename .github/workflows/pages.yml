@@ -1,0 +1,47 @@
+# Publica o site no GitHub Pages. Desde 18/10/2026 a fonte do Pages é "GitHub Actions" (Settings > Pages):
+# sem este workflow, nada do que vai para a main aparece no site.
+# Monta o site (site/, React + Vite), junta o data.json e publica. Roda a cada mudança nos dados (coleta diária,
+# preços de mercado), no código do site e no botão manual. Leva 1 a 2 min.
+name: Publicar site
+
+on:
+  push:
+    branches: [main]
+    paths: [data.json, "site/**", .github/workflows/pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true # só a versão mais nova interessa
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Montar o site
+        working-directory: site
+        run: |
+          npm ci
+          npm run build
+      - name: Juntar os dados ao site
+        run: cp data.json site/dist/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+      - id: deploy
+        uses: actions/deploy-pages@v4

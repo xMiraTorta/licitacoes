@@ -1,4 +1,4 @@
-# Coleta diária no PNCP, publica no GitHub Pages (commit na main) e avisa no Telegram.
+# Coleta diária no PNCP, grava data.json na main (o pages.yml republica o site) e avisa no Telegram.
 # Só roda a partir da branch padrão (main): agendamento e botão "Run workflow" do GitHub.
 # Segredos (Settings > Secrets and variables > Actions): TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID.
 name: Atualizar licitações
@@ -20,7 +20,7 @@ on:
 
 permissions:
   contents: write
-  pages: write # pedir a republicação do site após o commit
+  actions: write # pedir ao pages.yml que publique o site depois do commit
 
 concurrency:
   group: atualizar-licitacoes
@@ -71,20 +71,22 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data.json index.html coletor/cache/sem_cafe.json
+          git add data.json coletor/cache/sem_cafe.json
           if git diff --cached --quiet; then
             echo "Nada mudou nos dados."
           else
-            git commit -m "Atualiza licitações de café – $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M') (Brasília)"
+            git commit -m "Atualiza licitações de café, $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M') (Brasília)"
             # A coleta leva ~1 h; se a main mudou nesse tempo (outro commit), traz antes de enviar.
             # Conflito nos dados (ex.: a reserva já publicou) faz o passo falhar e avisa: não sobrescreve.
             git pull --rebase origin main
             git push origin HEAD:main
-            # Commits feitos com o GITHUB_TOKEN podem não disparar o GitHub Pages sozinhos: pede o build.
-            curl -sS -o /dev/null -w "Pages build: HTTP %{http_code}\n" -X POST \
-              -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
-              "${{ github.api_url }}/repos/${{ github.repository }}/pages/builds"
           fi
+          # O push de data.json dispara o pages.yml, que monta e publica o site (1 a 2 min). Commits feitos com o
+          # GITHUB_TOKEN não disparam outros workflows: pede a execução pela API.
+          curl -sS -o /dev/null -w "Publicar site: HTTP %{http_code}\n" -X POST \
+            -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/actions/workflows/pages.yml/dispatches" \
+            -d '{"ref":"main"}'
 
       - name: Avisar no Telegram
         if: github.event_name == 'schedule' || inputs.acao == 'coletar'
@@ -102,4 +104,4 @@ jobs:
         run: |
           curl -sS -f -o /dev/null -w "Telegram: HTTP %{http_code}\n" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=⚠️ A atualização das licitações falhou ou foi interrompida. Se a coleta não chegou a publicar, o painel segue com os dados anteriores e a reserva tenta de novo por volta de 10h40 nos dias úteis. Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --data-urlencode "text=Monitor de Licitações: a atualização de hoje falhou ou foi interrompida. Se não chegou a publicar, o painel segue com os dados anteriores; a reserva tenta de novo por volta de 10h40 (dias úteis). Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
