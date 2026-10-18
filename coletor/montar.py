@@ -199,7 +199,7 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
         "sig": "Sim" if any(i["sig"] for i in itens) else "Não",
         "me": me, "me_f": me_f, "tags": _uniq([t for i in itens for t in i["tags"]]),
         "resumo": "; ".join(_resumo(i) for i in itens),
-        "dup": "", "dup_of": None, "dup_group": [], "wf0": {},
+        "dup": "", "dup_of": None, "dup_group": [],
         "itens": itens,
     }
 

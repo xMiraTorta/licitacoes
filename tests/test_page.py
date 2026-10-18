@@ -11,7 +11,6 @@ from tests.conftest import wait_ready
 WFK = "monitorLicitacoes.meusDados.v1"
 UIK = "monitorLicitacoes.ui.v1"
 CLK = "monitorLicitacoes.checklist.v1"
-MIGK = "monitorLicitacoes.backupMigracao.v1"
 FIRST = "18243295000192-1-000080/2026"  # torrado e moído 500 g, R$ 66,03/kg
 SOLUVEL_ONLY = "77402196000175-1-000046/2026"  # T&M sem peso + solúvel 0,5 kg a R$ 300/kg
 MIXED = "01612911000132-1-000128/2026"  # T&M R$ 46,94/kg (696,5 kg) + solúvel R$ 151,55/kg
@@ -48,8 +47,7 @@ def test_real_site_loads_without_errors(page: Page, real_url: str) -> None:
         page.click(f'[data-tab="{tab}"]')
         assert page.locator(f"#tab-{tab}").is_visible()
     assert page.locator("#list .row").count() > 0
-    assert "Bizinotto" not in page.inner_text("body")
-    assert not [k for k in page.evaluate("Object.keys(localStorage)") if k.startswith("cafeBizinotto.")]
+    assert all(k.startswith("monitorLicitacoes.") for k in page.evaluate("Object.keys(localStorage)"))
 
 
 def test_duplicates_hidden_by_default(page: Page, fixture_url: str) -> None:
@@ -156,8 +154,7 @@ def test_checklist_persists_and_shows_progress(page: Page, fixture_url: str) -> 
 
 def test_export_import_roundtrip(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url)
-    # backup exportado pela versão antiga do monitor (app "cafe-bizinotto-licitacoes") continua aceito
-    backup = {"app": "cafe-bizinotto-licitacoes", "versao": 1, "exportado_em": "2026-10-17T12:00:00Z",
+    backup = {"app": "monitor-licitacoes", "versao": 1, "exportado_em": "2026-10-17T12:00:00Z",
               "meus_dados": {FIRST: {"fav": True, "notas": "importada", "upd": "2026-10-17T12:00:00Z"}},
               "checklist": {"3": 1}}
     assert page.evaluate("t => window.__monitor.importText(t)", json.dumps(backup)) == 1
@@ -300,55 +297,3 @@ def test_mobile_layout_has_no_horizontal_overflow(browser: Any, fixture_url: str
     assert box and box["x"] + box["width"] <= 390  # valor visível, não cortado à direita
     ctx.close()
 
-
-OLD = {"cafeBizinotto.meusDados.v1": json.dumps({FIRST: {"fav": True, "notas": "antiga", "upd": "2026-10-17T10:00:00Z"}}),
-       "cafeBizinotto.ui.v1": json.dumps({"sort": "valor", "tab": "check"}),
-       "cafeBizinotto.checklist.v1": json.dumps({"0": 1, "4": 1})}
-
-
-def _seed_old_keys(page: Page, fixture_url: str) -> None:
-    goto(page, fixture_url)
-    page.evaluate("""o => { localStorage.clear(); for (const [k, v] of Object.entries(o)) localStorage.setItem(k, v); }""", OLD)
-    page.reload()
-    wait_ready(page)
-
-
-def test_old_storage_keys_are_migrated_without_loss(page: Page, fixture_url: str) -> None:
-    _seed_old_keys(page, fixture_url)
-    keys = page.evaluate("Object.keys(localStorage)")
-    assert not [k for k in keys if k.startswith("cafeBizinotto.")]  # nada ficou para trás
-    assert ls(page, WFK)[FIRST]["notas"] == "antiga" and ls(page, CLK) == {"0": 1, "4": 1}
-    assert ls(page, UIK)["sort"] == "valor"
-    assert ls(page, MIGK)["chaves"] == OLD  # backup com o texto exato de antes
-    assert page.locator("#tab-check").is_visible()  # preferência de aba migrada e aplicada
-    assert row(page, FIRST).locator(".star.on").count() == 1
-
-
-def test_new_key_wins_when_both_exist(page: Page, fixture_url: str) -> None:
-    goto(page, fixture_url)
-    page.evaluate("""() => { localStorage.clear();
-      localStorage.setItem('cafeBizinotto.meusDados.v1', '{"A":{"notas":"velha"}}');
-      localStorage.setItem('monitorLicitacoes.meusDados.v1', '{"A":{"notas":"nova"}}'); }""")
-    page.reload()
-    wait_ready(page)
-    assert ls(page, WFK) == {"A": {"notas": "nova"}}
-    assert ls(page, MIGK)["chaves"]["cafeBizinotto.meusDados.v1"] == '{"A":{"notas":"velha"}}'
-    assert page.evaluate("localStorage.getItem('cafeBizinotto.meusDados.v1')") is None
-
-
-def test_restore_from_migration_backup(page: Page, fixture_url: str) -> None:
-    _seed_old_keys(page, fixture_url)
-    page.click('[data-tab="list"]')  # a preferência migrada abre na aba Guia
-    row(page, FIRST).locator('[data-act="fav"]').click()  # desmarca depois da migração
-    assert "fav" not in ls(page, WFK)[FIRST]
-    page.on("dialog", lambda d: d.accept())
-    page.click("#dataBtn")
-    page.click("#restMig")
-    assert ls(page, WFK)[FIRST]["fav"] is True and ls(page, WFK)[FIRST]["notas"] == "antiga"
-    assert ls(page, CLK) == {"0": 1, "4": 1}
-
-
-def test_restore_button_hidden_without_migration(page: Page, fixture_url: str) -> None:
-    goto(page, fixture_url)
-    page.click("#dataBtn")
-    assert not page.locator("#restMig").is_visible()

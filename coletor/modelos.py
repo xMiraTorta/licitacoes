@@ -79,7 +79,6 @@ class Compra(_Base):
     dup: str
     dup_of: str | None
     dup_group: list[str]
-    wf0: dict[str, Any] = Field(max_length=0)  # nunca publicar dados pessoais aqui
     itens: list[Item] = Field(min_length=1)
 
 

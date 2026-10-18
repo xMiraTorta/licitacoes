@@ -10,7 +10,7 @@ import httpx
 from loguru import logger
 
 # O workflow passa o endereço do site (muda se o repositório for renomeado).
-PAINEL_URL = os.environ.get("PAINEL_URL") or "https://xmiratorta.github.io/licitacoes-cafe/"
+PAINEL_URL = os.environ.get("PAINEL_URL") or "https://xmiratorta.github.io/licitacoes/"
 LIMITE_MSG = 3900  # Telegram aceita 4096 caracteres por mensagem
 PERTO = {"MG": 0, "SP": 1, "GO": 1}
 

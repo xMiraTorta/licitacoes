@@ -2,7 +2,7 @@
 
 Monitor de compras públicas para encontrar oportunidades de venda ao governo. Foco atual: **café** (torrado e moído, em grão, solúvel, cápsulas e cestas que incluem café), em pregões eletrônicos e dispensas de todo o Brasil.
 
-**Site:** https://xmiratorta.github.io/licitacoes-cafe/ (o endereço muda se o repositório for renomeado)
+**Site:** https://xmiratorta.github.io/licitacoes/
 
 ## O que ele faz
 
