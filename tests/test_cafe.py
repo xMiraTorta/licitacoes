@@ -195,3 +195,42 @@ def test_revisao_dos_itens_sem_categoria() -> None:
     i = cafe.classificar("CAFÉ INSOLUVEL - Café torrado e moído, grupo especial, subgrupo empeliculado, tipo 1, embalagem de 250 g. "
                          "Validade mínima de 6 (seis) meses", "UND")
     assert i and i.nivel == "Sem categoria" and "Validade ≥6 meses" in i.tags
+
+
+@pytest.mark.parametrize("texto,nota", [
+    ("qualidade global de no minimo 6,0 pontos", 6.0),  # "no mínimo" não é "nº"
+    ("nota minima 7,0 - 500g", 7.0),  # 500 não é fim de faixa
+    ("nota de qualidade global 6,0 e 250 g", 6.0),
+    ("analise sensorial realizada por 5 provadores", None),
+    ("avaliacao sensorial com 8 (oito) provadores", None),
+    ("analise sensorial: amostra de 5 pacotes", None),
+    ("laudo de analise sensorial em ate 5 (cinco) dias uteis", None),
+    ("escala sensorial minima 4,5 pontos", 4.5),
+])
+def test_nota_revisao_2(texto: str, nota: float | None) -> None:
+    assert cafe.nota_qg(texto) == nota
+
+
+@pytest.mark.parametrize("desc,nivel", [
+    ('Café, qualidade mínima exigida: bebida "mole" ou superior', "Superior"),
+    ("Café torrado, bebida: mole", "Superior"),
+    ("Café torrado e moído, categoria superior ou acima", "Superior"),
+    ("Café superior 500g", "Superior"),
+    ("Café torrado e moído, marca equivalente ou de qualidade superior", "Sem categoria"),
+])
+def test_nivel_revisao_2(desc: str, nivel: str) -> None:
+    item = cafe.classificar(desc, "Pacote")
+    assert item is not None and item.nivel == nivel
+
+
+@pytest.mark.parametrize("texto,tem", [
+    ("nao aceita blend nem conilon", False), ("proibido cafe robusta", False), ("embalagem robusta", False),
+    ("cafe arabica e conilon", True), ("graos de cafe robusta", True), ("admitindo-se cafe conilon", True),
+])
+def test_conilon_com_negacao(texto: str, tem: bool) -> None:
+    assert ("Aceita conilon/blend" in cafe.exigencias(cafe.norm(texto))) is tem
+
+
+def test_100_arabica_nao_vale_com_conilon() -> None:
+    assert "100% arábica" not in cafe.exigencias(cafe.norm("100% arábica e/ou conilon"))
+    assert "100% arábica" in cafe.exigencias(cafe.norm("100% arábica, sem conilon"))
