@@ -35,15 +35,18 @@ def open_detail(page: Page, chave: str) -> Locator:
     return d
 
 
-def goto(page: Page, url: str) -> None:
+def goto(page: Page, url: str, tab: str = "list") -> None:
+    """Abre o site (que sempre começa no Dashboard) e vai para a aba pedida."""
     page.goto(url + "/index.html")
     wait_ready(page)
+    if tab != "dash":
+        page.click(f'[data-tab="{tab}"]')
 
 
 def test_real_site_loads_without_errors(page: Page, real_url: str) -> None:
     goto(page, real_url)
     assert page.evaluate("window.__monitor.count()") > 0
-    for tab in ("mine", "agenda", "charts", "check", "about", "list"):
+    for tab in ("mine", "agenda", "check", "about", "list", "dash"):
         page.click(f'[data-tab="{tab}"]')
         assert page.locator(f"#tab-{tab}").is_visible()
     assert page.locator("#list .row").count() > 0
@@ -185,12 +188,14 @@ def test_secret_budget_shown_as_secret_not_zero(page: Page, fixture_url: str) ->
 def test_ui_state_saved(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url)
     page.select_option("#sort", "valor")
-    page.click('[data-tab="charts"]')
+    page.click('[data-tab="agenda"]')
     ui = ls(page, UIK)
-    assert ui["sort"] == "valor" and ui["tab"] == "charts"
+    assert ui["sort"] == "valor" and ui["tab"] == "agenda"
     page.reload()
     wait_ready(page)
-    assert page.locator("#tab-charts").is_visible()
+    assert page.locator("#tab-dash").is_visible()  # sempre abre no Dashboard
+    page.click('[data-tab="list"]')
+    assert page.locator("#sort").input_value() == "valor"
 
 
 def test_theme_toggle_saved(page: Page, fixture_url: str) -> None:
@@ -207,6 +212,7 @@ def test_corrupted_storage_is_backed_up_not_erased(page: Page, fixture_url: str)
     page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, broken])
     page.reload()
     wait_ready(page)
+    page.click('[data-tab="list"]')
     row(page, FIRST).locator('[data-act="fav"]').click()
     keys = page.evaluate("Object.keys(localStorage)")
     copies = [k for k in keys if k.startswith(WFK + ".ilegivel.")]
@@ -412,3 +418,46 @@ def test_csv_neutralizes_formulas(page: Page, fixture_url: str) -> None:
     page.wait_for_timeout(400)
     csv = page.evaluate("window.__monitor.csvText().csv")
     assert "\"'=HYPERLINK(\"\"x\"\")\"" in csv
+
+
+PISOK = "monitorLicitacoes.pisos.v1"
+
+
+def test_opens_on_dashboard_and_kpi_filters_list(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, tab="dash")
+    assert page.locator("#tab-dash").is_visible() and page.locator('[data-tab="dash"]').get_attribute("aria-selected") == "true"
+    assert page.locator("#dash .lv-row").count() == 4  # um por nível de exigência
+    page.click('.kpi[data-k="urg"]')
+    assert page.locator("#tab-list").is_visible() and page.evaluate("window.__monitor.F().urg") is True
+
+
+def test_level_facet_and_dashboard_row_filter(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, tab="dash")
+    page.click('#dash [data-cf="niveis|Superior"]')
+    page.wait_for_function("window.__monitor.count() === 2")  # 080 e 128 pedem Superior
+    assert page.locator(f'#list .row[data-ch="{FIRST}"] .lvl').inner_text().strip() == "Superior"
+
+
+def test_price_floor_marks_purchases_and_goes_to_backup(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, tab="dash")
+    piso = page.locator('[data-piso="Superior"]')
+    piso.fill("70,00")
+    piso.blur()
+    assert ls(page, PISOK) == {"Superior": 70}
+    page.click('[data-tab="list"]')
+    assert "abaixo do meu piso" in row(page, FIRST).inner_text()  # R$ 66,03 < R$ 70
+    page.locator('[data-t="viavel"]').check()
+    page.wait_for_function("window.__monitor.count() === 0")
+    exp = page.evaluate("JSON.parse(window.__monitor.exportText())")
+    assert exp["pisos"] == {"Superior": 70}
+
+
+def test_drawer_starts_with_verdict_and_specs(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
+    cards = d.locator(".d-body > .card h3").all_inner_texts()
+    assert cards[0].lower() == "vale a pena?"
+    assert "nível Superior" in d.locator(".verdict").inner_text() and "R$ 66,03/kg" in d.locator(".verdict").inner_text()
+    assert "Nível de exigência" in d.locator(".spec-grid").inner_text()
+    d.locator('[data-act="pisos"]').click()
+    page.wait_for_function("document.activeElement && document.activeElement.dataset.piso === 'Sem exigência'")

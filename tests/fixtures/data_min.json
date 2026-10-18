@@ -72,6 +72,7 @@
    ],
    "tags": [
     "ABIC/pureza",
+    "Aceita conilon/blend",
     "Validade ≥10 meses"
    ],
    "resumo": "T&M 500g ×12084 PACOTE",
@@ -98,11 +99,17 @@
      "sit": "Em andamento",
      "tags": [
       "ABIC/pureza",
+      "Aceita conilon/blend",
       "Validade ≥10 meses"
      ],
      "espec": "Cafe em po torrado e moido, cesta basica- CAFE EM PO TORRADO E MOIDO: Cafe em po homogeneo, torrado e moido, TIPO SUPERIOR, sabor tipo extraforte, com, no maximo, 20% de graos tipo Conilon/Robusta. Embalagem: pacotes de 500g, tipo vacuo, contendo na embalagem a identificacao do produto, a marca do fabricante, a data de fabricacao, o prazo de validade nao inferior a 10 (dez) meses contados da data de recebimento, com selo de pureza e qualidade \"ABIC. Caracteristicas quimicas (exigidas para cada 100g): umidade maxima 5,0%, residuo mineral fixo maximo 5,0%, residuo mineral fixo, insoluvel em acido cloridrico a 10% maximo 1,0%, cafeina minimo 0,7%, extrato aquoso minimo 25,0%, extrato etereo minimo 8,0%, caracteristicas sensoriais: aroma caracteristico do produto, acidez baixa a moderada, amargor moderado, sabor caracteristico e equilibrado, livre de sabor fermentado, mofado e de terra, adstringencia baixa, corpo razoavelmente encorpado. Acondicionado em embalagem a vacuo puro, 500g.",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": "Superior"
     }
+   ],
+   "niveis": [
+    "Superior"
    ]
   },
   {
@@ -184,7 +191,9 @@
      "sit": "Em andamento",
      "tags": [],
      "espec": "Café Café, Apresentação:Torrado Moído, Intensidade:Intensa Ou Extra Forte, Tipo:Tradicional, Empacotamento:Vácuo Conforme TR",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": "Tradicional"
     },
     {
      "n": 21,
@@ -205,8 +214,13 @@
      "sit": "Em andamento",
      "tags": [],
      "espec": "Café Café, Apresentação:Solúvel Granulado, Intensidade:Média, Tipo:Tradicional Café solúvel liofilizado gourmet para máquina de café, em embalagens de 500 g. Obs.: Este insumo deve ser compatível com a máquina de café da marca SVAGO modelo 5S.",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": null
     }
+   ],
+   "niveis": [
+    "Tradicional"
    ]
   },
   {
@@ -267,8 +281,8 @@
     "Exclusiva ME/EPP (todos os itens)"
    ],
    "tags": [
-    "Validade ≥12 meses",
-    "Marca ref."
+    "Marca ref.",
+    "Validade ≥12 meses"
    ],
    "resumo": "T&M 500g ×1393 UN; Solúvel 200g ×545 UN",
    "dup": "",
@@ -293,11 +307,13 @@
      "me": "Exclusivo",
      "sit": "Em andamento",
      "tags": [
-      "Validade ≥12 meses",
-      "Marca ref."
+      "Marca ref.",
+      "Validade ≥12 meses"
      ],
      "espec": "CAFÉ TORRADO E MOÍDO DO TIPO SUPERIOR, DE PRIMEIRA QUALIDADE, COM AS SEGUINTES CARACTERÍSTICAS: MARCAS DE REFERÊNCIA: MELITTA SUPERIOR OU EQUIVALENTE. BEBIDA (SABOR): DO TIPO INTENSO, EMBALAGEM: TIPO ALTO VÁCUO OU VÁCUO PURO EM PACOTES DE 500 GRAMAS; INTENSIDADE 8 • DEVERÁ CONSTAR NA EMBALAGEM A DATA DE FABRICAÇÃO E PRAZO DE VALIDADE, QUE DEVERÁ SER DE, NO MÍNIMO, 12 (DOZE) MESES; • NO ATO DA ENTREGA DO PRODUTO, PODERÃO TER TRANSCORRIDO, NO MÁXIMO, 60 (SESSENTA) DIAS DA DATA DE SUA FABRICAÇÃO.",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": "Superior"
     },
     {
      "n": 45,
@@ -320,8 +336,13 @@
       "Validade ≥12 meses"
      ],
      "espec": "CAFÉ GRANULADO, SOLUVEL INSTANTÂNEO, EMBALAGEM DE 200 G, DEVE CONSTAR NA EMBALAGEM DATA DE FABRICAÇÃO E PRAZO DE VALIDADE DE NO MÍNIMO 12 MESES.",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": null
     }
+   ],
+   "niveis": [
+    "Superior"
    ]
   },
   {
@@ -417,7 +438,9 @@
       "Marca ref."
      ],
      "espec": "CAFÉ TORRADO E MOÍDO, TIPO TRADICIONAL 500GR, 100% puro",
-     "usa_trecho": true
+     "usa_trecho": true,
+     "qg": null,
+     "nivel": "Tradicional"
     },
     {
      "n": 12,
@@ -444,8 +467,13 @@
       "Marca ref."
      ],
      "espec": "CÁPSULA DE CAFÉ (COMPATÍVEL SISTEMA DOLCE GUSTO) 100% ARÁBICA",
-     "usa_trecho": true
+     "usa_trecho": true,
+     "qg": null,
+     "nivel": null
     }
+   ],
+   "niveis": [
+    "Tradicional"
    ]
   },
   {
@@ -527,7 +555,9 @@
      "sit": "Em andamento",
      "tags": [],
      "espec": "CESTA BASICA COM 15 ITENS Arroz agulhinha tipo 1 - polido, longo fino, grãos inteiros. 5kg; Feijão carioca, primeira linha, in natura, novo, grãos inteiros, aspecto brilhoso; Açúcar cristal granulado. 5kg; Óleo de soja, refinado. 900ml; Café torrado e moído tipo 1 - embalado a vácuo ou tipo almofada, com 100% de pureza. 2kg; Sal iodado refinado, sal fino seco, iodado para cozinha.1kg; Macarrão espaguete.500g; Extrato de tomate.minimo 300g; Biscoito rosquinha ou doce. Minimo 800g; Achocolatado em pó. Minimo 400g; Farinha de mandioca.500g; Farinha de trigo especial - enriquecida com ferro e ácido fólico.1kg; Bolacha de água e Sal ou Cream Cracker. Minimo 350g; Sardinha em lata. Lata 125g; Flocão de milho.1kg; Os itens deverão conter todas as especificações descritas no edital.",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": null
     },
     {
      "n": 20001,
@@ -548,9 +578,12 @@
      "sit": "Em andamento",
      "tags": [],
      "espec": "CESTAS BÁSICAS DE NATAL: Arroz agulhinha tipo 1 - polido, longo fino, grãos inteiros. 5kg; Feijão carioca, primeira linha, in natura, novo, grãos inteiros, aspecto brilhoso; Açúcar cristal granulado. 5kg; Óleo de soja, refinado. 900ml; Café torrado e moído tipo 1 - embalado a vácuo ou tipo almofada, com 100% de pureza. 2kg; Sal iodado refinado, sal fino seco, iodado para cozinha.1kg; Macarrão espaguete.500g; Extrato de tomate.minimo 300g; Biscoito rosquinha ou doce. Minimo 800g; Achocolatado em pó. Minimo 400g; Farinha de mandioca.500g; Farinha de trigo especial - enriquecida com ferro e ácido fólico.1kg; Bolacha de água e Sal ou Cream Cracker. Minimo 350g; Sardinha em lata. Lata 125g; Flocão de milho.1kg; Azeitona verde em conserva com caroço.Sachê 500g; Milho verde em conserva enlatado. Mínimo 170g; Panettone tradicional com frutas cristalizadas. Mínimo 400g; Leite condensado integral. Caixa 395g. Os itens deverão conter todas as especificações exigidas no edital.",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": null
     }
-   ]
+   ],
+   "niveis": []
   },
   {
    "chave": "96291141000180-1-006590/2026",
@@ -633,8 +666,13 @@
      "sit": "Em andamento",
      "tags": [],
      "espec": "Café apresentação: torrado moído, intensidade: média, tipo: tradicional, empacotamento: vácuo",
-     "usa_trecho": true
+     "usa_trecho": true,
+     "qg": null,
+     "nivel": "Tradicional"
     }
+   ],
+   "niveis": [
+    "Tradicional"
    ]
   },
   {
@@ -724,7 +762,9 @@
      "sit": "Em andamento",
      "tags": [],
      "espec": "Café solúvel, em pó",
-     "usa_trecho": true
+     "usa_trecho": true,
+     "qg": null,
+     "nivel": null
     },
     {
      "n": 31,
@@ -747,7 +787,9 @@
       "ABIC/pureza"
      ],
      "espec": "Café torrado e moído ESPECIAL ou PREMIUM, Intensidade 7, Certificado pureza e qualidade ABIC, embalagem alto vácuo, pacote com 500 gramas",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": "Gourmet/especial"
     },
     {
      "n": 32,
@@ -770,7 +812,9 @@
       "ABIC/pureza"
      ],
      "espec": "Café torrado e moído EXTRAFORTE, Intensidade 10, Certificado pureza e qualidade ABIC, embalagem alto vácuo, pacote com 500 gramas.",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": "Tradicional"
     },
     {
      "n": 33,
@@ -793,8 +837,14 @@
       "ABIC/pureza"
      ],
      "espec": "Café torrado e moído TRADICIONAL, Intensidade 8, Certificado pureza e qualidade ABIC, embalagem alto vácuo, pacote com 500 gramas",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": "Tradicional"
     }
+   ],
+   "niveis": [
+    "Tradicional",
+    "Gourmet/especial"
    ]
   },
   {
@@ -879,8 +929,13 @@
       "Validade ≥6 meses"
      ],
      "espec": "CAFÉ – torrado e moído embalagem comum de 250 gramas, de primeira qualidade, com selo de pureza da Associação Brasileira da Indústria do Café - ABIC. O produto deverá ter registro no Ministério da Saúde e atender a Portaria 451/97 do Ministério da Saúde. Prazo de validade mínimo de 6 (seis) meses a partir data de entrega.",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": "Tradicional"
     }
+   ],
+   "niveis": [
+    "Tradicional"
    ]
   },
   {
@@ -965,8 +1020,13 @@
       "Validade ≥6 meses"
      ],
      "espec": "LOTE 01 - CAFE torrado e moido embalagem comum de 250 gramas, de primeira qualidade, com selo de pureza da Associacao Brasileira da Industria do Cafe - ABIC. O produto devera ter registro no Ministerio da Saude e atender a Portaria 451/97 do Ministerio da Saude. Prazo de validade minimo de 6 (seis) meses a partir data de entrega.",
-     "usa_trecho": false
+     "usa_trecho": false,
+     "qg": null,
+     "nivel": "Tradicional"
     }
+   ],
+   "niveis": [
+    "Tradicional"
    ]
   }
  ],
