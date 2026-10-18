@@ -69,6 +69,17 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .menu-pop small{display:block;color:var(--muted);font-size:12px;padding:8px 10px 6px}
 .menu-pop button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 10px;border-radius:8px;font-size:13.5px}
 .menu-pop button:hover{background:var(--surface-2)}
+.sync .sdot{width:9px;height:9px;border-radius:50%;background:var(--faint);flex:none}
+.sync .sdot.ok{background:var(--green)}.sync .sdot.salvando{background:var(--amber)}.sync .sdot.erro{background:var(--red)}
+.sync-pop{min-width:320px;max-width:min(380px,calc(100vw - 24px))}
+.sync-pop small{line-height:1.45}
+.sync-pop code{font-size:11.5px}
+.sync-form{padding:4px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.sync-form label{font-size:12px;font-weight:650;color:var(--muted)}
+.sync-how{padding:0 10px 8px;font-size:12.5px;color:var(--text-2)}
+.sync-how summary{cursor:pointer;color:var(--accent);font-weight:600}
+.sync-how ol{padding-left:18px;margin:6px 0 0}
+.sync-how li{margin:3px 0}
 /* ---------- abas */
 .nav{border-top:1px solid var(--border-2)}
 .nav-in{max-width:1440px;margin:0 auto;display:flex;gap:2px;padding:0 14px;overflow-x:auto;scrollbar-width:none}
@@ -440,16 +451,9 @@ footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint);fon
       <kbd>/</kbd><button class="x" id="qx" type="button" aria-label="Limpar busca">×</button>
     </label>
     <div class="tactions">
-      <button class="ib" id="csvBtn" title="Exportar a lista filtrada (CSV, abre no Excel)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3h16v-3"/></svg><span class="lbl">CSV</span></button>
-      <div class="menu" id="dataMenu">
-        <button class="ib" id="dataBtn" aria-haspopup="true" title="Meus dados: backup das anotações"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span class="lbl">Meus dados</span></button>
-        <div class="menu-pop" role="menu">
-          <small>Favoritos, status, preços, notas e checklist ficam salvos só neste navegador. Faça backup de vez em quando.</small>
-          <button id="expJson" role="menuitem">⬇️ Exportar backup (JSON)</button>
-          <button id="impJson" role="menuitem">⬆️ Importar backup (JSON)</button>
-          <button id="undoImp" role="menuitem">↩️ Desfazer última importação</button>
-          <input type="file" id="impFile" accept="application/json,.json" hidden>
-        </div>
+      <div class="menu" id="syncMenu">
+        <button class="ib sync" id="syncBtn" aria-haspopup="true" title="Gravação das suas anotações no GitHub"><span class="sdot" id="syncDot"></span><span class="lbl" id="syncLbl">Só neste aparelho</span></button>
+        <div class="menu-pop sync-pop" id="syncPop"></div>
       </div>
       <button class="ib" id="themeBtn" title="Alternar tema claro/escuro" aria-label="Alternar tema"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
     </div>
@@ -589,7 +593,6 @@ const lset = (k, v) => {
   const s = JSON.stringify(v); if (LS) { try { LS.setItem(k, s); } catch (e) { toast('Não foi possível salvar no navegador.'); } } else mem[k] = s;
 };
 const PFX = 'monitorLicitacoes.';
-const PREIMP = PFX + 'antesDaImportacao.v1';
 const WFK = PFX + 'meusDados.v1', UIK = PFX + 'ui.v1', CLK = PFX + 'checklist.v1', PISOK = PFX + 'pisos.v1';
 let WF = lget(WFK, {});
 /* Meu preço mínimo (R$/kg) por nível de exigência, para café torrado (moído ou em grão). Só neste navegador. */
@@ -604,9 +607,12 @@ function setW(chave, patch) {
   const w = Object.assign({}, WF[chave] || {}, patch, {upd: new Date().toISOString()});
   if (c) w.ref = refOf(c);
   for (const k of Object.keys(w)) if (w[k] === '' || w[k] == null || w[k] === false) delete w[k];
-  if (Object.keys(w).some(k => k !== 'upd' && k !== 'ref')) WF[chave] = w; else delete WF[chave];
-  lset(WFK, WF);
+  // Sem mais nada anotado, fica só {upd}: uma "marca de removido" com data, para a sincronização não trazer de
+  // volta, de outro aparelho, uma anotação que você apagou aqui.
+  WF[chave] = temAnotacao(w) ? w : {upd: w.upd};
+  lset(WFK, WF); alterou('anotações');
 }
+const temAnotacao = w => !!w && Object.keys(w).some(k => k !== 'upd' && k !== 'ref');
 const follows = w => !!(w.fav || w.status);
 
 /* ---------------- preparação */
@@ -1073,7 +1079,7 @@ function goneHTML(chave) {
       ${r.vcafe != null ? `<dt>Valor estimado (café)</dt><dd>${BRL0(r.vcafe)}</dd>` : ''}</dl></div>
   </div>`;
 }
-const canOpen = k => !!(BYK[k] || WF[k]);
+const canOpen = k => !!(BYK[k] || temAnotacao(WF[k]));
 function openDetail(chave, push = true) {
   if (!canOpen(chave)) return;
   const c = BYK[chave];
@@ -1253,7 +1259,7 @@ function renderDash() {
   <div class="ch w8"><div class="ch-h"><h3>Melhores oportunidades</h3><button data-go="folga">Ver todas →</button></div>
     <p class="sub">Preço do órgão mais acima do preço típico do mesmo nível${temPiso ? ', sem as que ficam abaixo do seu piso' : ''}. Empate: maior volume.</p>
     ${best.length ? best.map(orow).join('') : '<div class="l2" style="white-space:normal">Nenhuma licitação com comparação de preço disponível.</div>'}</div>
-  <div class="stack w4"><div class="ch"><h3>Meu preço mínimo por nível</h3><p class="sub">R$/kg abaixo do qual não vale entrar (café torrado). Fica só neste navegador e entra no backup.</p>
+  <div class="stack w4"><div class="ch"><h3>Meu preço mínimo por nível</h3><p class="sub">R$/kg abaixo do qual não vale entrar (café torrado). Gravado com as suas anotações.</p>
     <div class="pisos">${NIVEIS.map(n => `<div><label for="piso-${NIVEIS.indexOf(n)}">${esc(n)}</label><input class="inp num" id="piso-${NIVEIS.indexOf(n)}" data-piso="${esc(n)}" inputmode="decimal" placeholder="${REF[TM + '|' + n] ? NF2.format(REF[TM + '|' + n].med) : '60,00'}" title="Vazio: sem piso. A sugestão é o preço típico do nível." value="${PISOS[n] > 0 ? NF2.format(PISOS[n]) : ''}"></div>`).join('')}</div>
     <p class="l2" style="white-space:normal;margin:10px 0 0">${temPiso ? `<b>${O.filter(c => c._cmp && c._cmp.ok).length}</b> licitações abertas cobrem o seu piso; <b>${O.filter(c => c._cmp && c._cmp.ok === false).length}</b> ficam abaixo.` : 'Preencha para ver quais licitações cobrem o seu custo.'}</p></div>
   <div class="ch"><div class="ch-h"><h3>Fecham em até 7 dias</h3><button data-go="agenda">Agenda →</button></div><p class="sub">${soon.length} licitações; as 5 primeiras:</p>
@@ -1304,84 +1310,147 @@ function renderAbout() {
    <li><b>Preço típico do nível</b>: o R$/kg do meio entre os itens abertos do mesmo tipo e nível (metade das licitações paga mais, metade paga menos; mínimo ${REF_MIN} itens). Compara licitações entre si; não é custo. “No típico” = até 10% de diferença. A <b>faixa comum</b> mostra onde fica a metade das licitações.</li>
    <li><b>Varejo</b>: preço médio em supermercados por estilo, ABIC, ${MERCADO.varejoData} (Tradicional ${BRL(MERCADO.varejo.Tradicional)}, Superior ${BRL(MERCADO.varejo.Superior)}, Gourmet ${BRL(MERCADO.varejo['Gourmet/especial'])} por kg).</li>
    <li><b>Grão cru</b>: indicador <a href="https://www.cepea.org.br/br/indicador/cafe.aspx" target="_blank" rel="noopener">CEPEA/ESALQ</a> do arábica em ${MERCADO.cruData} (R$ 1.601,25 a saca de 60 kg), dividido por 0,82 (18% de quebra na torra): ≈ ${BRL(MERCADO.cru)} por kg torrado, só a matéria-prima.</li>
-   <li><b>Meu piso</b>: o preço mínimo que você digita no Dashboard. Fica só neste navegador e entra no backup.</li>
+   <li><b>Meu piso</b>: o preço mínimo que você digita no Dashboard. É gravado junto com as suas anotações.</li>
    <li><b>Pontos de atenção</b> citam a <a href="https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/l14133.htm" target="_blank" rel="noopener">Lei 14.133/2021</a> (arts. 41 e 42). Não são orientação jurídica.</li></ul></div>
   <div class="card"><h3>Lacunas conhecidas</h3><ul>
    <li>${semK} de ${n} sem volume em kg (pacote sem peso informado, cestas, cápsulas) e ${semR} sem R$/kg.</li>
    <li>${naoPlat} sem plataforma identificada automaticamente (aparece “ver edital”).</li>
    <li>${semEd} sem edital lido: só a descrição do item está disponível.</li>
    <li>${dup} marcadas como possível duplicata (${dupH} ficam ocultas por padrão).</li></ul></div>
-  <div class="card"><h3>Seus dados</h3><p>Favoritos, status, preços, responsável, notas e o checklist ficam salvos <b>só neste navegador</b>; celular e computador não se sincronizam sozinhos. Use <b>Meus dados → Exportar backup</b> para guardar ou levar para outro aparelho, e <b>Importar</b> para restaurar.</p></div>`;
+  <div class="card"><h3>Seus dados</h3><p>Favoritos, status, preços, responsável, notas, checklist e pisos são gravados <b>sozinhos no GitHub</b>, no arquivo <code>${esc(SYNC_PATH)}</code> deste repositório (público: qualquer pessoa pode ver), e sincronizam entre celular e computador. Cada gravação fica no histórico do GitHub, de onde dá para recuperar versões antigas. Para gravar, cada aparelho precisa da sua chave de acesso uma vez: botão no topo da página (“Só neste aparelho” / “Salvo no GitHub”).</p></div>`;
 }
 
-/* ---------------- CSV / JSON */
-function download(name, content, type) {
-  const blob = new Blob([content], {type});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
-  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+/* ---------------- gravação automática das anotações no GitHub
+   Arquivo dados/meus-dados.json na branch main deste repositório (público por decisão do dono: as anotações
+   ficam visíveis). Grava pela API do GitHub com uma chave de acesso que fica SÓ neste navegador.
+   Junta aparelhos por item: vale a alteração mais recente (campo upd); remoção vira {upd} (marca de removido).
+   Checklist e pisos: vale o conjunto alterado por último (upd em SYNCMETA). */
+const SYNCK = PFX + 'github.v1', SYNCMETA = PFX + 'sync.v1', PRESYNC = PFX + 'antesDaSincronizacao.v1';
+const SYNC_PATH = 'dados/meus-dados.json', SYNC_ATRASO = 2000, MARCA_DIAS = 180;
+const REPO = (() => {
+  const h = location.hostname.match(/^([\w-]+)\.github\.io$/i), p = location.pathname.split('/').filter(Boolean)[0];
+  if (h && p) return h[1] + '/' + p;
+  return new URLSearchParams(location.search).get('repo');  // só fora do GitHub Pages (testes, cópia local)
+})();
+const META = Object.assign({checklist_upd: '', pisos_upd: '', pendente: false}, lget(SYNCMETA, {}));
+const SY = {token: (lget(SYNCK, {}) || {}).token || '', estado: 'local', quando: '', erro: '', timer: null, rodando: false, denovo: false, mudancas: 0};
+const agoraISO = () => new Date().toISOString();
+function alterou(o) {
+  if (o === 'checklist') META.checklist_upd = agoraISO();
+  if (o === 'pisos') META.pisos_upd = agoraISO();
+  META.pendente = true; lset(SYNCMETA, META); SY.mudancas++;
+  if (!SY.token) { syncUI(); return; }
+  clearTimeout(SY.timer); SY.timer = setTimeout(() => syncAgora(), SYNC_ATRASO);
+  SY.estado = 'salvando'; syncUI();
 }
-function csvText() {
-  const num = v => v == null ? '' : String(v).replace('.', ',');
-  const H = ['Chave PNCP', 'Prazo final', 'Dias restantes', 'UF', 'Município', 'Distância (km, estrada)', 'Órgão', 'Modalidade', 'Número', 'Onde enviar', 'ME/EPP', 'Tipo', 'Categoria', 'Embalagem', 'Qtd café (kg)', 'Valor estimado café (R$)', 'R$/kg estimado', 'Exigências', 'Edital menciona', 'Objeto', 'Nova', 'Possível duplicata', 'Link PNCP', 'Link plataforma', 'Favorito', 'Status', 'Meu preço R$/kg', 'Margem vs estimado', 'Responsável', 'Notas', 'R$/kg refere-se a', 'Tempo de viagem (min)', 'Nível de exigência', 'Nota mínima de qualidade', 'Preço típico R$/kg do nível', 'Diferença vs preço típico', 'Cobre meu piso'];
-  const rows = LAST.map(c => { const w = getW(c), u = urg(c), m = margin(c, w);
-    return [c.chave, fmtDate(c.fim), u.d ?? '', c.uf, c.mun, c.dist ?? '', c._orgao, c.mod, c.num, c.plat, c.me, c.tipos.join('; '), c.cats.join('; '), c.embs, num(c.kg), num(c.vcafe), num(rkV(c)), c.tags.join('; '), c.ed_tags.join('; '), c.objeto, c._new ? 'Sim' : '', c.dup ? 'Sim' : '', c.link_pncp, c.link_plat, w.fav ? 'Sim' : '', w.status || '', num(w.preco), m != null ? NF1.format(m * 100) + '%' : '', w.resp || '', w.notas || '', c._rk ? c._rk.main.t : '', c.dist_min ?? '', c._niv || '', c._main && c._main.qg ? num(c._main.qg) : '',
-      c._cmp && c._cmp.ref ? num(c._cmp.ref) : '', c._cmp && c._cmp.dif != null ? NF1.format(c._cmp.dif * 100) + '%' : '', c._cmp && c._cmp.ok != null ? (c._cmp.ok ? 'Sim' : 'Não') : '']; });
-  const q = v => {
-    v = String(v ?? '');
-    if (/^[=+\-@\t\r]/.test(v) && !/^-?[\d.,]+%?$/.test(v)) v = "'" + v;  // não deixa o Excel tratar como fórmula
-    return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
-  };
-  return {n: rows.length, csv: '﻿' + [H, ...rows].map(r => r.map(q).join(';')).join('\r\n')};
-}
-function exportCSV() { const {n, csv} = csvText(); download(`licitacoes-${todayYMD()}.csv`, csv, 'text/csv;charset=utf-8'); toast(`CSV com ${n} licitações exportado.`); }
-function exportText() {
-  return JSON.stringify({app: 'monitor-licitacoes', versao: 1, exportado_em: new Date().toISOString(), meus_dados: WF, checklist: lget(CLK, {}), pisos: PISOS}, null, 1);
-}
-function exportJSON() {
-  download(`backup-licitacoes-${todayYMD()}.json`, exportText(), 'application/json');
-  toast(`Backup exportado: ${Object.keys(WF).length} licitações com anotações.`);
-}
-let IMP_PISOS = 0;  // pisos alterados pela última importação (para o aviso)
-const CHAVE_RX = /^\d{14}-\d+-\d{6}\/\d{4}$/;
-function importText(text) {
-  const j = JSON.parse(text);
-  if (!j || typeof j !== 'object' || Array.isArray(j)) throw new Error('formato');
-  if (j.compras && !j.meus_dados) throw new Error('é o arquivo de dados do site, não um backup');
-  const md = j.meus_dados || j;
-  if (typeof md !== 'object' || Array.isArray(md)) throw new Error('formato');
-  const ok = Object.entries(md).filter(([k, v]) => CHAVE_RX.test(k) && v && typeof v === 'object' && !Array.isArray(v));
-  if (!ok.length && Object.keys(md).length) throw new Error('nenhuma anotação reconhecida');
-  lset(PREIMP, {salvo_em: new Date().toISOString(), meus_dados: WF, checklist: lget(CLK, {}), pisos: PISOS});
-  let n = 0;
-  for (const [k, v] of ok) {
-    const cur = WF[k];
-    if (!cur || !cur.upd || (v.upd && v.upd > cur.upd)) { WF[k] = v; n++; }
+const docLocal = () => ({app: 'monitor-licitacoes', versao: 2, atualizado_em: agoraISO(), meus_dados: WF,
+  checklist: {itens: lget(CLK, {}), upd: META.checklist_upd}, pisos: {valores: PISOS, upd: META.pisos_upd}});
+/* Junta o que veio do GitHub com o local. Devolve o documento final e se o local mudou. */
+function juntar(rem) {
+  let mudouLocal = false;
+  const md = Object.assign({}, WF), rmd = (rem && rem.meus_dados) || {};
+  for (const [k, v] of Object.entries(rmd)) {
+    if (!/^\d{14}-\d+-\d{6}\/\d{4}$/.test(k) || !v || typeof v !== 'object') continue;
+    if (!md[k] || (v.upd || '') > (md[k].upd || '')) { md[k] = v; mudouLocal = true; }
   }
-  lset(WFK, WF);
-  if (j.checklist && typeof j.checklist === 'object' && !Array.isArray(j.checklist)) {
-    const cl = Object.fromEntries(Object.entries(j.checklist).filter(([k, v]) => /^\d+$/.test(k) && v === 1));
-    lset(CLK, Object.assign(lget(CLK, {}), cl));
-  }
-  if (j.pisos && typeof j.pisos === 'object' && !Array.isArray(j.pisos)) {
-    for (const [k, v] of Object.entries(j.pisos)) if (NIVEIS.includes(k) && typeof v === 'number' && v > 0) { if (PISOS[k] !== v) IMP_PISOS++; PISOS[k] = v; }
-    lset(PISOK, PISOS); applyRefs();
-  }
-  renderAll();
-  return n;
+  const lim = new Date(Date.now() - MARCA_DIAS * 864e5).toISOString();
+  for (const [k, v] of Object.entries(md)) if (!temAnotacao(v) && (v.upd || '') < lim) delete md[k];  // marcas antigas
+  let cl = lget(CLK, {}), clu = META.checklist_upd, pi = PISOS, piu = META.pisos_upd;
+  const rcl = rem && rem.checklist, rpi = rem && rem.pisos;
+  if (rcl && rcl.itens && (rcl.upd || '') > (clu || '')) { cl = Object.fromEntries(Object.entries(rcl.itens).filter(([k, v]) => /^\d+$/.test(k) && v === 1)); clu = rcl.upd; mudouLocal = true; }
+  if (rpi && rpi.valores && (rpi.upd || '') > (piu || '')) { pi = Object.fromEntries(Object.entries(rpi.valores).filter(([k, v]) => NIVEIS.includes(k) && typeof v === 'number' && v > 0)); piu = rpi.upd; mudouLocal = true; }
+  return {md, cl, clu, pi, piu, mudouLocal};
 }
-function undoImport() {
-  const b = lget(PREIMP, null);
-  if (!b || typeof b.meus_dados !== 'object') { toast('Nenhuma importação para desfazer.'); return; }
-  WF = b.meus_dados; lset(WFK, WF); lset(CLK, b.checklist || {});
-  if (b.pisos && typeof b.pisos === 'object') { PISOS = b.pisos; lset(PISOK, PISOS); applyRefs(); }
-  if (LS) LS.removeItem(PREIMP);
-  renderAll();
-  toast(`Importação desfeita: restaurei os dados de ${new Date(b.salvo_em).toLocaleString('pt-BR', {timeZone: TZ, dateStyle: 'short', timeStyle: 'short'})}.`);
+function aplicar(j) {
+  if (!LS || LS.getItem(PRESYNC) == null) lset(PRESYNC, {salvo_em: agoraISO(), meus_dados: WF, checklist: lget(CLK, {}), pisos: PISOS});  // cópia antes da 1ª junção
+  WF = j.md; lset(WFK, WF); lset(CLK, j.cl); PISOS = j.pi; lset(PISOK, PISOS);
+  META.checklist_upd = j.clu; META.pisos_upd = j.piu; lset(SYNCMETA, META);
 }
-function importJSON(file) {
-  const r = new FileReader();
-  r.onload = () => { try { IMP_PISOS = 0; const n = importText(r.result); toast(`Importado: ${n} licitações atualizadas${IMP_PISOS ? ` e ${IMP_PISOS} piso(s) de preço trocado(s)` : ''}.`); } catch (e) { console.error(e); toast('Arquivo inválido. Use um backup exportado por este monitor.'); } };
-  r.readAsText(file);
+const b64enc = s => { const b = new TextEncoder().encode(s); let r = ''; for (let i = 0; i < b.length; i += 8192) r += String.fromCharCode.apply(null, b.subarray(i, i + 8192)); return btoa(r); };
+const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g, '')), c => c.charCodeAt(0)));
+async function gh(method, body) {
+  const h = {Accept: 'application/vnd.github+json'};
+  if (SY.token) h.Authorization = 'Bearer ' + SY.token;
+  if (body) h['Content-Type'] = 'application/json';
+  return fetch(`https://api.github.com/repos/${REPO}/contents/${SYNC_PATH}` + (method === 'GET' ? '?ref=main&t=' + Date.now() : ''),
+    {method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store'});
+}
+async function lerRemoto() {
+  const r = await gh('GET');
+  if (r.status === 404) return {doc: null, sha: null};
+  if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'chave' : 'HTTP ' + r.status);
+  const j = await r.json();
+  return {doc: JSON.parse(b64dec(j.content)), sha: j.sha};
+}
+/* Busca, junta e (com chave) grava. Uma de cada vez; pedido durante uma gravação roda logo em seguida. */
+async function syncAgora(soLer = false) {
+  if (!REPO) { SY.estado = 'local'; syncUI(); return; }
+  if (SY.rodando) { SY.denovo = true; return; }
+  SY.rodando = true; clearTimeout(SY.timer);
+  try {
+    for (let tentativa = 1; ; tentativa++) {
+      const {doc, sha} = await lerRemoto();
+      const j = juntar(doc), feitas = SY.mudancas;
+      if (j.mudouLocal) {  // veio algo mais novo de outro aparelho
+        aplicar(j); applyRefs();
+        if (document.activeElement && document.activeElement.closest('.drawer,#dash input')) render(); else renderAll();  // não apaga o que está sendo digitado
+      }
+      if (soLer || !SY.token || (!META.pendente && doc)) { SY.estado = SY.token ? 'ok' : 'local'; SY.quando = SY.token ? agoraISO() : SY.quando; break; }
+      SY.estado = 'salvando'; syncUI();
+      const novo = {app: 'monitor-licitacoes', versao: 2, atualizado_em: agoraISO(), meus_dados: j.md,
+        checklist: {itens: j.cl, upd: j.clu}, pisos: {valores: j.pi, upd: j.piu}};
+      const r = await gh('PUT', {message: 'Minhas anotações (salvo pelo site)', content: b64enc(JSON.stringify(novo, null, 1) + '\n'), branch: 'main', ...(sha ? {sha} : {})});
+      if (r.ok) {
+        SY.quando = agoraISO(); SY.erro = '';
+        if (SY.mudancas === feitas) { META.pendente = false; lset(SYNCMETA, META); SY.estado = 'ok'; }
+        else SY.denovo = true;  // houve alteração durante o envio: grava de novo em seguida
+        break;
+      }
+      if ((r.status === 409 || r.status === 422) && tentativa < 4) continue;  // alguém gravou no meio: busca de novo e junta
+      throw new Error(r.status === 401 || r.status === 403 ? 'chave' : 'HTTP ' + r.status);
+    }
+  } catch (e) {
+    console.error('Gravação no GitHub falhou:', e);
+    SY.estado = 'erro';
+    SY.erro = e.message === 'chave' ? 'A chave de acesso foi recusada (vencida, apagada ou sem permissão de escrita neste repositório).'
+      : 'Sem conexão com o GitHub agora. Suas alterações estão guardadas neste aparelho e serão enviadas na próxima tentativa.';
+    if (e.message !== 'chave') { clearTimeout(SY.timer); SY.timer = setTimeout(() => syncAgora(), 60000); }
+  } finally {
+    SY.rodando = false; syncUI();
+    if (SY.denovo) { SY.denovo = false; syncAgora(); }
+  }
+}
+function syncUI() {
+  const st = !REPO ? 'local' : SY.estado === 'erro' ? 'erro' : (SY.estado === 'salvando' || (META.pendente && SY.token)) ? 'salvando' : SY.token ? 'ok' : 'local';
+  const lbl = {ok: 'Salvo no GitHub', salvando: 'Salvando…', erro: 'Erro ao salvar', local: 'Só neste aparelho'}[st];
+  $('#syncDot').className = 'sdot ' + st; $('#syncLbl').textContent = lbl;
+  $('#syncBtn').title = lbl + (SY.quando ? ' · ' + new Date(SY.quando).toLocaleString('pt-BR', {timeZone: TZ, dateStyle: 'short', timeStyle: 'short'}) : '');
+  const hist = REPO ? `https://github.com/${REPO}/commits/main/${SYNC_PATH}` : '';
+  $('#syncPop').innerHTML = !REPO ? `<small>Gravação no GitHub disponível só no site publicado. Aqui as anotações ficam neste navegador.</small>`
+    : `<small><b>${esc(lbl)}</b>${SY.quando ? ' em ' + esc(new Date(SY.quando).toLocaleString('pt-BR', {timeZone: TZ, dateStyle: 'short', timeStyle: 'short'})) : ''}.
+      ${SY.erro ? '<br>' + esc(SY.erro) : ''}
+      Favoritos, status, preços, notas, checklist e pisos são gravados sozinhos em <code>${esc(SYNC_PATH)}</code> no repositório (visível ao público).
+      Cada gravação fica no <a href="${esc(hist)}" target="_blank" rel="noopener">histórico</a>, então dá para recuperar versões antigas.</small>
+    ${SY.token ? `<button id="syncNow">↻ Sincronizar agora</button><button id="syncOff">Desconectar este aparelho</button>`
+      : `<div class="sync-form"><label for="syncTok">Chave de acesso do GitHub (só fica neste aparelho)</label>
+        <input class="inp" id="syncTok" type="password" autocomplete="off" placeholder="github_pat_…">
+        <button class="btn primary" id="syncSave">Conectar</button></div>
+        <details class="sync-how"><summary>Como criar a chave (uma vez, 2 minutos)</summary><ol>
+        <li>No GitHub: foto do perfil → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+        <li>Nome: “Monitor de Licitações”. Validade: 1 ano.</li>
+        <li><b>Repository access</b>: <i>Only select repositories</i> → <b>${esc(REPO)}</b>.</li>
+        <li><b>Permissions</b> → <b>Contents</b>: <i>Read and write</i>. Nada mais.</li>
+        <li>Gere, copie e cole aqui. Repita só o passo 5 nos outros aparelhos (ou crie uma chave para cada um).</li></ol></details>`}`;
+}
+async function conectar(tok) {
+  SY.token = tok.trim(); SY.erro = '';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}`, {headers: {Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + SY.token}});
+    const j = r.ok ? await r.json() : null;
+    if (!j || !(j.permissions && j.permissions.push)) throw new Error('chave');
+  } catch (e) { SY.token = ''; SY.estado = 'erro'; SY.erro = 'Essa chave não tem permissão para gravar neste repositório. Confira os passos.'; syncUI(); return; }
+  lset(SYNCK, {token: SY.token}); META.pendente = true; lset(SYNCMETA, META);
+  toast('Conectado. Gravando suas anotações no GitHub…'); await syncAgora();
 }
 
 /* ---------------- utilidades */
@@ -1437,16 +1506,19 @@ function bind() {
   $('#scrim').addEventListener('click', () => { if ($('#filters').classList.contains('show')) openFilters(false); else closeDetail(); });
   const clear = () => { F = DEF(); setQ(''); resetLimit(); render(); };
   $('#clearF').addEventListener('click', clear); $('#clearF2').addEventListener('click', clear);
-  $('#csvBtn').addEventListener('click', exportCSV);
   $('#themeBtn').addEventListener('click', () => {
     const dark = UI.theme ? UI.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
     UI.theme = dark ? 'light' : 'dark'; applyTheme(); saveUI();
   });
-  $('#dataBtn').addEventListener('click', e => { e.stopPropagation(); $('#dataMenu').classList.toggle('open'); });
-  document.addEventListener('click', e => { if (!e.target.closest('#dataMenu')) $('#dataMenu').classList.remove('open'); });
-  $('#expJson').addEventListener('click', () => { $('#dataMenu').classList.remove('open'); exportJSON(); });
-  $('#impJson').addEventListener('click', () => $('#impFile').click());
-  $('#undoImp').addEventListener('click', () => { $('#dataMenu').classList.remove('open'); undoImport(); });
+  $('#syncBtn').addEventListener('click', e => { e.stopPropagation(); $('#syncMenu').classList.toggle('open'); });
+  document.addEventListener('click', e => { if (!e.target.closest('#syncMenu')) $('#syncMenu').classList.remove('open'); });
+  $('#syncPop').addEventListener('click', e => {
+    const id = e.target.id;
+    if (id === 'syncSave') conectar($('#syncTok').value);
+    else if (id === 'syncNow') syncAgora();
+    else if (id === 'syncOff' && confirm('Desconectar este aparelho? As anotações continuam no GitHub e aqui, mas as próximas alterações deste aparelho não serão gravadas lá.')) { SY.token = ''; if (LS) LS.removeItem(SYNCK); SY.estado = 'local'; syncUI(); }
+  });
+  $('#syncPop').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'syncTok') conectar(e.target.value); });
   const fb = $('#fbody');
   fb.addEventListener('click', e => {
     const o = e.target.closest('.opt'); if (!o) return;
@@ -1499,7 +1571,7 @@ function bind() {
     if ((raw && !t) || (v != null && !(v > 0))) { toast('Piso não salvo: digite um valor maior que zero (ex.: 55,00).'); e.target.value = PISOS[n] > 0 ? NF2.format(PISOS[n]) : ''; return; }
     if (v) PISOS[n] = v; else delete PISOS[n];
     if (!temPisos()) F.viavel = false;
-    lset(PISOK, PISOS); applyRefs(); toast(v ? `Piso ${n}: ${BRL(v)}/kg` : `Piso ${n} removido`);
+    lset(PISOK, PISOS); alterou('pisos'); applyRefs(); toast(v ? `Piso ${n}: ${BRL(v)}/kg` : `Piso ${n} removido`);
     // redesenha depois que o foco já foi para o próximo campo (Tab), e devolve o foco a ele
     setTimeout(() => { const id = document.activeElement && document.activeElement.id; render(); if (id && document.getElementById(id)) document.getElementById(id).focus(); }, 0);
   });
@@ -1566,11 +1638,11 @@ function bind() {
   $('#moreWrap').addEventListener('click', e => { if (e.target.id === 'more') { LIMIT += 50; renderList(); } });
   $('#tab-check').addEventListener('change', e => {
     const i = e.target.dataset.cl; if (i == null) return;
-    const d = lget(CLK, {}); if (e.target.checked) d[i] = 1; else delete d[i]; lset(CLK, d); renderChecklist();
+    const d = lget(CLK, {}); if (e.target.checked) d[i] = 1; else delete d[i]; lset(CLK, d); alterou('checklist'); renderChecklist();
   });
   $('#tab-check').addEventListener('click', e => {
     if (e.target.id !== 'clReset') return;
-    if (confirm('Desmarcar todos os itens do checklist?')) { lset(CLK, {}); renderChecklist(); }
+    if (confirm('Desmarcar todos os itens do checklist?')) { lset(CLK, {}); alterou('checklist'); renderChecklist(); }
   });
   window.addEventListener('popstate', () => {
     const m = location.hash.match(/^#c=(.+)$/);
@@ -1621,15 +1693,19 @@ function init() {
   showTab('dash');  // o site sempre abre no Dashboard
   const bad = Object.keys(BAD);
   if (bad.length) {
-    $('main').insertAdjacentHTML('afterbegin', `<div class="note alert" role="alert" id="badData"><b>Atenção:</b> os dados salvos neste navegador estavam ilegíveis. ${LOCKED.size ? 'Bloqueei a gravação para não apagar nada.' : 'Guardei uma cópia intacta e comecei do zero.'} Se tiver um backup, use <b>Meus dados → Importar</b>. <button class="linkbtn" id="badDataOk">Entendi</button></div>`);
+    $('main').insertAdjacentHTML('afterbegin', `<div class="note alert" role="alert" id="badData"><b>Atenção:</b> os dados salvos neste navegador estavam ilegíveis. ${LOCKED.size ? 'Bloqueei a gravação para não apagar nada.' : 'Guardei uma cópia intacta e comecei do zero.'} Se este aparelho estiver conectado ao GitHub, a última versão gravada lá volta sozinha. <button class="linkbtn" id="badDataOk">Entendi</button></div>`);
     $('#badDataOk').addEventListener('click', () => $('#badData').remove());
   }
   const m = location.hash.match(/^#c=(.+)$/); if (m && canOpen(decodeURIComponent(m[1]))) openDetail(decodeURIComponent(m[1]), false);
   setInterval(tick, 1000);
-  setInterval(checkUpdate, 15 * 60000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkUpdate(); renderKPIs(); renderQuick(); } });
+  setInterval(() => { checkUpdate(); if (REPO) syncAgora(); }, 15 * 60000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { checkUpdate(); renderKPIs(); renderQuick(); if (REPO) syncAgora(); }
+    else if (META.pendente && SY.token) { flushSave(); syncAgora(); }  // saindo da aba: grava já, sem esperar
+  });
+  syncUI(); if (REPO) syncAgora();
   checkUpdate();
-  window.__monitor = {count: () => LAST.length, csvText, importText, exportText, undoImport, open: openDetail, F: () => F,
+  window.__monitor = {count: () => LAST.length, open: openDetail, F: () => F, sync: syncAgora, syncState: () => ({estado: SY.estado, erro: SY.erro, pendente: META.pendente}),
     data: () => DATA, apply: applyData, offer: offerData,
     rkCheck: () => C.filter(c => c._rk && !c._rk.outros.length && c.rkg != null && Math.abs(c._rk.main.v - c.rkg) > 0.011).map(c => [c.chave, c.rkg, c._rk.main.v])};
 }

@@ -155,27 +155,6 @@ def test_checklist_persists_and_shows_progress(page: Page, fixture_url: str) -> 
     assert "1 de " in page.locator("#gside").inner_text()
 
 
-def test_export_import_roundtrip(page: Page, fixture_url: str) -> None:
-    goto(page, fixture_url)
-    backup = {"app": "monitor-licitacoes", "versao": 1, "exportado_em": "2026-10-17T12:00:00Z",
-              "meus_dados": {FIRST: {"fav": True, "notas": "importada", "upd": "2026-10-17T12:00:00Z"}},
-              "checklist": {"3": 1}}
-    assert page.evaluate("t => window.__monitor.importText(t)", json.dumps(backup)) == 1
-    assert ls(page, WFK)[FIRST]["notas"] == "importada"
-    assert ls(page, CLK) == {"3": 1}
-    # importação de entrada mais antiga não sobrescreve a mais nova
-    older = {"meus_dados": {FIRST: {"notas": "velha", "upd": "2020-01-01T00:00:00Z"}}}
-    assert page.evaluate("t => window.__monitor.importText(t)", json.dumps(older)) == 0
-    assert ls(page, WFK)[FIRST]["notas"] == "importada"
-
-
-def test_csv_export(page: Page, fixture_url: str) -> None:
-    goto(page, fixture_url)
-    csv = page.evaluate("window.__monitor.csvText()")
-    assert csv["n"] == 8
-    lines = csv["csv"].lstrip("﻿").split("\r\n")
-    assert lines[0].startswith("Chave PNCP;Prazo final;")
-    assert len(lines) == 9
 
 
 def test_secret_budget_shown_as_secret_not_zero(page: Page, fixture_url: str) -> None:
@@ -224,23 +203,6 @@ def test_corrupted_storage_is_backed_up_not_erased(page: Page, fixture_url: str)
     page.click("#badDataOk")
     assert alert.count() == 0
 
-
-def test_undo_import_restores_previous_data(page: Page, fixture_url: str) -> None:
-    goto(page, fixture_url)
-    row(page, FIRST).locator('[data-act="fav"]').click()
-    page.click('[data-tab="check"]')
-    page.click('[data-cl="2"]')
-    before_wf, before_cl = ls(page, WFK), ls(page, CLK)
-    imp = {"meus_dados": {"99999999000199-1-000001/2026": {"notas": "outra", "upd": "2030-01-01T00:00:00Z"}}, "checklist": {"5": 1}}
-    page.evaluate("t => window.__monitor.importText(t)", json.dumps(imp))
-    assert "99999999000199-1-000001/2026" in ls(page, WFK)
-    page.click("#dataBtn")
-    page.click("#undoImp")
-    assert ls(page, WFK) == before_wf and ls(page, CLK) == before_cl
-    assert ls(page, "monitorLicitacoes.antesDaImportacao.v1") is None
-    page.click("#dataBtn")
-    page.click("#undoImp")
-    assert "Nenhuma importação" in page.locator("#toast").inner_text()
 
 
 def test_price_per_kg_separated_by_coffee_type(page: Page, fixture_url: str) -> None:
@@ -357,7 +319,7 @@ def test_star_in_agenda_updates_and_toggles(page: Page, fixture_url: str) -> Non
     assert page.locator(f'#agenda .row[data-ch="{ch}"] [data-act="fav"]').inner_text() == "★"
     page.locator(f'#agenda .row[data-ch="{ch}"] [data-act="fav"]').click()
     assert page.locator(f'#agenda .row[data-ch="{ch}"] [data-act="fav"]').inner_text() == "☆"
-    assert ch not in (ls(page, WFK) or {})
+    assert not (ls(page, WFK) or {}).get(ch, {}).get("fav")  # fica só a marca de removido ({upd})
 
 
 def test_direct_link_then_close_stays_on_site(page: Page, fixture_url: str) -> None:
@@ -403,21 +365,6 @@ def test_followed_purchase_stays_on_board_after_leaving_data(page: Page, fixture
     assert ls(page, WFK)[FIRST]["status"] == "Ganha"
 
 
-def test_import_rejects_site_data_file(page: Page, fixture_url: str) -> None:
-    goto(page, fixture_url)
-    data = page.evaluate("JSON.stringify(window.__monitor.data())")
-    err = page.evaluate("t => { try { window.__monitor.importText(t); return ''; } catch (e) { return e.message; } }", data)
-    assert err and ls(page, WFK) is None and ls(page, CLK) is None
-
-
-def test_csv_neutralizes_formulas(page: Page, fixture_url: str) -> None:
-    goto(page, fixture_url)
-    d = open_detail(page, FIRST)
-    d.locator('[data-w="notas"]').fill("=HYPERLINK(\"x\")")
-    d.locator('[data-w="notas"]').blur()
-    page.wait_for_timeout(400)
-    csv = page.evaluate("window.__monitor.csvText().csv")
-    assert "\"'=HYPERLINK(\"\"x\"\")\"" in csv
 
 
 PISOK = "monitorLicitacoes.pisos.v1"
@@ -448,8 +395,6 @@ def test_price_floor_marks_purchases_and_goes_to_backup(page: Page, fixture_url:
     assert "abaixo do meu piso" in row(page, FIRST).inner_text()  # R$ 66,03 < R$ 70
     page.locator('[data-t="viavel"]').check()
     page.wait_for_function("window.__monitor.count() === 0")
-    exp = page.evaluate("JSON.parse(window.__monitor.exportText())")
-    assert exp["pisos"] == {"Superior": 70}
 
 
 def test_drawer_starts_with_verdict_and_specs(page: Page, fixture_url: str) -> None:
@@ -517,3 +462,119 @@ def test_mobile_drawers_fit_screen(browser: Any, fixture_url: str) -> None:
       return d.scrollWidth > d.clientWidth + 1 || !v || v.getBoundingClientRect().height < 60; })""")
     assert ruins == []
     page.close()
+
+
+# ---------------- gravação automática no GitHub (API simulada; nada sai para a internet)
+import base64  # noqa: E402
+
+SYNCK = "monitorLicitacoes.github.v1"
+
+
+class FakeGitHub:
+    """Repositório falso: guarda dados/meus-dados.json e responde como a API de conteúdos do GitHub."""
+
+    def __init__(self, conflitos: int = 0) -> None:
+        self.doc: dict[str, Any] | None = None
+        self.sha = 0
+        self.puts = 0
+        self.conflitos = conflitos  # quantos PUTs responder 409 (alguém gravou no meio)
+
+    def handler(self, route: Any) -> None:
+        req = route.request
+        auth = req.headers.get("authorization", "")
+        if "/contents/" not in req.url:  # GET /repos/dono/repo (teste da chave)
+            ok = auth == "Bearer boa"
+            route.fulfill(status=200 if ok else 401, json={"permissions": {"push": True}} if ok else {"message": "Bad credentials"})
+            return
+        if req.method == "GET":
+            if self.doc is None:
+                route.fulfill(status=404, json={"message": "Not Found"})
+            else:
+                raw = base64.b64encode(json.dumps(self.doc).encode()).decode()
+                route.fulfill(status=200, json={"content": raw, "sha": str(self.sha)})
+            return
+        body = json.loads(req.post_data or "{}")
+        if auth != "Bearer boa":
+            route.fulfill(status=401, json={"message": "Bad credentials"})
+        elif self.conflitos or (self.doc is not None and body.get("sha") != str(self.sha)):
+            self.conflitos = max(0, self.conflitos - 1)
+            route.fulfill(status=409, json={"message": "conflict"})
+        else:
+            self.doc = json.loads(base64.b64decode(body["content"]).decode())
+            self.sha += 1
+            self.puts += 1
+            route.fulfill(status=200, json={"content": {"sha": str(self.sha)}})
+
+
+def aparelho(browser: Any, url: str, gh: FakeGitHub, token: str | None = "boa") -> Page:
+    ctx = browser.new_context(viewport={"width": 1440, "height": 900})
+    ctx.route("https://api.github.com/**", gh.handler)
+    page = ctx.new_page()
+    if token:
+        page.add_init_script(f"localStorage.setItem('{SYNCK}', JSON.stringify({{token: '{token}'}}))")
+    page.goto(url + "/index.html?repo=dono/repo")
+    wait_ready(page)
+    page.click('[data-tab="list"]')
+    return page
+
+
+def espera_salvo(page: Page) -> None:
+    page.wait_for_function("window.__monitor.syncState().estado === 'ok' && !window.__monitor.syncState().pendente", timeout=8000)
+
+
+def test_sync_saves_to_github_and_second_device_sees_it(browser: Any, fixture_url: str) -> None:
+    gh = FakeGitHub()
+    a = aparelho(browser, fixture_url, gh)
+    row(a, FIRST).locator('[data-act="fav"]').click()
+    espera_salvo(a)
+    assert gh.doc and gh.doc["meus_dados"][FIRST]["fav"] is True
+    assert "Salvo no GitHub" in a.locator("#syncLbl").inner_text()
+    b = aparelho(browser, fixture_url, gh)  # outro aparelho, navegador vazio
+    b.wait_for_function(f"document.querySelector('#list .row[data-ch=\"{FIRST}\"] .star.on')")
+    b.click('[data-tab="mine"]')
+    assert b.locator(f'[data-ch="{FIRST}"]').count() >= 1
+
+
+def test_sync_unfavorite_is_not_resurrected_by_other_device(browser: Any, fixture_url: str) -> None:
+    gh = FakeGitHub()
+    a = aparelho(browser, fixture_url, gh)
+    row(a, FIRST).locator('[data-act="fav"]').click()
+    espera_salvo(a)
+    b = aparelho(browser, fixture_url, gh)
+    b.wait_for_function(f"document.querySelector('#list .row[data-ch=\"{FIRST}\"] .star.on')")
+    row(a, FIRST).locator('[data-act="fav"]').click()  # desfavorita no aparelho A
+    espera_salvo(a)
+    assert gh.doc["meus_dados"][FIRST].get("fav") is None  # fica só a marca de removido
+    b.evaluate("window.__monitor.sync()")  # B ainda tinha o favorito antigo guardado
+    b.wait_for_function(f"!document.querySelector('#list .row[data-ch=\"{FIRST}\"] .star.on')")
+    espera_salvo(b)
+    assert gh.doc["meus_dados"][FIRST].get("fav") is None
+
+
+def test_sync_merges_when_someone_saved_in_between(browser: Any, fixture_url: str) -> None:
+    gh = FakeGitHub(conflitos=1)
+    a = aparelho(browser, fixture_url, gh)
+    row(a, FIRST).locator('[data-act="fav"]').click()
+    espera_salvo(a)
+    assert gh.doc["meus_dados"][FIRST]["fav"] is True and gh.conflitos == 0  # o 409 aconteceu e foi resolvido
+
+
+def test_sync_rejected_key_keeps_data_local(browser: Any, fixture_url: str) -> None:
+    gh = FakeGitHub()
+    a = aparelho(browser, fixture_url, gh, token="velha")
+    row(a, FIRST).locator('[data-act="fav"]').click()
+    a.wait_for_function("window.__monitor.syncState().estado === 'erro'", timeout=8000)
+    assert gh.doc is None and ls(a, WFK)[FIRST]["fav"] is True
+    assert "recusada" in a.evaluate("window.__monitor.syncState().erro")
+
+
+def test_sync_connect_with_key_from_header(browser: Any, fixture_url: str) -> None:
+    gh = FakeGitHub()
+    a = aparelho(browser, fixture_url, gh, token=None)
+    row(a, FIRST).locator('[data-act="fav"]').click()
+    assert "Só neste aparelho" in a.locator("#syncLbl").inner_text() and gh.doc is None
+    a.click("#syncBtn")
+    a.fill("#syncTok", "boa")
+    a.click("#syncSave")
+    espera_salvo(a)
+    assert gh.doc["meus_dados"][FIRST]["fav"] is True and ls(a, SYNCK) == {"token": "boa"}
