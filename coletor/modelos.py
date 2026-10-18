@@ -1,7 +1,7 @@
 """Formato de data.json (contrato com index.html). Validado antes de cada gravação."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveFloat
 
@@ -30,6 +30,8 @@ class Item(_Base):
     tags: list[str]
     espec: str
     usa_trecho: bool
+    nivel: Literal["Sem exigência", "Tradicional", "Superior", "Gourmet/especial"] | None = None  # inferido
+    qg: float | None = Field(default=None, ge=4, le=10)  # nota mínima de Qualidade Global exigida (0-10)
 
 
 class Compra(_Base):
@@ -75,6 +77,7 @@ class Compra(_Base):
     me: str
     me_f: list[str]
     tags: list[str]
+    niveis: list[str] = []  # níveis de exigência dos itens (para filtro)
     resumo: str
     dup: str
     dup_of: str | None

@@ -112,7 +112,7 @@ def montar_item(raw: dict[str, Any]) -> dict[str, Any] | None:
         "qtd": qtd, "un": un, "vu": vu, "vt": vt, "sig": sig, "kgt": kgt, "rkg": rkg,
         "conferir": cafe.precisa_conferir(rkg), "me": ME_ITEM.get(raw.get("tipoBeneficio"), "Não se aplica"),
         "sit": raw.get("situacaoCompraItemNome") or "", "tags": c.tags, "espec": espec,
-        "usa_trecho": False,
+        "usa_trecho": False, "nivel": c.nivel, "qg": c.qg,
     }
 
 
@@ -198,11 +198,25 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
         "kg_parcial": kg is not None and any(i["kgt"] is None and i["tipo"] != cafe.CESTA for i in itens),
         "rkg": (round(sum(i["vt"] for i in rk) / sum(i["kgt"] for i in rk), 2) or None) if rk else None,
         "sig": "Sim" if any(i["sig"] for i in itens) else "Não",
-        "me": me, "me_f": me_f, "tags": _uniq([t for i in itens for t in i["tags"]]),
+        "me": me, "me_f": me_f, "tags": _uniq([t for i in itens for t in i["tags"]]), "niveis": niveis_da_compra(itens),
         "resumo": "; ".join(_resumo(i) for i in itens),
         "dup": "", "dup_of": None, "dup_group": [],
         "itens": itens,
     }
+
+
+def niveis_da_compra(itens: list[dict[str, Any]]) -> list[str]:
+    ns = {i.get("nivel") for i in itens} - {None}
+    return [n for n in cafe.NIVEIS if n in ns]
+
+
+def reclassificar_nivel(compra: dict[str, Any]) -> None:
+    """Recalcula nível e nota de qualidade a partir do texto e da categoria já gravados (sem PNCP)."""
+    for i in compra["itens"]:
+        t = cafe.norm(i["espec"])
+        i["qg"] = cafe.nota_qg(t)
+        i["nivel"] = cafe.nivel(t, i["tipo"], i["cat"], i["tags"], i["qg"])
+    compra["niveis"] = niveis_da_compra(compra["itens"])
 
 
 def _completude(c: dict[str, Any]) -> tuple[int, ...]:
@@ -255,5 +269,6 @@ def herdar_do_anterior(novo: dict[str, Any], antigo: dict[str, Any]) -> None:
             i["cat"] = v.get("cat", i["cat"])
             i["tags"] = _uniq(i["tags"] + list(v.get("tags", [])))
     if any(i["usa_trecho"] for i in novo["itens"]):
+        reclassificar_nivel(novo)  # categoria/exigências do edital podem subir o nível
         novo["tags"] = _uniq([t for i in novo["itens"] for t in i["tags"]])
         novo["cats"] = _uniq([p.rstrip("*") for i in novo["itens"] for p in i["cat"].split("/")]) or ["Não informada"]

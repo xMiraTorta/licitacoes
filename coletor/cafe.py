@@ -53,7 +53,7 @@ def _tipo(t: str, un: str) -> str:
 
 # Versão das regras de classificação. Mude ao alterar o que conta como café: o cache de compras
 # "sem café" (coletor/cache/sem_cafe.json) de outra versão é descartado e tudo é verificado de novo.
-VERSAO_REGRAS = 2
+VERSAO_REGRAS = 2  # nível/nota (18/10) não muda o que é café: cache continua válido
 
 # Ruído antes do nome do produto: "(COTA)", "[COTA RESERVADA ME/EPP] -", "Lote 1: Item 4 -", "(L3) 8910.10465-",
 # "GENEROS ALIMENTICIOS -", e embalagem/verbo/rótulo: "Aquisição de", "Pacote de", "Pct de", "Produto:".
@@ -212,6 +212,47 @@ def exigencias(t: str) -> list[str]:
     return tags
 
 
+# ---------------------------------------------------------------- nível de exigência
+# Escala do PQC/ABIC para a nota de Qualidade Global (0 a 10): Tradicional/Extraforte 4,5 a 5,9;
+# Superior 6,0 a 7,2; Gourmet 7,3 a 10. Pontuação em 0-100 (ex.: "70 pontos", "80 pontos SCA") vira /10.
+NIVEIS = ("Sem exigência", "Tradicional", "Superior", "Gourmet/especial")
+_TIPOS_COM_NIVEL = (TM, TM_DESCAF, GRAO)
+_QG = re.compile(r"(?:qualidade global|pontuacao(?: global| sensorial| final)?|nota(?: de qualidade| sensorial| global| final)?|\bqg\b)"
+                 r"([^.;]{0,45}?)(?<![\d,.])(\d{1,3}(?:[,.]\d{1,2})?)(?![\d%])(\s*\w*)")
+_QG_FAIXA = re.compile(r"\s*(?:pontos\s*)?(?:-|a|ate|e)\s*(\d{1,3}(?:[,.]\d{1,2})?)(?![\d%])")
+# "nota: validade mínima de 90 dias", "nota fiscal nº 12": número que não é nota de qualidade.
+_QG_NAO = re.compile(r"validade|prazo|fiscal|entrega|empenho|dias|meses|anos|horas|item|lote|\bn[o°º]?\b")
+
+
+def nota_qg(t: str) -> float | None:
+    """Nota mínima de qualidade exigida (0 a 10), quando o texto cita uma. "Mínima de 4,5 a 5,9" -> 4,5."""
+    for m in _QG.finditer(t):
+        if _QG_NAO.search(m.group(1)) or _QG_NAO.search(m.group(3)):
+            continue
+        vs = [float(m.group(2).replace(",", "."))]
+        if (faixa := _QG_FAIXA.match(t, m.end(2))):  # "7,2 - 6,0", "4,5 a 5,9": vale o mínimo
+            vs.append(float(faixa.group(1).replace(",", ".")))
+        vs = [v / 10 if 10 < v <= 100 else v for v in vs]
+        if all(4 <= v <= 10 for v in vs):
+            return round(min(vs), 2)
+    return None
+
+
+def nivel(t: str, tipo: str, cat: str, tags: list[str], qg: float | None) -> str | None:
+    """Nível de qualidade pedido (inferido do texto; o maior que o item indicar). None para tipos sem
+    comparação de preço por qualidade (solúvel, cápsula, bebida, cesta)."""
+    if tipo not in _TIPOS_COM_NIVEL:
+        return None
+    cats = {x.rstrip("*") for x in cat.split("/")}  # "Superior*": categoria tirada do edital
+    if "Gourmet" in cats or "especial" in cats or (qg is not None and qg >= 7.3):
+        return "Gourmet/especial"
+    if "Superior" in cats or (qg is not None and qg >= 6.0) or re.search(r"bebida (estritamente )?mole", t):
+        return "Superior"
+    if cats & {"Tradicional", "Extraforte"} or qg is not None or {"ABIC/pureza", "PQC"} & set(tags):
+        return "Tradicional"
+    return "Sem exigência"
+
+
 # ---------------------------------------------------------------- item completo
 @dataclass
 class ItemCafe:
@@ -221,6 +262,8 @@ class ItemCafe:
     kgu: float | None
     kg_src: str
     tags: list[str] = field(default_factory=list)
+    nivel: str | None = None
+    qg: float | None = None
 
 
 def classificar(descricao: str, unidade: str, vu: float | None = None) -> ItemCafe | None:
@@ -236,7 +279,8 @@ def classificar(descricao: str, unidade: str, vu: float | None = None) -> ItemCa
     if src.endswith("(caixa/fardo)"):  # embalagem descreve o pacote, não o fardo
         mx = _N_X_PESO.search(t)
         kg_pacote = _kg(mx.group(2), mx.group(3)) if mx else next(iter(pesos_na_descricao(t)), None)
-    return ItemCafe(tipo, categoria(t), embalagem(t, kg_pacote), kgu, src, exigencias(t))
+    cat, tags, qg = categoria(t), exigencias(t), nota_qg(t)
+    return ItemCafe(tipo, cat, embalagem(t, kg_pacote), kgu, src, tags, nivel(t, tipo, cat, tags, qg), qg)
 
 
 def precisa_conferir(rkg: float | None) -> bool:
