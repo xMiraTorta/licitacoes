@@ -72,8 +72,7 @@ def cartao(c: dict[str, Any], refs: dict[tuple[str, str], float]) -> str:
         oque.append(f"nota ≥ {_num(pedido['qg'], 1)}")
     outros = [t for t in c.get("tipos", []) if t != pedido["tipo"]]
     vol = f"{'≥ ' if c.get('kg_parcial') else ''}{_num(c['kg'])} kg" if c.get("kg") else "volume não informado"
-    valor = (f"cestas: {_valor(c['vcesta'], 'Não')}" if c.get("vcafe") is None and c.get("vcesta")
-             else _valor(c.get("vcafe"), c.get("sig", "Não")))
+    valor = _valor(c.get("vcafe"), c.get("sig", "Não"))
     linhas = [" · ".join(e(x) for x in oque) + (f" + {e(', '.join(outros).lower())}" if outros else ""), f"{vol} · {valor}"]
     if principal:
         cmp_ = referencia.comparar(principal, refs)

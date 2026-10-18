@@ -23,6 +23,9 @@ GRAO = "Grão"
 CAPSULA = "Cápsula"
 BEBIDA = "Café pronto (bebida)"
 CESTA = "Cesta/kit"
+# Escopo do dono (18/10/2026): só café torrado, moído ou em grão. Solúvel, cápsula, bebida pronta e cesta ficam de fora.
+TIPOS_TORRADOS = (TM, TM_DESCAF, GRAO)
+CRU = "Café cru (verde)"
 
 # "Café da manhã"/"coffee break" são serviços.
 _SERVICO = re.compile(r"cafe da manha|cafe colonial|coffee ?-?break|coffe ?-?break|cafe regional")
@@ -37,6 +40,8 @@ _UTENSILIO = re.compile(r"^(\W|\d)*\s*(jogo|conjunto|porta|potes?|kit (de )?cozi
 def _tipo(t: str, un: str) -> str:
     """Tipo pelo começo da descrição (onde fica o produto); o resto costuma ser especificação."""
     t = t[:200]
+    if re.search(r"\b(cru|crus|verde|verdes)\b", t[:80]) and not re.search(r"torrad", t[:120]):
+        return CRU  # café verde/cru (beneficiado), não torrado
     if re.search(r"\bdescafeinado\b", t) and not re.search(r"soluvel|capsula", t):
         return TM_DESCAF
     if re.search(r"\bcapsula", t):
