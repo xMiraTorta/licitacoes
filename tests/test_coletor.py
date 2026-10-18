@@ -426,6 +426,16 @@ def test_cartao_telegram_numero_e_apostrofo() -> None:
     assert "d'Oeste" in telegram.cartao(c, {})
 
 
+def test_cartao_telegram_mostra_marcas_e_nivel_do_edital() -> None:
+    c = montar.montar_compra(compra_api("11111111000111", 1, "café"), [item_api(1, "Café torrado e moído 500g", 10, 15.0)])
+    assert c
+    c["itens"][0]["ed_trecho"] = "cafe torrado e moido categoria superior, marca de referencia pilao"
+    montar.reclassificar_nivel(c)
+    c["marcas"] = ["Pilão", "3 Corações", "Melitta", "Caboclo", "Café do Ponto"]
+    t = telegram.cartao(c, {})
+    assert "nível Superior (pelo edital)" in t and "Marcas de referência: Pilão, 3 Corações, Melitta, Caboclo e outras" in t
+
+
 @pytest.mark.parametrize("desc", ["Café solúvel 200g", "Cápsula de café espresso", "Café pronto para consumo, garrafa 1 litro",
                                   "Cesta básica com arroz, feijão, açúcar, óleo, macarrão e café", "Café cru em grãos, saca 60 kg"])
 def test_so_cafe_torrado_entra(desc: str) -> None:
