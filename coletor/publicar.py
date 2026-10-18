@@ -1,4 +1,4 @@
-"""Junta a coleta nova com a anterior, valida e grava data.json + cópia embutida em index.html.
+"""Junta a coleta nova com a anterior, valida e grava data.json (o site, em site/, lê esse arquivo).
 
 Travas de segurança (uma coleta ruim nunca substitui dados bons em silêncio):
 - listagem incompleta (qualquer página com erro) -> aborta antes de chegar aqui;
@@ -19,7 +19,6 @@ from loguru import logger
 
 from coletor import custos, marcas, mercado
 
-DATA_PREFIX = "const DATA0 = "
 LIMITE_FALHAS = 0.05
 LIMITE_QUEDA = 0.6
 
@@ -111,37 +110,13 @@ def _gravar_atomico(path: Path, texto: str) -> None:
     os.replace(tmp, path)
 
 
-def embutir_no_html(html: str, data_json: str) -> str:
-    """Troca a linha `const DATA0 = ...;`. Textos do PNCP podem conter "</script>" ou "<!--", que
-    encerrariam o <script> da página (e rodariam código de terceiros): escapados como "<\\/" e
-    "<\\u0021--", que continuam JSON/JavaScript válidos e com o mesmo valor."""
-    seguro = data_json.replace("</", "<\\/").replace("<!--", "<\\u0021--")
-    inicio = html.index("\n" + DATA_PREFIX) + 1
-    fim = html.index("\n", inicio)
-    if not html[inicio:fim].endswith(";"):
-        raise ValueError("linha const DATA0 em index.html não termina com ';'")
-    return html[:inicio] + DATA_PREFIX + seguro + ";" + html[fim:]
-
-
-def atualizar_cabecalho(html: str, gerado_em: datetime) -> str:
-    """Texto estático "Atualizado em" (a página também o reescreve ao carregar)."""
-    import re
-
-    novo = f'<span id="upd">Atualizado em <b>{gerado_em:%d/%m/%Y %H:%M}</b> (horário de Brasília)</span>'
-    html2, n = re.subn(r'<span id="upd">.*?</span>', novo, html, count=1)
-    if n != 1:
-        raise ValueError('span id="upd" não encontrado em index.html')
-    return html2
-
-
 def gravar(data: dict[str, Any], destino: Path, gerado_em: datetime) -> None:
+    """Grava data.json validado. O site (site/, React) baixa esse arquivo ao abrir e a cada 15 min; o GitHub
+    Pages republica o site a cada push na main que mude data.json (.github/workflows/pages.yml)."""
     data["marcas_ref"] = marcas.resumo()  # pesquisa de varejo das marcas citadas em editais (coletor/marcas_cafe.json)
-    data["mercado"] = mercado.carregar()  # café verde por nível (coletor/mercado.json, semanal)
+    data["mercado"] = mercado.carregar()  # café verde por nível (coletor/mercado.json, 2x por dia útil)
     data["custos"] = custos.premissas()  # premissas padrão da margem (coletor/custos.json)
     validar(data)
     texto = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    html_path = destino / "index.html"
-    html = atualizar_cabecalho(embutir_no_html(html_path.read_text(encoding="utf-8"), texto), gerado_em)
     _gravar_atomico(destino / "data.json", texto)
-    _gravar_atomico(html_path, html)
-    logger.info("Gravados data.json ({} KB) e index.html com {} compras", len(texto) // 1024, len(data["compras"]))
+    logger.info("Gravado data.json ({} KB, {} compras, gerado em {:%d/%m/%Y %H:%M})", len(texto) // 1024, len(data["compras"]), gerado_em)

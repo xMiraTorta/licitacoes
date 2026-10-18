@@ -1,7 +1,8 @@
-"""Fixtures compartilhadas: servidor HTTP local e navegador headless.
+"""Fixtures compartilhadas: site montado (site/dist), servidor HTTP local e navegador headless.
 
-Os testes de página não acessam a internet: servem os arquivos do repositório
-(ou uma cópia com dados de teste) a partir de um servidor local.
+Os testes de página não acessam a internet: servem a versão montada do site (site/dist) com um data.json
+de teste (ou o real) a partir de um servidor local. Se o dist estiver ausente ou mais velho que o código,
+`npm run build` roda uma vez (precisa de Node e de `npm install` em site/).
 """
 from __future__ import annotations
 
@@ -9,7 +10,9 @@ import functools
 import http.server
 import json
 import os
+import shutil
 import socketserver
+import subprocess
 import threading
 from collections.abc import Iterator
 from pathlib import Path
@@ -20,42 +23,52 @@ from playwright.sync_api import Browser, Page, sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
-DATA_LINE_PREFIX = "const DATA0 = "
+SITE = ROOT / "site"
+DIST = SITE / "dist"
 
 
-def split_index(html: str) -> tuple[str, str, str]:
-    """Separa index.html em (antes, json embutido, depois) da linha `const DATA0 = ...;`."""
-    start = html.index("\n" + DATA_LINE_PREFIX) + 1
-    end = html.index("\n", start)
-    line = html[start:end]
-    if not line.endswith(";"):
-        raise ValueError("linha DATA0 não termina com ';'")
-    return html[:start], line[len(DATA_LINE_PREFIX):-1], html[end:]
+def _dist_desatualizado() -> bool:
+    idx = DIST / "index.html"
+    if not idx.exists():
+        return True
+    t = idx.stat().st_mtime
+    fontes = [*(SITE / "src").rglob("*"), *(SITE / "public").rglob("*"), SITE / "index.html", SITE / "vite.config.ts", SITE / "package.json"]
+    return any(p.is_file() and p.stat().st_mtime > t for p in fontes)
 
 
-def embedded_data(html: str) -> dict[str, Any]:
-    return json.loads(split_index(html)[1])
+@pytest.fixture(scope="session")
+def dist_dir() -> Path:
+    """Site montado. Monta de novo se o código mudou depois do último build."""
+    if _dist_desatualizado():
+        if not (SITE / "node_modules").exists():
+            raise RuntimeError("site/node_modules não existe: rode `npm install` em site/ (precisa de Node 22)")
+        subprocess.run(["npm", "run", "build"], cwd=SITE, check=True, capture_output=True)
+    return DIST
 
 
-def page_with_data(html: str, data: dict[str, Any]) -> str:
-    before, _, after = split_index(html)
-    return before + DATA_LINE_PREFIX + json.dumps(data, ensure_ascii=False) + ";" + after
+def _montar_site(destino: Path, dist: Path, data: dict[str, Any]) -> Path:
+    shutil.copytree(dist, destino, dirs_exist_ok=True)
+    (destino / "data.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return destino
+
+
+@pytest.fixture(scope="session")
+def site_dir(tmp_path_factory: pytest.TempPathFactory, dist_dir: Path) -> Path:
+    """Diretório servido: site montado com os dados de teste em tests/fixtures/data_min.json."""
+    data = json.loads((FIXTURES / "data_min.json").read_text(encoding="utf-8"))
+    return _montar_site(tmp_path_factory.mktemp("site"), dist_dir, data)
+
+
+@pytest.fixture(scope="session")
+def real_site_dir(tmp_path_factory: pytest.TempPathFactory, dist_dir: Path) -> Path:
+    """Site montado com os dados reais do repositório (data.json)."""
+    data = json.loads((ROOT / "data.json").read_text(encoding="utf-8"))
+    return _montar_site(tmp_path_factory.mktemp("site_real"), dist_dir, data)
 
 
 class _QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A002 (assinatura da stdlib)
         pass
-
-
-@pytest.fixture(scope="session")
-def site_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """Diretório servido: cópia de index.html com os dados de teste em tests/fixtures/data_min.json."""
-    d = tmp_path_factory.mktemp("site")
-    data = json.loads((FIXTURES / "data_min.json").read_text(encoding="utf-8"))
-    html = (ROOT / "index.html").read_text(encoding="utf-8")
-    (d / "index.html").write_text(page_with_data(html, data), encoding="utf-8")
-    (d / "data.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    return d
 
 
 def _serve(directory: Path) -> Iterator[str]:
@@ -74,9 +87,9 @@ def fixture_url(site_dir: Path) -> Iterator[str]:
 
 
 @pytest.fixture(scope="session")
-def real_url() -> Iterator[str]:
-    """Site real do repositório (dados atuais)."""
-    yield from _serve(ROOT)
+def real_url(real_site_dir: Path) -> Iterator[str]:
+    """Site com os dados atuais do repositório."""
+    yield from _serve(real_site_dir)
 
 
 @pytest.fixture(scope="session")
@@ -104,4 +117,4 @@ def page(browser: Browser) -> Iterator[Page]:
 
 
 def wait_ready(pg: Page) -> None:
-    pg.wait_for_function("() => window.__monitor && document.querySelectorAll('.kpi').length > 0")
+    pg.wait_for_function("() => window.__monitor && window.__monitor.state().prep && document.querySelector('.page')")

@@ -12,7 +12,7 @@ import pytest
 
 from coletor import coleta, montar, publicar, telegram
 from coletor.pncp import PNCP, ColetaErro
-from tests.conftest import ROOT, embedded_data
+from tests.conftest import ROOT  # noqa: F401 (raiz do repositório)
 
 AGORA = datetime(2026, 10, 19, 9, 0, tzinfo=coleta.TZ)
 
@@ -80,7 +80,6 @@ def fake_pncp(lista: list[dict[str, Any]], itens: dict[str, Any], falhar: set[st
 
 @pytest.fixture
 def destino(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    shutil.copy(ROOT / "index.html", tmp_path / "index.html")
     monkeypatch.setattr(coleta, "CACHE", tmp_path / "cache" / "sem_cafe.json")
     return tmp_path
 
@@ -94,7 +93,6 @@ def rodar(destino: Path, lista: list[dict[str, Any]], itens: dict[str, Any] = IT
 def test_primeira_coleta_monta_registro_completo(destino: Path) -> None:
     r = rodar(destino, [CAFE, OUTRA, PNEU, ENCERRADA])
     data = json.loads((destino / "data.json").read_text(encoding="utf-8"))
-    assert embedded_data((destino / "index.html").read_text(encoding="utf-8")) == data
     assert [c["chave"] for c in data["compras"]] == [CAFE["numeroControlePNCP"]]  # só a de café aberta
     c = data["compras"][0]
     assert [i["n"] for i in c["itens"]] == [2, 3]  # arroz e solúvel ficam de fora (só café torrado)
@@ -105,7 +103,8 @@ def test_primeira_coleta_monta_registro_completo(destino: Path) -> None:
     assert c["plat"] == "BLL Compras" and c["dist"] == 76 and c["dist_min"] == 72 and c["me"] == "Exclusivo ME/EPP"
     assert c["first_seen"] == "2026-10-19" and c["nova"] is False  # primeira carga não marca "nova"
     assert r.novas == [CAFE["numeroControlePNCP"]]
-    assert "Atualizado em <b>19/10/2026 09:00</b>" in (destino / "index.html").read_text(encoding="utf-8")
+    assert c["lat"] == -19.8622 and c["lon"] == -47.4508  # sede de Sacramento (IBGE), para o mapa
+    assert data["gerado_em"].startswith("2026-10-19T09:00")
 
 
 def test_segunda_coleta_marca_novas_e_preserva_edital(destino: Path) -> None:
@@ -127,14 +126,14 @@ def test_segunda_coleta_marca_novas_e_preserva_edital(destino: Path) -> None:
 
 def test_falha_na_listagem_nao_altera_arquivos(destino: Path) -> None:
     rodar(destino, [CAFE])
-    antes = (destino / "data.json").read_bytes(), (destino / "index.html").read_bytes()
+    antes = (destino / "data.json").read_bytes()
 
     def quebrado(req: httpx.Request) -> httpx.Response:
         return httpx.Response(503, text="fora do ar")
     p = PNCP(httpx.Client(transport=httpx.MockTransport(quebrado)), tentativas=2, espera_base=0, intervalo_min=0)
     with pytest.raises(ColetaErro):
         coleta.coletar(destino, pncp=p, agora=AGORA)
-    assert ((destino / "data.json").read_bytes(), (destino / "index.html").read_bytes()) == antes
+    assert (destino / "data.json").read_bytes() == antes
 
 
 def test_queda_brusca_bloqueia_publicacao(destino: Path) -> None:
@@ -219,14 +218,13 @@ def test_valor_que_arredonda_para_zero_vira_ausente(destino: Path) -> None:
     assert i["rkg"] is None and i["vt"] is None or i["vt"] > 0
 
 
-def test_texto_com_fim_de_script_nao_quebra_a_pagina(destino: Path) -> None:
+def test_texto_com_fim_de_script_fica_integro_no_data_json(destino: Path) -> None:
+    """Texto do PNCP com "</script>" vai para o data.json como está (o site lê JSON, não embute em HTML)."""
     perigosa = compra_api("55555555000155", 5, "Café </script><script>window.XSS=1</script> <!-- x")
     itens = {"55555555000155/compras/2026/5": [item_api(1, "Café torrado 500g &lt;/script&gt;", 10, 30.0)]}
     rodar(destino, [perigosa], itens)
-    html = (destino / "index.html").read_text(encoding="utf-8")
-    linha = next(x for x in html.splitlines() if x.startswith(publicar.DATA_PREFIX))
-    assert "</" not in linha and "<!--" not in linha
-    assert embedded_data(html)["compras"][0]["objeto"] == perigosa["objetoCompra"]
+    data = json.loads((destino / "data.json").read_text(encoding="utf-8"))
+    assert data["compras"][0]["objeto"] == perigosa["objetoCompra"]
 
 
 def test_duplicatas_mesmo_municipio_valor_e_data() -> None:
@@ -285,15 +283,21 @@ def test_mensagens_telegram() -> None:
     msgs = telegram.mensagens([perto, base[0]], painel)
     m = msgs[0]
     assert "<b>2 licitações novas</b>" in m and "Segunda, 19/10/2026" in m
-    assert m.index("PERTO DE VOCÊ") < m.index("Sacramento · MG") < m.index("DEMAIS ESTADOS") < m.index("Curitiba · PR")
+    assert m.index("Perto de você") < m.index("Sacramento · MG") < m.index("Demais estados") < m.index("Curitiba · PR")
     assert "nível Superior" in m and "▲" in m and "acima do preço típico do nível" in m
     assert "#c=00000000000050-1-000050%2F2026" in m  # abre direto a licitação no monitor
+    assert "Prazo: " in m and "Abrir no monitor" in m and "PNCP" in m
     assert _html_equilibrado(m)
+    # estilo pedido pelo dono (18/10/2026): sem linha decorativa, sem travessão longo, sem exclamação
+    assert "━" not in m and "—" not in m and "!" not in m
     muitas = telegram.mensagens([compra(100 + i, "BA", "Salvador", 30.0) for i in range(60)], painel)
     assert len(muitas) > 1 and all(len(x) <= 4096 and _html_equilibrado(x) for x in muitas)
-    assert muitas[1].startswith("<i>(continuação)</i>")
+    assert muitas[1].startswith(f"<i>Continuação (2/{len(muitas)})</i>") and muitas[-1].rstrip().endswith("Abrir o monitor</a>")
+    assert "Preço típico:" in muitas[0] and all("Preço típico:" not in x for x in muitas[1:])  # nota só na 1ª
+    assert all(x.count("☕") <= 1 for x in muitas) and "☕" not in muitas[1]  # no máximo 1 emoji por mensagem
     vazio = telegram.mensagens([], painel)[0]
     assert "Nenhuma licitação nova" in vazio and "7 abertas no monitor" in vazio and _html_equilibrado(vazio)
+    assert "\n" not in vazio and "Abrir o monitor" in vazio  # uma linha só, com a situação e o link
 
 
 def test_enviar_telegram_sem_vazar_token(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -384,7 +388,6 @@ def test_reclassificar_preenche_nivel_sem_pncp(destino: Path) -> None:
     assert main(["reclassificar", "--destino", str(destino)]) == 0
     c = json.loads((destino / "data.json").read_text(encoding="utf-8"))["compras"][0]
     assert c["niveis"] == ["Sem categoria", "Tradicional"] and c["itens"][0]["nivel"] == "Tradicional"  # selo ABIC; o grão não pede categoria
-    assert embedded_data((destino / "index.html").read_text(encoding="utf-8")) == json.loads((destino / "data.json").read_text())
 
 
 @pytest.mark.parametrize("sit,nome,entra", [

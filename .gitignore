@@ -2,3 +2,7 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+node_modules/
+site/dist/
+site/.vite/
+novas.json

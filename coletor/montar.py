@@ -208,6 +208,7 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
     org, uni = c.get("orgaoEntidade") or {}, c.get("unidadeOrgao") or {}
     cnpj, ano, seq = org.get("cnpj", ""), c.get("anoCompra"), c.get("sequencialCompra")
     km, minutos = distancias.estrada(uni.get("codigoIbge"))  # por estrada, a partir de Uberaba
+    lat, lon = distancias.sede(uni.get("codigoIbge"))  # sede do município, para o mapa do site
     plat, plat_src, plat_f = plataforma(c.get("linkSistemaOrigem"), c.get("usuarioNome"))
     return {
         "chave": c["numeroControlePNCP"],
@@ -215,7 +216,7 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
         "abre": (c.get("dataAberturaProposta") or "")[:16] or None,
         "publicado": (c.get("dataPublicacaoPncp") or "")[:16] or None,
         "first_seen": None, "nova": False,
-        "uf": uni.get("ufSigla", ""), "mun": uni.get("municipioNome", ""), "dist": km, "dist_min": minutos,
+        "uf": uni.get("ufSigla", ""), "mun": uni.get("municipioNome", ""), "dist": km, "dist_min": minutos, "lat": lat, "lon": lon,
         "orgao": org.get("razaoSocial", ""), "unidade": uni.get("nomeUnidade", ""),
         "esfera": ESFERAS.get(org.get("esferaId", "N"), "Não se aplica"),
         "mod": MODALIDADES.get(c.get("modalidadeNome", ""), c.get("modalidadeNome", "")),

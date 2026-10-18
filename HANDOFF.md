@@ -1,8 +1,18 @@
 # HANDOFF · licitacoes
 
-- **Atualizado em:** 2026-10-18 (custo e margem por oportunidade, preços semanais de mercado; automação ativa na main)
-- **Branch de trabalho:** `claude/confident-galileo-equwuz` · repositório `xMiraTorta/licitacoes` (renomeado pelo dono em 17/10/2026; site https://xmiratorta.github.io/licitacoes/). Merge automático autorizado (ver CLAUDE.md).
-- **Commit de partida:** `bd38a7f` (main). Último commit relevante: ver `git log` da branch.
+- **Atualizado em:** 2026-10-18 (site novo em React, publicação do Pages por Actions, Telegram reescrito)
+- **Branch de trabalho:** `claude/confident-galileo-equwuz` · repositório `xMiraTorta/licitacoes` (site https://xmiratorta.github.io/licitacoes/). Merge automático autorizado (ver CLAUDE.md).
+- **Commit de partida:** `fe59cdf` (main, com o `pages.yml` do PR #16). Último commit relevante: ver `git log` da branch.
+
+## Sessão 18/10/2026 (9): site novo em React, Pages por Actions, Telegram enxuto
+- **Decisões do dono**: visual próprio, escuro por padrão, "clean", com mais recursos visuais e interativos (mockup aprovado no Claude Design em 3 rodadas: canvas https://claude.ai/artifact/Bve6ieosup2oV3ksm9K3kY, quadro "Rodada 2b"); adotar React; housekeeping completo e README com cara visual; mensagens do Telegram profissionais e enxutas; pasta/sessão/repositório com o mesmo nome (`licitacoes`). Ele trocou a fonte do GitHub Pages para "GitHub Actions".
+- **Pages por Actions** (PR #16, já na main e conferido no ar): `pages.yml` publica a cada push que mude `data.json` ou `site/`. Sem ele, a coleta de segunda não apareceria no site. Nesta branch o mesmo workflow passou a montar o `site/` (Node 22, `npm ci`, `npm run build`) e juntar o `data.json`. `atualizar.yml` e `precos.yml` não gravam mais `index.html` e pedem ao `pages.yml` que publique (commits do GITHUB_TOKEN não disparam workflows sozinhos; permissão `actions: write`).
+- **Site novo** (`site/`): React 19 + Vite + TypeScript; estado em `src/store.ts` com as mesmas chaves do `localStorage`; sincronização com a branch `dados` portada 1:1 (`src/sync/github.ts`); regras de negócio em `src/lib/modelo.ts` (mesma margem de `custos.py`, mesmo preço típico de `referencia.py`, mesmo item principal); telas Hoje, Oportunidades (painel dividido redimensionável; no celular e nas outras abas o detalhe abre por cima), Propostas (+ agenda), Mercado, Guia (checklist com mola + Sobre os dados), Ajustes (custos, pisos, sincronização, tema, atalhos); paleta Ctrl K; dicas em termos técnicos; atalhos j/k/f/Enter/Esc/T/G+letra; puxar para atualizar no celular; animações discretas (números que contam, barras que crescem), desligadas com `prefers-reduced-motion`. Mapa com contorno do IBGE (`src/data/mapa-uf.json`), anéis de 300/600/1.000 km e pontos das melhores oportunidades (precisa de `lat`/`lon` nas compras: o coletor passou a gravar e o `reclassificar` preencheu as 259 publicadas).
+- **Coletor**: `publicar.gravar` só grava `data.json`; `mapa.gerar` grava o JSON do site; `mercado.atualizar` guarda `historico` (uma linha por data de cotação, até 400) para o gráfico do Mercado (aparece depois da próxima atualização de preço); `montar_compra` inclui `lat`/`lon` (IBGE). `index.html` e `.nojekyll` da raiz saíram (o `.nojekyll` está em `site/public/`).
+- **Telegram** (`coletor/telegram.py`, agente): sem linhas decorativas, no máximo 1 emoji, cabeçalho de 3 linhas, cartão por licitação com o que decide (onde, órgão, o que pedem, volume e valor, R$/kg vs preço típico, margem, prazo, modalidade, plataforma, ME/EPP, marcas, links), "nenhuma nova" em uma linha; continuação discreta "Continuação (2/3)". Avisos de falha dos workflows sem emoji e com o efeito prático. Exemplo real gerado na sessão (não versionado).
+- **Testes**: vitest (`site/src/lib/modelo.test.ts`, 6) + pytest. `tests/conftest.py` monta o site (`npm run build`) se o `dist` estiver velho e serve `site/dist` + `data.json` de teste; `tests/test_page.py` reescrito para o site novo (46 testes, mesmos cenários: filtros, detalhe, anotações, quadro, agenda, checklist, pisos, custos, sincronização simulada com o GitHub, celular). Resultado: ver "Testes executados".
+- **Housekeeping**: README visual (badges, captura, diagrama Mermaid, estrutura), `.gitignore` com `node_modules/` e `site/dist/`, pasta local renomeada para `licitacoes` (o caminho antigo `licitacoes-cafe` ficou como atalho porque a sessão foi criada com o nome antigo do repositório; o rótulo "licitacoes-cafe" na barra lateral do app vem da sessão e só muda em sessão nova criada a partir de `xMiraTorta/licitacoes`).
+- **Não feito / atenção**: o histórico do café verde só começa na próxima execução do `precos.yml`; a reserva (tarefa agendada do Claude Code) ainda tem instruções antigas se mencionar `index.html` (conferir na próxima vez que rodar: ela deve fazer `git add data.json coletor/cache/sem_cafe.json` e o `pages.yml` publica); o pacote do site tem ~230 KB gzip (sem code-splitting por enquanto).
 
 ## Contexto (vindo do dono)
 O projeto foi feito pelo agente "Grok Bot", que tinha: uma planilha, uma busca diária às 9h com aviso no bot do Telegram **@ComprasGovXBot**, e publicava o site com um login do GitHub (fluxo de dispositivo) na conta `xMiraTorta`. A cota do Grok acabou: **o gerador, a busca diária e o envio ao Telegram dele não estão disponíveis**. O primeiro aviso dele estava previsto para 19/10 e não deve chegar. Ele também tinha começado a ampliar o painel para outros CNAEs do dono, sem concluir.
@@ -131,7 +141,7 @@ Entregue e testado (112 testes, coleta real com 0 falhas, 39 min neste ambiente)
 - Tentativas que falharam: busca textual do PNCP como fonte principal (paginação inconsistente); 4 threads na listagem (muitos 429).
 
 ## Testes executados (último resultado)
-`.venv/bin/python -m pytest -q` → 106 passed (17/10/2026). Coleta real: ver seção abaixo.
+`.venv/bin/python -m pytest -q` → 258 passed (18/10/2026, site novo montado e aberto no Chromium) · `npm test` em site/ → 6 passed · `tsc --noEmit` ok. Coleta real: ver seção abaixo.
 
 ## Coleta real pela linha de comando (17/10/2026)
 | Rodada | Cache | Chamadas PNCP | Tempo | Resultado |
@@ -156,6 +166,7 @@ O dono decide sobre: (1) autorizar merge do PR na `main`; (2) revogar acessos do
 ```bash
 git fetch origin claude/confident-galileo-equwuz && git checkout claude/confident-galileo-equwuz
 python -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/playwright install chromium
+cd site && npm install && cd ..
 .venv/bin/python -m pytest -q
 ```
 Ler `CLAUDE.md`. Se o PR já tiver sido mergeado, partir da `main`.

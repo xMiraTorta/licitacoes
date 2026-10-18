@@ -1,4 +1,4 @@
-"""Formato de data.json (contrato com index.html). Validado antes de cada gravação."""
+"""Formato de data.json (contrato com o site em site/src/types.ts). Validado antes de cada gravação."""
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -46,6 +46,8 @@ class Compra(_Base):
     mun: str
     dist: int | None  # km por estrada a partir de Uberaba (OSRM)
     dist_min: int | None = None  # minutos de viagem
+    lat: float | None = None  # sede do município (IBGE), para o mapa da tela Hoje
+    lon: float | None = None
     orgao: str
     unidade: str
     esfera: str

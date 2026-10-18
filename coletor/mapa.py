@@ -1,8 +1,8 @@
-"""Mapa do Brasil por estado para o Dashboard: contorno oficial do IBGE convertido em caminhos SVG.
+"""Mapa do Brasil por estado para a tela Hoje: contorno oficial do IBGE convertido em caminhos SVG.
 
 Fonte: API de malhas do IBGE (servicodados.ibge.gov.br, dado público), qualidade "mínima".
-Roda só quando for preciso refazer o desenho (`python -m coletor mapa`); o resultado fica embutido
-no index.html na linha `const MAPA_UF = ...;`.
+Roda só quando for preciso refazer o desenho (`python -m coletor mapa`); o resultado vai para
+site/src/data/mapa-uf.json, que o site (React) importa na montagem.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from loguru import logger
 
 URL = ("https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR"
        "?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=minima")
-PREFIXO = "const MAPA_UF = "
+ARQUIVO = Path("site") / "src" / "data" / "mapa-uf.json"  # relativo ao destino (raiz do repositório)
 UF_IBGE = {"11": "RO", "12": "AC", "13": "AM", "14": "RR", "15": "PA", "16": "AP", "17": "TO", "21": "MA", "22": "PI",
            "23": "CE", "24": "RN", "25": "PB", "26": "PE", "27": "AL", "28": "SE", "29": "BA", "31": "MG", "32": "ES",
            "33": "RJ", "35": "SP", "41": "PR", "42": "SC", "43": "RS", "50": "MS", "51": "MT", "52": "GO", "53": "DF"}
@@ -72,18 +72,13 @@ def caminhos(geo: dict[str, Any]) -> dict[str, Any]:
     return {"viewBox": f"0 0 {LARGURA:.0f} {altura:.0f}", "uf": out, "centro": centro}
 
 
-def embutir(html: str, mapa: dict[str, Any]) -> str:
-    inicio = html.index("\n" + PREFIXO) + 1
-    fim = html.index("\n", inicio)
-    return html[:inicio] + PREFIXO + json.dumps(mapa, separators=(",", ":")) + ";" + html[fim:]
-
-
 def gerar(destino: Path) -> None:
     r = httpx.get(URL, timeout=60, follow_redirects=True)
     r.raise_for_status()
     mapa = caminhos(r.json())
     if set(mapa["uf"]) != set(UF_IBGE.values()):
         raise ValueError(f"malha do IBGE incompleta: {sorted(set(UF_IBGE.values()) - set(mapa['uf']))}")
-    html_path = destino / "index.html"
-    html_path.write_text(embutir(html_path.read_text(encoding="utf-8"), mapa), encoding="utf-8")
-    logger.info("Mapa do Brasil embutido no index.html ({} KB, 27 estados)", len(json.dumps(mapa)) // 1024)
+    alvo = destino / ARQUIVO
+    alvo.parent.mkdir(parents=True, exist_ok=True)
+    alvo.write_text(json.dumps(mapa, separators=(",", ":")) + "\n", encoding="utf-8")
+    logger.info("Mapa do Brasil gravado em {} ({} KB, 27 estados)", alvo, len(json.dumps(mapa)) // 1024)

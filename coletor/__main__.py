@@ -8,7 +8,7 @@
     python -m coletor editais [--todas] [--textos DIR]   # lê edital/TR das compras do data.json atual
     python -m coletor mercado              # preço do café verde por nível (CEPEA e Carvalhaes; semanal)
     python -m coletor varejo               # preço de varejo das marcas de referência (semanal, varejo.yml)
-    python -m coletor mapa                 # baixa o contorno dos estados (IBGE) e embute no index.html (raramente)
+    python -m coletor mapa                 # baixa o contorno dos estados (IBGE) e grava site/src/data/mapa-uf.json (raramente)
 
 Códigos de saída: 0 ok; 2 coleta/publicação bloqueada (dados publicados intactos); 3 falha no aviso.
 """
@@ -37,7 +37,7 @@ def _encerrada(c: dict[str, Any]) -> bool:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="coletor")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    c = sub.add_parser("coletar", help="coleta no PNCP e atualiza data.json e index.html")
+    c = sub.add_parser("coletar", help="coleta no PNCP e atualiza data.json (o site lê esse arquivo)")
     c.add_argument("--destino", type=Path, default=Path("."))
     c.add_argument("--forcar", action="store_true", help="publica mesmo se as travas de segurança dispararem")
     c.add_argument("--sem-busca", action="store_true", help="não usa a busca textual (só a listagem)")
@@ -47,7 +47,7 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--novas", type=Path, required=True)
     sub.add_parser("telegram-chat", help="mostra os chats que mandaram mensagem ao bot")
     sub.add_parser("distancias", help="recalcula as distâncias por estrada a partir da origem (OSRM)")
-    m = sub.add_parser("mapa", help="baixa o contorno dos estados do IBGE e embute no index.html")
+    m = sub.add_parser("mapa", help="baixa o contorno dos estados do IBGE e grava site/src/data/mapa-uf.json")
     m.add_argument("--destino", type=Path, default=Path("."))
     r = sub.add_parser("reclassificar", help="recalcula nível/nota de qualidade no data.json publicado (sem PNCP)")
     r.add_argument("--destino", type=Path, default=Path("."))
@@ -114,6 +114,8 @@ def main(argv: list[str] | None = None) -> int:
             c.update(montar.agregar(c["itens"]))
             n, _, ano = c["num"].rpartition("/")  # "114/2026/2026" (ano repetido em coletas antigas) -> "114/2026"
             c["num"] = montar.numero(n, ano) if n else c["num"]
+            if c.get("lat") is None:  # publicadas antes do mapa com pontos: sede do município pelo nome
+                c["lat"], c["lon"] = distancias.sede_por_nome(c.get("mun"), c.get("uf"))
         try:
             publicar.gravar(data, args.destino, datetime.fromisoformat(data["gerado_em"]))
         except ValidationError as e:
