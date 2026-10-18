@@ -1,6 +1,6 @@
 # HANDOFF · licitacoes
 
-- **Atualizado em:** 2026-10-18 (ajustes do dono, mapa do Brasil, 2ª revisão de bugs; automação ativa na main)
+- **Atualizado em:** 2026-10-18 (anotações gravadas no GitHub, Minhas propostas novo, ícone; automação ativa na main)
 - **Branch de trabalho:** `claude/confident-galileo-equwuz` · repositório `xMiraTorta/licitacoes` (renomeado pelo dono em 17/10/2026; site https://xmiratorta.github.io/licitacoes/). Merge automático autorizado (ver CLAUDE.md).
 - **Commit de partida:** `bd38a7f` (main). Último commit relevante: ver `git log` da branch.
 
@@ -11,6 +11,15 @@ CNAEs do dono: 1081-3/02 (torrefação e moagem de café, principal), 4611-7/00 
 
 ## Escopo aprovado
 O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. Segredos do Telegram cadastrados pelo dono (confirmado pelo envio do aviso de falha do run #1). Não autorizado: ampliar para outros CNAEs.
+
+## Sessão 18/10/2026 (4): anotações no GitHub, Minhas propostas, ícone, rolagens
+- **Bug do favorito "fixo"**: favorita que saiu dos dados (prazo encerrado/cancelada) aparecia em Minhas propostas sem estrela no painel: não havia como tirar. Agora estrela e "Parar de acompanhar" (tira estrela e status, mantém preço e notas) no cartão e no detalhe, também fora dos dados.
+- **Minhas propostas** redesenhado: resumo (quantas, valor, próximo prazo), etapas clicáveis, cartões em grade com status direto no cartão, nível, preço do órgão × típico, meu preço e margem, notas. Sem rolagem lateral.
+- **Gravação automática** (pedido do dono; ele escolheu o repositório público mesmo sabendo que as anotações ficam visíveis): `dados/meus-dados.json` na branch `dados`, pela API do GitHub com chave do dono guardada só no navegador (fine-grained, só este repositório, Contents: Read and write; passo a passo no botão do topo). Junta aparelhos por item com marca de removido; 409 resolvido sozinho; chave recusada mostra erro e mantém tudo local. Branch própria: cada gravação na main reconstruiria o Pages (limite ~10/h). **Removidos** a pedido: CSV, exportar/importar/desfazer backup.
+- **Ícone**: bandeira do Brasil redonda (como o avatar do Telegram) no cabeçalho e na aba.
+- **Rolagens**: filtros sem rolagem própria no computador; no celular abas, indicadores e atalhos quebram linha. Ficam só as rolagens do painel de detalhe e da gaveta de filtros (sobrepostos à página).
+- Testes: 219 (`pytest -q`), com API do GitHub simulada (grava, cria a branch, 2º aparelho, remoção não ressuscita, conflito, chave recusada, conectar).
+- **Pendente do dono**: criar a chave de acesso e colar no botão "Só neste aparelho" (topo do site) em cada aparelho.
 
 ## Sessão 18/10/2026 (3): ajustes do dono e 2ª revisão de bugs
 - **Itens cancelados**: o PNCP mantém a compra aberta por causa de outros itens; 12 itens de café "Anulado/Revogado/Cancelado" e 2 "Homologado" (3 compras) apareciam. Agora só entra item com `situacaoCompraItem == 1` (Em andamento); `reclassificar` tirou as 3 compras publicadas (331 restantes).
