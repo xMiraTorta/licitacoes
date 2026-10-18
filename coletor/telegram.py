@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import html
 import os
+import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Any
@@ -35,7 +36,7 @@ def _num(v: float, casas: int = 0) -> str:
 def _valor(v: float | None, sig: str) -> str:
     if v is None:
         return "valor sigiloso" if sig != "Não" else "valor não informado"
-    if v >= 1e6:
+    if v >= 999_500:  # 999.700 vira "R$ 1,0 mi", não "R$ 1.000 mil"
         return f"R$ {_num(v / 1e6, 1)} mi"
     if v >= 1e4:
         return f"R$ {_num(v / 1e3)} mil"
@@ -56,19 +57,24 @@ def _link_monitor(c: dict[str, Any]) -> str:
 
 def cartao(c: dict[str, Any], refs: dict[tuple[str, str], float]) -> str:
     """Bloco de uma licitação: onde, o que pedem, preço x referência do nível, prazo e links."""
-    e = html.escape
+    def e(x: str) -> str:  # texto (fora de atributo): sem trocar aspas/apóstrofo por entidades
+        return html.escape(x, quote=False)
     km = f" · {_num(c['dist'])} km" if c.get("dist") is not None else ""
     me = " · <i>ME/EPP</i>" if c.get("me", "").startswith(("Exclusivo", "Cota")) else ""
     principal = referencia.item_principal(c)
     pedido = principal or next((i for i in c["itens"] if i["tipo"] != cafe.CESTA), c["itens"][0])
+    # sem item com R$/kg: o maior nível pedido na compra (mesma regra do site)
+    nivel = pedido.get("nivel") if principal else next((n for n in reversed(cafe.NIVEIS) if n in (c.get("niveis") or [])), None)
     oque = [pedido["tipo"]]
-    if pedido.get("nivel"):
-        oque.append(f"nível {pedido['nivel']}")
+    if nivel:
+        oque.append(f"nível {nivel}")
     if pedido.get("qg"):
         oque.append(f"nota ≥ {_num(pedido['qg'], 1)}")
     outros = [t for t in c.get("tipos", []) if t != pedido["tipo"]]
     vol = f"{'≥ ' if c.get('kg_parcial') else ''}{_num(c['kg'])} kg" if c.get("kg") else "volume não informado"
-    linhas = [" · ".join(e(x) for x in oque) + (f" + {e(', '.join(outros).lower())}" if outros else ""), f"{vol} · {_valor(c.get('vcafe'), c.get('sig', 'Não'))}"]
+    valor = (f"cestas: {_valor(c['vcesta'], 'Não')}" if c.get("vcafe") is None and c.get("vcesta")
+             else _valor(c.get("vcafe"), c.get("sig", "Não")))
+    linhas = [" · ".join(e(x) for x in oque) + (f" + {e(', '.join(outros).lower())}" if outros else ""), f"{vol} · {valor}"]
     if principal:
         cmp_ = referencia.comparar(principal, refs)
         preco = f"<b>R$ {_num(principal['rkg'], 2)}/kg</b>"
@@ -81,9 +87,9 @@ def cartao(c: dict[str, Any], refs: dict[tuple[str, str], float]) -> str:
         linhas.append(preco)
     linhas.append(f"⏰ {_prazo(c.get('fim'))} · {e(c['mod'])} {e(c['num'])} · {e(c.get('plat_f') or c.get('plat', ''))}{me}")
     corpo = "\n".join(linhas)
-    return (f"<b>{e(c['mun'])} · {c['uf']}</b>{km}\n{e(_titulo(c.get('orgao', '')))}\n"
+    return (f"<b>{e(c['mun'])} · {e(c['uf'])}</b>{km}\n{e(_titulo(c.get('orgao', '')))}\n"
             f"<blockquote>{corpo}</blockquote>\n"
-            f"<a href=\"{e(_link_monitor(c))}\">Abrir no monitor</a> · <a href=\"{e(c['link_pncp'])}\">PNCP</a>")
+            f"<a href=\"{html.escape(_link_monitor(c))}\">Abrir no monitor</a> · <a href=\"{html.escape(c['link_pncp'])}\">PNCP</a>")
 
 
 _MINUSC = {"de", "da", "do", "das", "dos", "e", "em"}
@@ -139,14 +145,28 @@ def mensagens(novas: list[dict[str, Any]], data: dict[str, Any]) -> list[str]:
     return out
 
 
-def enviar(textos: list[str], client: httpx.Client | None = None) -> None:
+# O Telegram aceita ~1 mensagem por segundo no mesmo chat; acima disso responde 429 com retry_after.
+PAUSA = 1.1
+TENTATIVAS_429 = 3
+ESPERA_MAX = 60.0
+
+
+def enviar(textos: list[str], client: httpx.Client | None = None, pausa: float = PAUSA) -> None:
     token, chat = os.environ.get("TELEGRAM_BOT_TOKEN", ""), os.environ.get("TELEGRAM_CHAT_ID", "")
     if not token or not chat:
         raise TelegramErro("TELEGRAM_BOT_TOKEN e/ou TELEGRAM_CHAT_ID não configurados")
     cli = client or httpx.Client(timeout=30)
     for i, t in enumerate(textos, 1):
-        r = cli.post(f"https://api.telegram.org/bot{token}/sendMessage",
-                     json={"chat_id": chat, "text": t, "parse_mode": "HTML", "disable_web_page_preview": True})
+        if i > 1:
+            time.sleep(pausa)
+        for tentativa in range(1, TENTATIVAS_429 + 1):
+            r = cli.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                         json={"chat_id": chat, "text": t, "parse_mode": "HTML", "disable_web_page_preview": True})
+            if r.status_code != 429 or tentativa == TENTATIVAS_429:
+                break
+            espera = min(ESPERA_MAX, float(((r.json() or {}).get("parameters") or {}).get("retry_after") or 5))
+            logger.warning("Telegram pediu para esperar {:.0f}s (mensagem {}/{}, tentativa {})", espera, i, len(textos), tentativa)
+            time.sleep(espera)
         ok = r.status_code == 200 and r.json().get("ok")
         if not ok:
             # a URL contém o token: nunca registrar a URL, só a resposta

@@ -204,7 +204,7 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
         "orgao": org.get("razaoSocial", ""), "unidade": uni.get("nomeUnidade", ""),
         "esfera": ESFERAS.get(org.get("esferaId", "N"), "Não se aplica"),
         "mod": MODALIDADES.get(c.get("modalidadeNome", ""), c.get("modalidadeNome", "")),
-        "num": f"{c.get('numeroCompra', '')}/{ano}", "plat": plat, "plat_src": plat_src, "plat_f": plat_f,
+        "num": numero(c.get("numeroCompra"), ano), "plat": plat, "plat_src": plat_src, "plat_f": plat_f,
         "publicado_via": c.get("usuarioNome") or "",
         "uasg": str(uni.get("codigoUnidade") or "") if plat == "Compras.gov.br" else "",
         "srp": "Sim" if c.get("srp") else "Não", "objeto": (c.get("objetoCompra") or "").strip(),
@@ -225,6 +225,14 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
     }
 
 
+def numero(n: Any, ano: Any) -> str:
+    """ "37" -> "37/2026"; quando o PNCP já traz o ano ("114/2026", "2809001/2026-PE", "PMCA 044/26"), não repete."""
+    n, a = str(n or "").strip(), str(ano or "")
+    if a and (a in n or re.search(rf"/{a[2:]}\b", n)):
+        return n
+    return f"{n}/{a}"
+
+
 def niveis_da_compra(itens: list[dict[str, Any]]) -> list[str]:
     ns = {i.get("nivel") for i in itens} - {None}
     return [n for n in cafe.NIVEIS if n in ns]
@@ -235,8 +243,14 @@ def reclassificar_nivel(compra: dict[str, Any]) -> None:
     Item cuja categoria/exigências vieram do trecho do edital (usa_trecho) mantém essas duas."""
     for i in compra["itens"]:
         t = cafe.norm(i["espec"])
-        if not i.get("usa_trecho") and i["tipo"] != cafe.CESTA:
-            i["cat"], i["tags"] = cafe.categoria(t), cafe.exigencias(t)
+        if i["tipo"] != cafe.CESTA:
+            if i.get("usa_trecho"):  # categoria/exigências do edital ficam; soma o que o texto do item traz
+                velhas = {x.rstrip("*") for x in i["cat"].split("/") if x}
+                novas = [x for x in cafe.categoria(t).split("/") if x and x not in velhas]
+                i["cat"] = "/".join([x for x in i["cat"].split("/") if x] + novas)
+                i["tags"] = _uniq(cafe.exigencias(t) + i["tags"])
+            else:
+                i["cat"], i["tags"] = cafe.categoria(t), cafe.exigencias(t)
         i["qg"] = cafe.nota_qg(t) if i["tipo"] != cafe.CESTA else None
         i["nivel"] = cafe.nivel(t, i["tipo"], i["cat"], i["tags"], i["qg"])
     compra["tags"] = _uniq([x for i in compra["itens"] for x in i["tags"]])

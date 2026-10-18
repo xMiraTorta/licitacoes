@@ -5,6 +5,7 @@
     python -m coletor telegram-chat        # lista chats que falaram com o bot (para o TELEGRAM_CHAT_ID)
     python -m coletor distancias           # recalcula distâncias por estrada (só se a origem mudar)
     python -m coletor reclassificar        # recalcula nível/nota de qualidade no data.json atual (sem PNCP)
+    python -m coletor mapa                 # baixa o contorno dos estados (IBGE) e embute no index.html (raramente)
 
 Códigos de saída: 0 ok; 2 coleta/publicação bloqueada (dados publicados intactos); 3 falha no aviso.
 """
@@ -19,7 +20,7 @@ from pathlib import Path
 from loguru import logger
 from pydantic import ValidationError
 
-from coletor import coleta, distancias, montar, publicar, telegram
+from coletor import coleta, distancias, mapa, montar, publicar, telegram
 from coletor.pncp import ColetaErro
 
 
@@ -36,6 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--novas", type=Path, required=True)
     sub.add_parser("telegram-chat", help="mostra os chats que mandaram mensagem ao bot")
     sub.add_parser("distancias", help="recalcula as distâncias por estrada a partir da origem (OSRM)")
+    m = sub.add_parser("mapa", help="baixa o contorno dos estados do IBGE e embute no index.html")
+    m.add_argument("--destino", type=Path, default=Path("."))
     r = sub.add_parser("reclassificar", help="recalcula nível/nota de qualidade no data.json publicado (sem PNCP)")
     r.add_argument("--destino", type=Path, default=Path("."))
     args = ap.parse_args(argv)
@@ -87,11 +90,17 @@ def main(argv: list[str] | None = None) -> int:
             montar.marcar_duplicatas(data["compras"], visiveis)
         for c in data["compras"]:
             montar.reclassificar_nivel(c)
+            n, _, ano = c["num"].rpartition("/")  # "114/2026/2026" (ano repetido em coletas antigas) -> "114/2026"
+            c["num"] = montar.numero(n, ano) if n else c["num"]
         try:
             publicar.gravar(data, args.destino, datetime.fromisoformat(data["gerado_em"]))
         except ValidationError as e:
             logger.error("Reclassificação não gravada (dados publicados intactos): {}", e)
             return 2
+        return 0
+
+    if args.cmd == "mapa":
+        mapa.gerar(args.destino)
         return 0
 
     if args.cmd == "distancias":

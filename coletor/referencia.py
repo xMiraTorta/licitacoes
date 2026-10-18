@@ -32,9 +32,11 @@ def referencias(compras: list[dict[str, Any]]) -> dict[tuple[str, str], float]:
 
 
 def item_principal(c: dict[str, Any]) -> dict[str, Any] | None:
-    """Item que define a compra para comparação de preço: o de maior volume com nível e R$/kg."""
+    """Item que define a compra para comparação de preço: o torrado e moído (senão qualquer tipo com nível)
+    de maior volume, com nível e R$/kg."""
     its = [i for i in c["itens"] if i.get("nivel") and i.get("rkg") and not i.get("conferir")]
-    return max(its, key=lambda i: i.get("kgt") or 0) if its else None
+    tm = [i for i in its if grupo(i["tipo"]) == cafe.TM]  # prefere torrado e moído (mesma regra do site)
+    return max(tm or its, key=lambda i: i.get("kgt") or 0) if its else None
 
 
 def comparar(i: dict[str, Any], refs: dict[tuple[str, str], float]) -> tuple[float, float] | None:
