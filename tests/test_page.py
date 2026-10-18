@@ -440,6 +440,23 @@ def test_edital_reading_shown_per_item(page: Page, fixture_url: str) -> None:
     assert "ainda não publicou o edital" in d.inner_text() and "ainda não foi lido automaticamente" not in d.inner_text()
 
 
+def test_reference_brands_show_retail_price(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
+      j.marcas_ref = {pesquisa_em: '2026-10-18', marcas: {'Pilão': {linhas: [], basica: {linha: 'Tradicional', cat: 'Tradicional', min: 39.78, max: 91.96}}}};
+      j.compras.find(c => c.chave === '%s').marcas = ['Pilão', 'Toko']; window.__monitor.apply(j); }""" % FIRST)
+    d = open_detail(page, FIRST)
+    t = d.inner_text()
+    assert "Pilão · Tradicional (Tradicional): R$ 39,78 a R$ 91,96/kg" in t and "Toko" in t and "18/10/2026" in t
+    assert "custam R$ 39,78 a R$ 91,96/kg no varejo" in d.locator(".verdict").inner_text()
+    d.locator('[data-act="close"]').click()
+    page.click('.tab[data-tab="dash"]')
+    card = page.locator('#dash .ch:has(h3:has-text("Marcas de referência"))')
+    assert "Pilão" in card.inner_text() and "varejo Tradicional" in card.inner_text()
+    card.locator('[data-cf="marcas|Pilão"]').click()
+    page.wait_for_function("window.__monitor.count() === 1")
+
+
 def test_floor_inputs_keep_focus_and_reject_garbage(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url, tab="dash")
     page.locator('[data-piso="Tradicional"]').fill("60")

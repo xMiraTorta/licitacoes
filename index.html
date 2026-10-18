@@ -275,6 +275,8 @@ blockquote{margin:8px 0 0;padding:8px 12px;border-left:3px solid var(--border);c
 .hb .br.mg{background:var(--green)}.hb .br.near{background:var(--blue)}
 .hb .vl{text-align:right;color:var(--muted);font-size:12.5px}
 .hb .vl b{color:var(--text)}
+.hb-wide .hb .row2{grid-template-columns:130px minmax(60px,1fr) minmax(0,2.4fr)}
+.hb-wide .hb .vl{text-align:left;white-space:normal}
 .svgc{width:100%;height:auto;display:block}
 .svgc .grid{stroke:var(--border-2)}.svgc .ax{fill:var(--faint);font-size:10px}.svgc .lab{fill:var(--text-2);font-size:10px;font-weight:700}
 .svgc .wk{fill:var(--surface-2)}
@@ -440,6 +442,8 @@ body>footer{max-width:1440px;margin:0 auto;padding:0 20px 40px;color:var(--faint
   .cli{grid-template-columns:22px 1fr}
   .cli .pct{grid-column:2;text-align:left}
   .hb .row2{grid-template-columns:96px 1fr 92px}
+  .hb-wide .hb .row2{grid-template-columns:96px minmax(0,1fr)}
+  .hb-wide .hb .vl{grid-column:1/-1}
   .lv-row{grid-template-columns:1fr;gap:4px}
   .lv-row .st2{text-align:left}
   .pisos{grid-template-columns:1fr 1fr}
@@ -751,10 +755,11 @@ const FACETS = [
   {k: 'me', t: 'ME/EPP', get: c => c.me_f, open: true},
   {k: 'mods', t: 'Modalidade', get: c => [c.mod]},
   {k: 'plats', t: 'Onde enviar proposta', get: c => [c.plat_f]},
+  {k: 'marcas', t: 'Marca de referência (edital)', get: c => c.marcas || []},
 ];
 const VALORES = [['', 'Qualquer'], ['a', 'Até R$ 50 mil'], ['b', 'R$ 50–200 mil'], ['c', 'R$ 200 mil–1 mi'], ['d', 'Acima de R$ 1 mi'], ['n', 'Sem valor (sigiloso)']];
 const MEX = ['Exclusiva ME/EPP (todos os itens)', 'Exclusiva em parte dos itens'];
-const DEF = () => ({q: '', niveis: [], precos: [], ufs: [], tipos: [], cats: [], embs: [], me: [], mods: [], plats: [], dist: 0, valor: '', hideDup: true, hideClosed: true, fav: false, novas: false, urg: false, rkg: false, viavel: false, status: ''});
+const DEF = () => ({q: '', niveis: [], precos: [], ufs: [], tipos: [], cats: [], embs: [], me: [], mods: [], plats: [], marcas: [], dist: 0, valor: '', hideDup: true, hideClosed: true, fav: false, novas: false, urg: false, rkg: false, viavel: false, status: ''});
 const UI = Object.assign({sort: 'prazo', tab: 'list', theme: '', agendaAll: false}, lget(UIK, {}));
 let F = Object.assign(DEF(), UI.F || {}, {q: ''});
 let LIMIT = 50, DISTMAX = 3000;
@@ -997,7 +1002,7 @@ function verdictHTML(c) {
     : ` <button class="linkbtn" data-act="pisos" data-n="${esc(x.i.nivel)}">Definir meu preço mínimo para ${esc(x.i.nivel)}</button>`;
   return `<div class="card verdict"><h3>Vale a pena?</h3><div class="big">${big} ${pcHTML(c, true)}</div>
     ${r ? stripSVG({...r, pts: [{c, v: x.i.rkg}]}, 30, 160, x.piso, x.i.nivel) : ''}
-    <div class="why">${fr}${piso}${MERCADO.varejo[x.i.nivel] ? `<br>Varejo ${esc(x.i.nivel)} em supermercados (ABIC, ${MERCADO.varejoData}): ${BRL(MERCADO.varejo[x.i.nivel])}/kg.` : ''} Grão cru arábica (CEPEA, ${MERCADO.cruData}): ≈ ${BRL(MERCADO.cru)} por kg torrado, só a matéria-prima.<br><span class="l2" style="white-space:normal">Por que nível ${esc(x.i.nivel)}: ${esc(nivelPorque(x.i))}. O preço típico compara licitações entre si; não é custo.</span></div></div>`;
+    <div class="why">${fr}${piso}${(mv => mv ? `<br>Marcas de referência citadas no edital (linha mais básica) custam ${BRL(mv.min)} a ${BRL(mv.max)}/kg no varejo.` : '')(marcasVarejo(c))}${MERCADO.varejo[x.i.nivel] ? `<br>Varejo ${esc(x.i.nivel)} em supermercados (ABIC, ${MERCADO.varejoData}): ${BRL(MERCADO.varejo[x.i.nivel])}/kg.` : ''} Grão cru arábica (CEPEA, ${MERCADO.cruData}): ≈ ${BRL(MERCADO.cru)} por kg torrado, só a matéria-prima.<br><span class="l2" style="white-space:normal">Por que nível ${esc(x.i.nivel)}: ${esc(nivelPorque(x.i))}. O preço típico compara licitações entre si; não é custo.</span></div></div>`;
 }
 function specsHTML(c) {
   const i = c._main || c.itens[0];
@@ -1066,7 +1071,8 @@ function detailHTML(c) {
     <div class="card"><h3>Itens de café (${c.itens.length})</h3>${c.itens.map(itemHTML).join('')}</div>
     <div class="card"><h3>Edital</h3>
       <div class="l2" style="white-space:normal">${edStatusHTML(c)}</div>
-      ${(c.marcas || []).length ? `<div class="l2" style="margin:10px 0 6px">Marcas citadas como referência (aceitam “ou equivalente”):</div><div class="tags">${c.marcas.map(m => `<span class="tag">${esc(m)}</span>`).join('')}</div>` : ''}
+      ${(c.marcas || []).length ? `<div class="l2" style="margin:10px 0 6px">Marcas citadas como referência (aceitam “ou equivalente”):</div><div class="tags">${c.marcas.map(m => `<span class="tag" title="${esc(varejoTxt(m) ? 'Varejo, linha mais básica: ' + varejoTxt(m) : 'Sem preço de varejo pesquisado')}">${esc(m)}${varejoTxt(m) ? ' · ' + esc(varejoTxt(m)) : ''}</span>`).join('')}</div>
+        <div class="l2" style="white-space:normal;margin-top:6px">Preços de varejo em supermercados online e categoria oficial da ABIC, pesquisa de ${esc(((DATA.marcas_ref || {}).pesquisa_em || '').split('-').reverse().join('/'))}. A mesma linha varia até 2 vezes entre lojas.</div>` : ''}
       ${c.edital_lido && c.ed_tags.length ? `<div class="l2" style="margin:10px 0 6px">O edital menciona:</div><div class="tags">${c.ed_tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
       ${c.ed_pz ? `<div style="font-size:13px;margin-top:8px">Prazo de entrega citado: <b>${esc(c.ed_pz)}</b></div>` : ''}
       ${c.tags.length ? `<div class="l2" style="margin:10px 0 6px">Exigências na descrição dos itens:</div><div class="tags">${c.tags.map(t => `<span class="tag req">${esc(t)}</span>`).join('')}</div>` : ''}
@@ -1219,6 +1225,16 @@ function renderAgenda() {
 }
 
 /* ---------------- gráficos (SVG/CSS, sem bibliotecas) */
+/* Marca de referência citada no edital: pesquisa de varejo e categoria ABIC (coletor/marcas_cafe.json). */
+function marcaRef(m) { return ((DATA.marcas_ref || {}).marcas || {})[m] || null; }
+function varejoTxt(m) {
+  const b = (marcaRef(m) || {}).basica;
+  return b ? `${b.cat || 'sem categoria ABIC'}${b.linha ? ' (' + b.linha + ')' : ''}: ${b.min === b.max ? BRL(b.min) : BRL(b.min) + ' a ' + BRL(b.max)}/kg` : '';
+}
+function marcasVarejo(c) {  // faixa de varejo da linha mais básica das marcas citadas
+  const bs = (c.marcas || []).map(m => (marcaRef(m) || {}).basica).filter(Boolean);
+  return bs.length ? {min: Math.min(...bs.map(b => b.min)), max: Math.max(...bs.map(b => b.max)), n: bs.length} : null;
+}
 function hbars(rows, fmtV) {
   const max = Math.max(1, ...rows.map(r => r.v));
   return `<div class="hb">${rows.map(r => `<div class="row2" ${r.click ? `data-cf="${esc(r.click)}" tabindex="0" role="button"` : ''} title="${esc(r.l)}"><div class="lb">${esc(r.l)}</div><div class="tr"><div class="br ${r.cls || ''}" style="width:${(r.v / max * 100).toFixed(1)}%"></div></div><div class="vl num">${fmtV(r)}</div></div>`).join('')}</div>`;
@@ -1305,6 +1321,10 @@ function renderDash() {
   const pfr = agg(c => [[c.plat_f, c.vcafe]]).slice(0, 8).map(([k, x]) => ({l: k, v: x.n, val: x.v, click: 'plats|' + k}));
   const dk = [['até 150 km', 0, 150], ['150–300 km', 150, 300], ['300–600 km', 300, 600], ['600–1.000 km', 600, 1000], ['acima de 1.000 km', 1000, 1e9]];
   const dr = dk.map(([l, a, b]) => ({l, v: O.filter(c => c.dist != null && c.dist >= a && c.dist < b).length}));
+  // 6b. Marcas de referência mais citadas nos editais
+  const mc = {}; O.forEach(c => (c.marcas || []).forEach(m => (mc[m] ||= []).push(c)));
+  const mrows = Object.entries(mc).sort((a, b) => b[1].length - a[1].length).slice(0, 10)
+    .map(([m, L]) => ({l: m, v: L.length, med: median(L.filter(c => c._main && c._main.rkg).map(c => c._main.rkg)), vj: varejoTxt(m), click: 'marcas|' + m}));
   // 7. Minhas propostas
   const st = ['Favoritas sem status', ...DATA.status_opcoes].map(s => [s, C.filter(c => { const w = getW(c); return follows(w) && (s === 'Favoritas sem status' ? !w.status : w.status === s); }).length + goneKeys().filter(k => s === 'Favoritas sem status' ? !WF[k].status : WF[k].status === s).length]);
   $('#dash').innerHTML = `
@@ -1324,6 +1344,8 @@ function renderDash() {
     <div class="legend"><span><i style="background:var(--red)"></i>até 3 dias</span><span><i style="background:var(--amber)"></i>4 a 7 dias</span><span><i style="background:var(--accent)"></i>mais de 7 dias</span></div></div>
   <div class="ch"><h3>Onde estão</h3><p class="sub">Licitações abertas por estado: quanto mais forte a cor, mais licitações. Toque num estado para filtrar.</p>${mapa}</div>
   <div class="ch"><h3>Exigências mais pedidas</h3><p class="sub">Licitações de café torrado que pedem cada item, e o preço típico (R$/kg) delas.</p>${hbars(exi, r => `<b>${r.v}</b>${r.med ? ' · ' + BRL(r.med) : ''}`)}</div>
+  <div class="ch w12"><h3>Marcas de referência mais citadas</h3><p class="sub">Marcas que os editais citam como padrão (“ou equivalente”), quantas licitações abertas citam cada uma, o preço típico que o órgão estima nelas e o preço de varejo da linha mais básica da marca. Toque para filtrar.</p>
+    ${mrows.length ? '<div class="hb-wide">' + hbars(mrows, r => `<b>${r.v}</b>${r.med ? ' · órgão ' + BRL(r.med) : ''}${r.vj ? ' · varejo ' + esc(r.vj) : ''}`) + '</div>' : '<div class="l2">Nenhum edital lido cita marca de referência.</div>'}</div>
   <div class="ch"><h3>Por tipo de café</h3><p class="sub">Itens e valor estimado. Toque para filtrar.</p>${hbars(tpr, fv)}</div>
   <div class="ch"><h3>Onde enviar a proposta</h3><p class="sub">Plataformas em que você precisa ter cadastro.</p>${hbars(pfr, fv)}</div>
   <div class="ch"><h3>Distância de ${esc(ORIG)}</h3><p class="sub">Por estrada (OpenStreetMap).</p>${hbars(dr, r => `<b>${r.v}</b>`)}</div>

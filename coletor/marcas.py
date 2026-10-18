@@ -33,7 +33,7 @@ MARCAS: dict[str, tuple[tuple[str, ...], bool]] = {
     "Damasco": (("damasco",), False),
     "Bom Jesus": (("bom jesus",), True),
     "Alvorada": (("alvorada",), True),
-    "Itamarati": (("itamarati",), False),
+    "Itamarati": (("itamarati", "itamaraty"), False),
     "Veneza": (("veneza",), True),
     "Dom Pedro": (("dom pedro",), True),
     "Produtor": (("cafe produtor", "produtor"), True),
@@ -82,9 +82,26 @@ def citadas(texto: str) -> list[str]:
     return [n for _, n in sorted(achadas)]
 
 
+ORDEM_CAT = {"Tradicional": 0, "Extraforte": 0, "Superior": 1, "Gourmet": 2, "Especial": 3}
+
+
 @lru_cache(maxsize=1)
-def base() -> dict[str, dict[str, Any]]:
-    """Categoria e faixa de preço de varejo por marca (pesquisa em marcas_cafe.json); vazio se ainda não existir."""
-    if not BASE.exists():
-        return {}
-    return {m["marca"]: m for m in json.loads(BASE.read_text(encoding="utf-8"))["marcas"]}
+def base() -> dict[str, Any]:
+    """Pesquisa de varejo e categorias ABIC (marcas_cafe.json): {pesquisa_em, como, fonte_categorias, linhas}."""
+    return json.loads(BASE.read_text(encoding="utf-8"))
+
+
+def resumo() -> dict[str, Any]:
+    """O que o site e o Telegram usam: por marca, as linhas com categoria e faixa de R$/kg no varejo, e a "básica"
+    (a linha de categoria mais baixa com preço: o mínimo que "equivalente à marca X" costuma significar)."""
+    b = base()
+    por: dict[str, list[dict[str, Any]]] = {}
+    for x in b["linhas"]:
+        por.setdefault(x["marca"], []).append({"linha": x["linha"] or "", "cat": x["categoria"], "min": x["preco_kg_min"],
+                                               "max": x["preco_kg_max"]})
+    out: dict[str, Any] = {}
+    for m, ls in por.items():
+        com_preco = [x for x in ls if x["min"] is not None]
+        basica = min(com_preco, key=lambda x: (ORDEM_CAT.get(x["cat"] or "", 0), x["min"])) if com_preco else None
+        out[m] = {"linhas": ls, "basica": basica}
+    return {"pesquisa_em": b["pesquisa_em"], "marcas": out}

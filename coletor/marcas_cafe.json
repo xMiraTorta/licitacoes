@@ -1,0 +1,2233 @@
+{
+ "pesquisa_em": "2026-10-18",
+ "como": "Preço de varejo em lojas virtuais de supermercados (pacotes de 250 g a 1 kg, só produtos disponíveis), em R$/kg. A mesma linha varia até 2x entre lojas. Categoria = estilo do produto na planilha oficial de produtos certificados da ABIC. Valores datados: atualizar à mão.",
+ "fonte_categorias": "https://www.abic.com.br/wp-content/plugins/integracao-abic-produtos/includes/ProdutosAutorizadosABIC.xlsx",
+ "linhas": [
+  {
+   "marca": "3 Corações",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 43.2,
+   "preco_kg_max": 83.92,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "Estilo 'Tradicional' na planilha ABIC (3 CORACOES TRADICIONAL). 29 ofertas em 12 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-em-po-3-coracoes-500g-tradicional-2025930/p",
+     "data": "2026-10-18",
+     "preco": 21.6,
+     "peso_g": 500,
+     "produto": "Café Em Pó 3 Corações Tradicional Vácuo 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-3-coracoes-almofada-tradicional-500g/p",
+     "data": "2026-10-18",
+     "preco": 21.9,
+     "peso_g": 500,
+     "produto": "Café 3 Corações Almofada Tradicional 500g"
+    },
+    {
+     "loja": "Zona Sul",
+     "url": "https://www.zonasul.com.br/cafe-moido-tradicional-3-coracoes-500g-869368/p",
+     "data": "2026-10-18",
+     "preco": 24.9,
+     "peso_g": 500,
+     "produto": "Café Moído Tradicional 3 Corações 500g Café Torrado e Moído Tradicional 3 Corações Pacote 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-tradicional-a-vacuo-3-coracoes-250g/p",
+     "data": "2026-10-18",
+     "preco": 20.98,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Tradicional a Vácuo 3 Corações 250g"
+    }
+   ]
+  },
+  {
+   "marca": "3 Corações",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 43.2,
+   "preco_kg_max": 83.92,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "29 ofertas em 12 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-em-po-3-coracoes-500g-extra-forte-2025922/p",
+     "data": "2026-10-18",
+     "preco": 21.6,
+     "peso_g": 500,
+     "produto": "Café Em Pó 3 Corações Extraforte Vácuo 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-3-coracoes-vacuo-extra-forte-500g/p",
+     "data": "2026-10-18",
+     "preco": 21.9,
+     "peso_g": 500,
+     "produto": "Café 3 Corações Vácuo Extra Forte 500g"
+    },
+    {
+     "loja": "Zona Sul",
+     "url": "https://www.zonasul.com.br/cafe-moido-extraforte-3-coracoes-500g-768928/p",
+     "data": "2026-10-18",
+     "preco": 24.9,
+     "peso_g": 500,
+     "produto": "Café Moído Extraforte 3 Corações 500g Café Torrado E Moído 3 Corações Extraforte Pacote 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-extra-forte-a-vacuo-3-coracoes-250g/p",
+     "data": "2026-10-18",
+     "preco": 20.98,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Extra Forte a Vácuo 3 Corações 250g"
+    }
+   ]
+  },
+  {
+   "marca": "3 Corações",
+   "linha": "Gourmet (Cerrado Mineiro, Sul de Minas, Mogiana, Dark Roast etc.)",
+   "categoria": "Gourmet",
+   "preco_kg_min": 79.92,
+   "preco_kg_max": 131.96,
+   "embalagem": "250 g (almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "Moído, pacotes de 250 g. 48 ofertas em 13 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_mogiana_paulista_3_coracoes_gourmet_pacote_250g_952583/p",
+     "data": "2026-10-18",
+     "preco": 19.98,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Mogiana Paulista 3 Corações Gourmet Pacote 250g"
+    },
+    {
+     "loja": "Supernosso",
+     "url": "https://www.supernosso.com/202329-cafe-em-po-3-coracoes-gourmet-mogiana-paulista-250g/p",
+     "data": "2026-10-18",
+     "preco": 19.99,
+     "peso_g": 250,
+     "produto": "Café em pó 3 Corações Gourmet Mogiana Paulista 250g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-gourmet-cerrado-mineiro-3-coracoes-250g/p",
+     "data": "2026-10-18",
+     "preco": 22.99,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Gourmet Cerrado Mineiro 3 Corações 250g"
+    },
+    {
+     "loja": "GBarbosa",
+     "url": "https://www.gbarbosa.com.br/cafe-em-po-3-coracoes-gourmet-torrado-e-moido-cerrado-mineiro-pacote-250g-1753961001/p",
+     "data": "2026-10-18",
+     "preco": 32.99,
+     "peso_g": 250,
+     "produto": "Café em Pó 3 Corações Gourmet Torrado e Moído Cerrado Mineiro Pacote 250g"
+    }
+   ]
+  },
+  {
+   "marca": "3 Corações",
+   "linha": "Estrada Real Premium",
+   "categoria": "Superior",
+   "preco_kg_min": 51.8,
+   "preco_kg_max": 93.98,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "ABIC classifica '3 CORACOES ESTRADA REAL PREMIUM' como Superior (não Gourmet). 12 ofertas em 10 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-empo-3-coracoes-estrada-real-500g",
+     "data": "2026-10-18",
+     "preco": 25.9,
+     "peso_g": 500,
+     "produto": "Café em pó 3 Corações Estrada Real 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-3-coracoes-almofada-premium-500g/p",
+     "data": "2026-10-18",
+     "preco": 26.9,
+     "peso_g": 500,
+     "produto": "Café em pó 3 Corações Estrada Real 500g Café 3 Corações Almofada Premium 500g"
+    },
+    {
+     "loja": "Zona Sul",
+     "url": "https://www.zonasul.com.br/cafe-moido-premium-estrada-real-3-coracoes-500g-461415/p",
+     "data": "2026-10-18",
+     "preco": 29.98,
+     "peso_g": 500,
+     "produto": "Café Moído Premium Estrada Real 3 Corações 500g Café Torrado E Moído 3 Corações Premium Estrada Real Pacote 500g"
+    },
+    {
+     "loja": "Prezunic",
+     "url": "https://www.prezunic.com.br/cafe-em-po-3-coracoes-premium-estrada-real-pacote-500g-1786897/p",
+     "data": "2026-10-18",
+     "preco": 46.99,
+     "peso_g": 500,
+     "produto": "Café em Pó 3 Corações Premium Estrada Real Pacote 500g"
+    }
+   ]
+  },
+  {
+   "marca": "3 Corações",
+   "linha": "Rituais",
+   "categoria": "Especial",
+   "preco_kg_min": 79.96,
+   "preco_kg_max": 224.0,
+   "embalagem": "250 g (vácuo, almofada/pouch, em grão)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "Maioria dos Rituais é 'Especial' na ABIC; Rituais Cerrado Mineiro e Mogiana Paulista (moído) são 'Gourmet'. Inclui moído e grão, 250 g. 36 ofertas em 10 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Supernosso",
+     "url": "https://www.supernosso.com/192109-cafe-em-po-3-coracoes-rituais-organico-250g/p",
+     "data": "2026-10-18",
+     "preco": 19.99,
+     "peso_g": 250,
+     "produto": "Café em pó 3 Corações Rituais Orgânico 250g"
+    },
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-grao-3-coracoes-rituais-exotico-250g/p",
+     "data": "2026-10-18",
+     "preco": 27.95,
+     "peso_g": 250,
+     "produto": "Café Grão 3 Corações Rituais Exótico 250g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-exotico-rituais-3-coracoes-250g/p",
+     "data": "2026-10-18",
+     "preco": 33.99,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Exótico Rituais 3 Corações 250g"
+    },
+    {
+     "loja": "Santa Luzia",
+     "url": "https://www.santaluzia.com.br/cafe-torrado-e-moido-florada-rituais-3-coracoes-250g-1302752/p",
+     "data": "2026-10-18",
+     "preco": 56,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Florada Rituais 3 Corações 250g"
+    }
+   ]
+  },
+  {
+   "marca": "3 Corações",
+   "linha": "Gourmet Espresso (grão)",
+   "categoria": "Gourmet",
+   "preco_kg_min": 73.44,
+   "preco_kg_max": 195.96,
+   "embalagem": "500 g / 1 kg (almofada/pouch, em grão)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "Café em grão. 9 ofertas em 7 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-grao-3-coracoes-espresso-gourmet-500g/p",
+     "data": "2026-10-18",
+     "preco": 36.72,
+     "peso_g": 500,
+     "produto": "Café Grão 3 Corações Espresso Gourmet 500g"
+    },
+    {
+     "loja": "Supernosso",
+     "url": "https://www.supernosso.com/330-cafe-torrado-em-graos-espresso-3-coracoes-gourmet-pacote-1kg/p",
+     "data": "2026-10-18",
+     "preco": 117.99,
+     "peso_g": 1000,
+     "produto": "Café Torrado em Grãos Espresso 3 Corações Gourmet Pacote 1kg"
+    },
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_em_graos_espresso_3_coracoes_gourmet_pacote_1kg_1115502/p",
+     "data": "2026-10-18",
+     "preco": 153.9,
+     "peso_g": 1000,
+     "produto": "Café Torrado em Grãos Espresso 3 Corações Gourmet Pacote 1kg"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-em-graos-expresso-gourmet-3-coracoes-500g/p",
+     "data": "2026-10-18",
+     "preco": 97.98,
+     "peso_g": 500,
+     "produto": "Café em Grãos Expresso Gourmet 3 Corações 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Melitta",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 43.88,
+   "preco_kg_max": 79.6,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch, caixa)",
+   "fabricante": "Melitta do Brasil Ind. e Com. Ltda. (Avaré-SP / sede SP)",
+   "obs": "25 ofertas em 13 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-torrado-e-moido-tradicional-melitta-250g",
+     "data": "2026-10-18",
+     "preco": 10.97,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Tradicional Melitta 250g"
+    },
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_tradicional_melitta_caixa_500g_252247/p",
+     "data": "2026-10-18",
+     "preco": 24.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Tradicional Melitta Caixa 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-tradicional-melitta-500g/p",
+     "data": "2026-10-18",
+     "preco": 26.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Tradicional Melitta 500g"
+    },
+    {
+     "loja": "Zona Sul",
+     "url": "https://www.zonasul.com.br/cafe-torrado-e-moido-melitta-tradicional-pacote-250g-865443/p",
+     "data": "2026-10-18",
+     "preco": 19.9,
+     "peso_g": 250,
+     "produto": "Café Torrado E Moído Melitta Tradicional Pacote 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Melitta",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 47.78,
+   "preco_kg_max": 79.6,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch, caixa)",
+   "fabricante": "Melitta do Brasil Ind. e Com. Ltda. (Avaré-SP / sede SP)",
+   "obs": "26 ofertas em 13 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-extra-forte-melitta-500g-2067",
+     "data": "2026-10-18",
+     "preco": 23.89,
+     "peso_g": 500,
+     "produto": "Café Extraforte Melitta 500g"
+    },
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_extraforte_melitta_caixa_500g_6160522/p",
+     "data": "2026-10-18",
+     "preco": 24.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Extraforte Melitta Caixa 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-extraforte-melitta-pacote-500g/p",
+     "data": "2026-10-18",
+     "preco": 26.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Extraforte Melitta Pacote 500g"
+    },
+    {
+     "loja": "Zona Sul",
+     "url": "https://www.zonasul.com.br/cafe-torrado-e-moido-melitta-extra-forte-pacote-250-g-865435/p",
+     "data": "2026-10-18",
+     "preco": 19.9,
+     "peso_g": 250,
+     "produto": "Café Torrado E Moído Melitta Extra Forte Pacote 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Melitta",
+   "linha": "Regiões Brasileiras (Cerrado, Mogiana, Sul de Minas, Terras Capixabas)",
+   "categoria": "Gourmet",
+   "preco_kg_min": 71.56,
+   "preco_kg_max": 107.92,
+   "embalagem": "250 g (vácuo, almofada/pouch)",
+   "fabricante": "Melitta do Brasil Ind. e Com. Ltda. (Avaré-SP / sede SP)",
+   "obs": "Pacotes 250 g. 36 ofertas em 11 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-torrado-e-moido-gourmet-regioes-brasileiras-cerrado-melitta-250g",
+     "data": "2026-10-18",
+     "preco": 17.89,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Gourmet Regiões Brasileiras Cerrado Melitta 250g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-melitta-regioes-brasileiras-mogiana-250g/p",
+     "data": "2026-10-18",
+     "preco": 19.49,
+     "peso_g": 250,
+     "produto": "Café Melitta Regiões Brasileiras Mogiana 250g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-regioes-brasileiras-mogiana-melitta-250g/p",
+     "data": "2026-10-18",
+     "preco": 22.99,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Regiões Brasileiras Mogiana Melitta 250g"
+    },
+    {
+     "loja": "Zona Sul",
+     "url": "https://www.zonasul.com.br/cafe-torrado-e-moido-melitta-regioes-brasileiras-cerrado-a-vacuo-250-g-485535/p",
+     "data": "2026-10-18",
+     "preco": 26.98,
+     "peso_g": 250,
+     "produto": "Café Torrado E Moído Melitta Regiões Brasileiras Cerrado A Vácuo 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Melitta",
+   "linha": "Premium",
+   "categoria": "Superior",
+   "preco_kg_min": 59.96,
+   "preco_kg_max": 99.96,
+   "embalagem": "500 g (vácuo, caixa)",
+   "fabricante": "Melitta do Brasil Ind. e Com. Ltda. (Avaré-SP / sede SP)",
+   "obs": "Não há linha chamada 'Melitta Superior' na planilha ABIC; o produto de estilo Superior é 'MELITTA PREMIUM'. Só 2 lojas com preço. 2 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_premium_melitta_caixa_500g_7407645/p",
+     "data": "2026-10-18",
+     "preco": 29.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Premium Melitta Caixa 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-premium-a-vacuo-melitta-500g/p",
+     "data": "2026-10-18",
+     "preco": 49.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Premium a Vácuo Melitta 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Melitta",
+   "linha": "Especial",
+   "categoria": null,
+   "preco_kg_min": 74.2,
+   "preco_kg_max": 91.96,
+   "embalagem": "500 g (vácuo, caixa)",
+   "fabricante": "Melitta do Brasil Ind. e Com. Ltda. (Avaré-SP / sede SP)",
+   "obs": "'Melitta Especial' (caixa/vácuo 500 g) é vendido, mas não aparece na planilha ABIC de 18/10/2026; estilo não confirmado. Atenção: em edital 'especial' pode ser só nome comercial, não café especial SCA. 3 ofertas em 3 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-torrado-e-moido-especial-melitta-caixa-500g-69849/p",
+     "data": "2026-10-18",
+     "preco": 37.1,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Especial Melitta Caixa 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-melitta-vacuo-especial-500g/p",
+     "data": "2026-10-18",
+     "preco": 42.99,
+     "peso_g": 500,
+     "produto": "Café Melitta Vácuo Especial 500g"
+    },
+    {
+     "loja": "Zona Sul",
+     "url": "https://www.zonasul.com.br/cafe-torrado-e-moido-melitta-especial-a-vacuo-500-g-112402/p",
+     "data": "2026-10-18",
+     "preco": 45.98,
+     "peso_g": 500,
+     "produto": "Café Torrado E Moído Melitta Especial A Vácuo 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Melitta",
+   "linha": "Sabor da Fazenda",
+   "categoria": "Tradicional",
+   "preco_kg_min": 51.96,
+   "preco_kg_max": 78.0,
+   "embalagem": "500 g (vácuo, almofada/pouch, caixa)",
+   "fabricante": "Melitta do Brasil Ind. e Com. Ltda. (Avaré-SP / sede SP)",
+   "obs": "12 ofertas em 9 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_melitta_sabor_da_fazenda_caixa_500g_1007386/p",
+     "data": "2026-10-18",
+     "preco": 25.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Melitta Sabor da Fazenda Caixa 500g"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-po-melitta-500g-sabor-da-fazenda-2035650/p",
+     "data": "2026-10-18",
+     "preco": 26.75,
+     "peso_g": 500,
+     "produto": "Café Pó Melitta 500g Sabor Da Fazenda"
+    },
+    {
+     "loja": "Coop",
+     "url": "https://www.coopsupermercado.com.br/cafe-torrado-e-moido-melitta-sabor-da-fazenda-500g/p",
+     "data": "2026-10-18",
+     "preco": 28.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Melitta Sabor da Fazenda 500g"
+    },
+    {
+     "loja": "Santa Luzia",
+     "url": "https://www.santaluzia.com.br/cafe-sabor-da-fazenda-tradicional-melitta-500g-877972/p",
+     "data": "2026-10-18",
+     "preco": 39,
+     "peso_g": 500,
+     "produto": "Café Sabor Da Fazenda Vácuo Melitta 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Melitta",
+   "linha": "Spresso (grão)",
+   "categoria": "Gourmet",
+   "preco_kg_min": 92.6,
+   "preco_kg_max": 179.8,
+   "embalagem": "500 g (almofada/pouch, em grão)",
+   "fabricante": "Melitta do Brasil Ind. e Com. Ltda. (Avaré-SP / sede SP)",
+   "obs": "Café em grão 500 g. 7 ofertas em 7 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-em-graos-melitta-gourmet-spresso-500g-289713/p",
+     "data": "2026-10-18",
+     "preco": 46.3,
+     "peso_g": 500,
+     "produto": "Café Torrado em Grãos Spresso Melitta Gourmet Pacote 500g"
+    },
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-graos-melitta-spresso-gourmet-500g",
+     "data": "2026-10-18",
+     "preco": 57.19,
+     "peso_g": 500,
+     "produto": "Café Torrado em Grãos Spresso Gourmet Melitta 500g"
+    },
+    {
+     "loja": "Supernosso",
+     "url": "https://www.supernosso.com/221181-cafe-torrado-em-graos-spresso-100-arabica-melitta-gourmet-pacote-500g/p",
+     "data": "2026-10-18",
+     "preco": 59.99,
+     "peso_g": 500,
+     "produto": "Café Torrado em Grãos Spresso 100% Arábica Melitta Gourmet Pacote 500g"
+    },
+    {
+     "loja": "GBarbosa",
+     "url": "https://www.gbarbosa.com.br/cafe-em-grao-melitta-gourmet-torrado-spresso-pacote-500g-1831170/p",
+     "data": "2026-10-18",
+     "preco": 89.9,
+     "peso_g": 500,
+     "produto": "Café em Grão Melitta Gourmet Torrado Spresso Pacote 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Pilão",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 39.78,
+   "preco_kg_max": 91.96,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "39 ofertas em 14 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-torrado-e-moido-a-vacuo-tradicional-pilao-pacote-500g-102414/p",
+     "data": "2026-10-18",
+     "preco": 19.89,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Tradicional Pilão Pacote 500g"
+    },
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_tradicional_pilao_pouch_500g_798665/p",
+     "data": "2026-10-18",
+     "preco": 19.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Tradicional Pilão Pouch 500g"
+    },
+    {
+     "loja": "Zona Sul",
+     "url": "https://www.zonasul.com.br/cafe-torrado-e-moido-pilao-tradicional-500g-828025/p",
+     "data": "2026-10-18",
+     "preco": 26.98,
+     "peso_g": 500,
+     "produto": "Café Torrado E Moído Pilão Tradicional Fresh Pack 500g"
+    },
+    {
+     "loja": "Prezunic",
+     "url": "https://www.prezunic.com.br/cafe-em-po-pilao-tradicional-a-vacuo-250g-1113751001/p",
+     "data": "2026-10-18",
+     "preco": 22.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Pilão Tradicional a Vácuo 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Pilão",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 39.78,
+   "preco_kg_max": 91.56,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "24 ofertas em 13 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-pilao-torrado-e-moido-extra-forte-vacuo-500g-184878/p",
+     "data": "2026-10-18",
+     "preco": 19.89,
+     "peso_g": 500,
+     "produto": "Café Pilão Torrado E Moído Extra Forte Vácuo 500g"
+    },
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_a_vacuo_extraforte_pilao_pacote_500g_479586/p",
+     "data": "2026-10-18",
+     "preco": 19.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Extraforte Pilão Pacote 500g"
+    },
+    {
+     "loja": "GBarbosa",
+     "url": "https://www.gbarbosa.com.br/cafe-em-po-pilao-torrado-e-moido-extra-forte-a-vacuo-250g-1616584/p",
+     "data": "2026-10-18",
+     "preco": 12.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Pilão Torrado e Moído Extra Forte a Vácuo 250g"
+    },
+    {
+     "loja": "Mercantil Rodrigues",
+     "url": "https://www.mercantilrodrigues.com.br/cafe-pilao-extra-forte-vacuo-250g/p",
+     "data": "2026-10-18",
+     "preco": 22.89,
+     "peso_g": 250,
+     "produto": "Café Pilão Extra Forte Vácuo 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Pilão",
+   "linha": "252 Graus",
+   "categoria": "Extraforte",
+   "preco_kg_min": 39.96,
+   "preco_kg_max": 67.4,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "10 ofertas em 9 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_a_vacuo_pilao_252_graus_pacote_500g_879037/p",
+     "data": "2026-10-18",
+     "preco": 19.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Pilão 252 Graus Pacote 500g"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-torrado-e-moido-a-vacuo-pilao-252-graus-pacote-500g-1922998/p",
+     "data": "2026-10-18",
+     "preco": 21.6,
+     "peso_g": 500,
+     "produto": "Café Torrado E Moído A Vácuo Pilão 252 Graus Pacote 500g"
+    },
+    {
+     "loja": "Coop",
+     "url": "https://www.coopsupermercado.com.br/cafe-torrado-e-moido-a-vacuo-252-graus-pilao-500g/p",
+     "data": "2026-10-18",
+     "preco": 24.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo 252° Graus Pilão 500g"
+    },
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-pilao-500g-vacuo-torrado-252-graus-forte-encorpado/p",
+     "data": "2026-10-18",
+     "preco": 33.7,
+     "peso_g": 500,
+     "produto": "Café Pilão 500g Vácuo Torrado 252 Graus Forte Encorpado"
+    }
+   ]
+  },
+  {
+   "marca": "Pilão",
+   "linha": "Intenso",
+   "categoria": "Tradicional",
+   "preco_kg_min": 39.78,
+   "preco_kg_max": 67.4,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "6 ofertas em 5 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-pilao-torrado-e-moido-intenso-vacuo-500g-146708/p",
+     "data": "2026-10-18",
+     "preco": 19.89,
+     "peso_g": 500,
+     "produto": "Café Pilão Torrado E Moído Intenso Vácuo 500g"
+    },
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_a_vacuo_intenso_pilao_pacote_500g_232785/p",
+     "data": "2026-10-18",
+     "preco": 19.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Intenso Pilão Pacote 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-intenso-pilao-500g/p",
+     "data": "2026-10-18",
+     "preco": 22.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Intenso Pilão 500g"
+    },
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-pilao-500g-vac-intenso/p",
+     "data": "2026-10-18",
+     "preco": 33.7,
+     "peso_g": 500,
+     "produto": "Café Pilão Intenso 500g a Vácuo"
+    }
+   ]
+  },
+  {
+   "marca": "Pilão",
+   "linha": "Cafeteria / Especialidades (Coado, Espresso, Italiano) moído",
+   "categoria": "Superior",
+   "preco_kg_min": 48.06,
+   "preco_kg_max": 83.96,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "ABIC: PILAO CAFETERIA COADO/ESPRESSO/ITALIANO = Superior. 21 ofertas em 10 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-torrado-e-moido-a-vacuo-italiano-pilao-cafeteria-pacote-500g-276682-1/p",
+     "data": "2026-10-18",
+     "preco": 24.03,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Italiano Pilão Cafeteria Pacote 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-pilao-cafeteria-italiano-500g/p",
+     "data": "2026-10-18",
+     "preco": 24.9,
+     "peso_g": 500,
+     "produto": "Café Pilão Cafeteria Italiano 500g"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-po-pilao-500g-cafeteria-espec-italiano-4004354/p",
+     "data": "2026-10-18",
+     "preco": 26.75,
+     "peso_g": 500,
+     "produto": "Café Torrado E Moído Italiano Pilão 500g Cafeteria Especialidades"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-italiano-cafeteria-especialidades-pilao-500g/p",
+     "data": "2026-10-18",
+     "preco": 41.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Italiano Cafeteria Especialidades Pilão 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Pilão",
+   "linha": "Espresso (grão)",
+   "categoria": "Gourmet",
+   "preco_kg_min": 79.8,
+   "preco_kg_max": 153.96,
+   "embalagem": "500 g / 1 kg (almofada/pouch, em grão)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "ABIC: PILAO ESPRESSO GRAOS = Gourmet; 'Pilão Espresso Institucional' (grão) = Superior. 12 ofertas em 10 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Atacadão",
+     "url": "https://secure.atacadao.com.br/cafe-em-graos-pilao-espresso-17512/p",
+     "data": "2026-10-18",
+     "preco": 39.9,
+     "peso_g": 500,
+     "produto": "Café em Grãos Pilão Espresso 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-pilao-graos-espresso-1kg/p",
+     "data": "2026-10-18",
+     "preco": 87.9,
+     "peso_g": 1000,
+     "produto": "Café Pilão Grãos Espresso 1kg"
+    },
+    {
+     "loja": "Coop",
+     "url": "https://www.coopsupermercado.com.br/cafe-torrado-em-graos-pilao-cafeteria-500g/p",
+     "data": "2026-10-18",
+     "preco": 52.49,
+     "peso_g": 500,
+     "produto": "Café Torrado em Grãos Pilão Cafeteria 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-em-graos-cafeteria-pilao-500g/p",
+     "data": "2026-10-18",
+     "preco": 76.98,
+     "peso_g": 500,
+     "produto": "Café em Grãos Cafeteria Pilão 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Caboclo",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 39.78,
+   "preco_kg_max": 79.6,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "15 ofertas em 10 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-tradicional-caboclo-500g-306",
+     "data": "2026-10-18",
+     "preco": 19.89,
+     "peso_g": 500,
+     "produto": "Café Tradicional Caboclo 500g"
+    },
+    {
+     "loja": "Supernosso",
+     "url": "https://www.supernosso.com/71055-cafe-torrado-e-moido-tradicional-caboclo-pacote-500g/p",
+     "data": "2026-10-18",
+     "preco": 19.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Tradicional Caboclo Pacote 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-caboclo-pouch-tradicional-500g/p",
+     "data": "2026-10-18",
+     "preco": 21.9,
+     "peso_g": 500,
+     "produto": "Café Caboclo Pouch Tradicional 500g"
+    },
+    {
+     "loja": "Santa Luzia",
+     "url": "https://www.santaluzia.com.br/cafe-torrado-e-moido-almofada-caboclo-500g-501247/p",
+     "data": "2026-10-18",
+     "preco": 39.8,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Almofada Caboclo 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Caboclo",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 39.78,
+   "preco_kg_max": 59.8,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "9 ofertas em 7 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-extraforte-caboclo-500g-25286",
+     "data": "2026-10-18",
+     "preco": 19.89,
+     "peso_g": 500,
+     "produto": "Café Extraforte Caboclo 500g"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-torrado-e-moido-a-vacuo-extraforte-caboclo-pacote-500g-1616757/p",
+     "data": "2026-10-18",
+     "preco": 20.57,
+     "peso_g": 500,
+     "produto": "Café Torrado E Moído A Vácuo Extraforte Caboclo Pacote 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-caboclo-almofada-extra-forte-500g/p",
+     "data": "2026-10-18",
+     "preco": 21.9,
+     "peso_g": 500,
+     "produto": "Café Caboclo Almofada Extra Forte 500g"
+    },
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-caboclo-500g-vacuo-extra-forte/p",
+     "data": "2026-10-18",
+     "preco": 29.9,
+     "peso_g": 500,
+     "produto": "Café Caboclo 500g Vácuo Extra Forte"
+    }
+   ]
+  },
+  {
+   "marca": "Café do Ponto",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 51.96,
+   "preco_kg_max": 65.9,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "4 ofertas em 4 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_a_vacuo_tradicional_cafe_do_ponto_pacote_500g_785067/p",
+     "data": "2026-10-18",
+     "preco": 25.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Tradicional Café do Ponto Pacote 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-do-ponto-vacuo-tradicional-500g/p",
+     "data": "2026-10-18",
+     "preco": 29.9,
+     "peso_g": 500,
+     "produto": "Café do Ponto Vácuo Tradicional 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-tradicional-a-vacuo-cafe-do-ponto-500g/p",
+     "data": "2026-10-18",
+     "preco": 29.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Tradicional a Vácuo Café do Ponto 500g"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-torrado-e-moido-a-vacuo-tradicional-cafe-do-ponto-pacote-500g-1618156/p",
+     "data": "2026-10-18",
+     "preco": 32.95,
+     "peso_g": 500,
+     "produto": "Café Torrado E Moído A Vácuo Tradicional Café Do Ponto Pacote 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Café do Ponto",
+   "linha": "Extra Forte",
+   "categoria": "Tradicional",
+   "preco_kg_min": 51.96,
+   "preco_kg_max": 65.9,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "Curioso: a planilha ABIC registra 'DO PONTO EXTRAFORTE' com estilo Tradicional. 3 ofertas em 3 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_a_vacuo_extraforte_cafe_do_ponto_pacote_500g_164739/p",
+     "data": "2026-10-18",
+     "preco": 25.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Extraforte Café do Ponto Pacote 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-a-vacuo-extra-forte-cafe-do-ponto-500g/p",
+     "data": "2026-10-18",
+     "preco": 29.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vacúo Extra Forte Café do Ponto 500g"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-torrado-e-moido-a-vacuo-extraforte-cafe-do-ponto-pacote-500g-2008173/p",
+     "data": "2026-10-18",
+     "preco": 32.95,
+     "peso_g": 500,
+     "produto": "Café Torrado E Moído A Vácuo Extraforte Café Do Ponto Pacote 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Café do Ponto",
+   "linha": "Exportação",
+   "categoria": "Superior",
+   "preco_kg_min": 59.8,
+   "preco_kg_max": 72.08,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "3 ofertas em 3 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-do-ponto-vacuo-exportacao-500g/p",
+     "data": "2026-10-18",
+     "preco": 29.9,
+     "peso_g": 500,
+     "produto": "Café do Ponto Vácuo Exportação 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-exportacao-do-ponto-500g/p",
+     "data": "2026-10-18",
+     "preco": 29.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Exportação Café Do Ponto 500g"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-torrado-e-moido-a-vacuo-exportacao-cafe-do-ponto-pacote-500g-1618148/p",
+     "data": "2026-10-18",
+     "preco": 36.04,
+     "peso_g": 500,
+     "produto": "Café Torrado E Moído A Vácuo Exportação Café Do Ponto Pacote 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Café do Ponto",
+   "linha": "Espresso (grão)",
+   "categoria": "Superior",
+   "preco_kg_min": 144.9,
+   "preco_kg_max": 154.4,
+   "embalagem": "1 kg (almofada/pouch, em grão)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "ABIC: DO PONTO ESPRESSO TORRADO EM GRAOS = Superior; linhas Cerrado/Mogiana/Sul de Minas (grão) = Gourmet. 2 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_em_graos_espresso_cafe_do_ponto_pacote_1kg_821233/p",
+     "data": "2026-10-18",
+     "preco": 144.9,
+     "peso_g": 1000,
+     "produto": "Café Torrado em Grãos Espresso Café do Ponto Pacote 1kg"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-torrado-em-graos-espresso-cafe-do-ponto-pacote-1kg-1908588/p",
+     "data": "2026-10-18",
+     "preco": 154.4,
+     "peso_g": 1000,
+     "produto": "Café Torrado Em Grãos Espresso Café Do Ponto Pacote 1kg"
+    }
+   ]
+  },
+  {
+   "marca": "Santa Clara",
+   "linha": "Clássico (Tradicional)",
+   "categoria": "Tradicional",
+   "preco_kg_min": 63.96,
+   "preco_kg_max": 63.96,
+   "embalagem": "250 g (almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "Marca da 3 Corações forte no Nordeste; só 1 loja (GBarbosa) com preço do Clássico. 1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "GBarbosa",
+     "url": "https://www.gbarbosa.com.br/cafe-em-po-santa-clara-classico-pacote-250g-1099323/p",
+     "data": "2026-10-18",
+     "preco": 15.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Santa Clara Clássico Pacote 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Santa Clara",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 70.76,
+   "preco_kg_max": 87.96,
+   "embalagem": "250 g (vácuo, almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "4 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "GBarbosa",
+     "url": "https://www.gbarbosa.com.br/cafe-em-po-santa-clara-torrado-e-moido-extraforte-almofada-250g-1823794/p",
+     "data": "2026-10-18",
+     "preco": 17.69,
+     "peso_g": 250,
+     "produto": "Café em Pó Santa Clara Torrado e Moído Extraforte Almofada 250g"
+    },
+    {
+     "loja": "Mercantil Rodrigues",
+     "url": "https://www.mercantilrodrigues.com.br/cafe-em-po-santa-clara-torrado-e-moido-extraforte-a-vacuo-250g/p",
+     "data": "2026-10-18",
+     "preco": 21.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Santa Clara Torrado e Moído Extraforte a Vácuo 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Santa Clara",
+   "linha": "Gourmet / Reserva da Família",
+   "categoria": "Gourmet",
+   "preco_kg_min": 123.96,
+   "preco_kg_max": 169.8,
+   "embalagem": "250 g / 500 g (almofada/pouch, em grão)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "ABIC: Reserva da Família e Região Vulcânica = Gourmet; Santa Clara Premium = Superior (sem preço encontrado). 11 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "GBarbosa",
+     "url": "https://www.gbarbosa.com.br/cafe-em-po-santa-clara-gourmet-torrado-e-moido-chapada-diamantina-pacote-250g-1848074001/p",
+     "data": "2026-10-18",
+     "preco": 30.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Santa Clara Gourmet Torrado e Moído Chapada Diamantina Pacote 250g"
+    },
+    {
+     "loja": "Mercantil Rodrigues",
+     "url": "https://www.mercantilrodrigues.com.br/cafe-torrado-e-moido-santa-clara-gourmet-regiao-vulcanica-pacote-250g-1848074002/p",
+     "data": "2026-10-18",
+     "preco": 32.29,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Santa Clara Gourmet Região Vulcânica Pacote 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Pelé",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 37.8,
+   "preco_kg_max": 43.2,
+   "embalagem": "500 g (vácuo)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "2 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-pele-tradicional-vacuo-500g/p",
+     "data": "2026-10-18",
+     "preco": 18.9,
+     "peso_g": 500,
+     "produto": "Café Pele Tradicional Vácuo 500g"
+    },
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-pele-tradicional-a-vacuo-500g-237794/p",
+     "data": "2026-10-18",
+     "preco": 21.6,
+     "peso_g": 500,
+     "produto": "Café Pelé Tradicional à Vacuo 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Pelé",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 37.8,
+   "preco_kg_max": 69.96,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "7 ofertas em 5 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-pele-extra-forte-vacuo-500g/p",
+     "data": "2026-10-18",
+     "preco": 18.9,
+     "peso_g": 500,
+     "produto": "Café Pele Extra Forte Vácuo 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-extra-forte-cafe-pele-500g/p",
+     "data": "2026-10-18",
+     "preco": 19.99,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Extra Forte Café Pelé 500g"
+    },
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-extra-forte-a-vacuo-pele-500g-1276",
+     "data": "2026-10-18",
+     "preco": 21.9,
+     "peso_g": 500,
+     "produto": "Café Extraforte a Vácuo Pelé 500g"
+    },
+    {
+     "loja": "Prezunic",
+     "url": "https://www.prezunic.com.br/cafe-em-po-pele-extraforte-torrado-e-moido-almofada-500g-1189095/p",
+     "data": "2026-10-18",
+     "preco": 34.98,
+     "peso_g": 500,
+     "produto": "Café em Pó Pelé Extraforte Torrado e Moído Almofada 500g"
+    }
+   ]
+  },
+  {
+   "marca": "União",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 37.96,
+   "preco_kg_max": 73.96,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Camil Alimentos S.A. (fábrica MG; também Sobesa-BA na planilha ABIC)",
+   "obs": "10 ofertas em 8 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-uniao-tradicional-pouch-500g/p",
+     "data": "2026-10-18",
+     "preco": 18.98,
+     "peso_g": 500,
+     "produto": "Café União Tradicional Pouch 500g"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-po-uniao-500g-tradicional-vacuo-2218798/p",
+     "data": "2026-10-18",
+     "preco": 19.54,
+     "peso_g": 500,
+     "produto": "Café Pó União Tradicional Vácuo 500g"
+    },
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-torrado-e-moido-a-vacuo-tradicional-uniao-500g",
+     "data": "2026-10-18",
+     "preco": 23.09,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Tradicional União 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-tradicional-uniao-500g/p",
+     "data": "2026-10-18",
+     "preco": 36.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Tradicional União 500g"
+    }
+   ]
+  },
+  {
+   "marca": "União",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 37.96,
+   "preco_kg_max": 73.96,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch)",
+   "fabricante": "Camil Alimentos S.A.",
+   "obs": "12 ofertas em 8 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-uniao-extra-forte-pouch-500g/p",
+     "data": "2026-10-18",
+     "preco": 18.98,
+     "peso_g": 500,
+     "produto": "Café União Extra Forte Pouch 500g"
+    },
+    {
+     "loja": "Bistek",
+     "url": "https://www.bistek.com.br/cafe-em-po-uniao-extraforte-a-vacuo-500g-2218780/p",
+     "data": "2026-10-18",
+     "preco": 19.54,
+     "peso_g": 500,
+     "produto": "Café Torrado Moído União Extra Forte 500g Vácuo"
+    },
+    {
+     "loja": "Coop",
+     "url": "https://www.coopsupermercado.com.br/cafe-extra-forte-uniao-pouch-500g/p",
+     "data": "2026-10-18",
+     "preco": 25.29,
+     "peso_g": 500,
+     "produto": "Café Extra Forte União Pouch 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-extra-forte-uniao-500g/p",
+     "data": "2026-10-18",
+     "preco": 36.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Extra Forte União 500g"
+    }
+   ]
+  },
+  {
+   "marca": "União",
+   "linha": "Gourmet (Cerrado, Mogiana, Sul de Minas)",
+   "categoria": "Gourmet",
+   "preco_kg_min": 69.04,
+   "preco_kg_max": 155.96,
+   "embalagem": "250 g (almofada/pouch)",
+   "fabricante": "Megabrayn do Brasil Ltda. (SP), conforme planilha ABIC",
+   "obs": "18 ofertas em 6 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-uniao-gourmet-cerrado-mineiro-250g/p",
+     "data": "2026-10-18",
+     "preco": 17.26,
+     "peso_g": 250,
+     "produto": "Café União Gourmet Cerrado Mineiro 250g"
+    },
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_uniao_gourmet_mogiana_paulista_pacote_250g_1686607/p",
+     "data": "2026-10-18",
+     "preco": 19.88,
+     "peso_g": 250,
+     "produto": "Café União Gourmet Mogiana Paulista Pacote 250g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-gourmet-cerrado-mineiro-uniao-250g/p",
+     "data": "2026-10-18",
+     "preco": 32.98,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Gourmet Cerrado Mineiro União 250g"
+    },
+    {
+     "loja": "Prezunic",
+     "url": "https://www.prezunic.com.br/cafe-em-po-uniao-gourmet-mogiana-paulista-pacote-250g-1872894002/p",
+     "data": "2026-10-18",
+     "preco": 38.99,
+     "peso_g": 250,
+     "produto": "Café em Pó União Gourmet Mogiana Paulista Pacote 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Café Brasileiro",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 37.8,
+   "preco_kg_max": 75.96,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "Alias 'brasileiro' é genérico: em edital confirme que é a marca. 7 ofertas em 4 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-brasileiro-500g-tradicional/p",
+     "data": "2026-10-18",
+     "preco": 18.9,
+     "peso_g": 500,
+     "produto": "Café Brasileiro 500g Tradicional"
+    },
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-vacuo-trad-brasileiro-500g",
+     "data": "2026-10-18",
+     "preco": 21.9,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Tradicional Café Brasileiro Pacote 500g"
+    },
+    {
+     "loja": "Coop",
+     "url": "https://www.coopsupermercado.com.br/cafe-torrado-e-moido-cafe-brasileiro-tradicional-pouch-500g/p",
+     "data": "2026-10-18",
+     "preco": 23.59,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Café Brasileiro Tradicional Pouch 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-tradicional-brasileiro-500g/p",
+     "data": "2026-10-18",
+     "preco": 37.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Tradicional Brasileiro 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Café Brasileiro",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 37.8,
+   "preco_kg_max": 75.96,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "7 ofertas em 5 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-brasileiro-500g-extra-forte/p",
+     "data": "2026-10-18",
+     "preco": 18.9,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Extraforte Café Brasileiro Pacote 500g"
+    },
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-vacuo-ex-forte-brasileiro-500g",
+     "data": "2026-10-18",
+     "preco": 21.9,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Extraforte Café Brasileiro Pacote 500g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-brasileiro-standart-extra-forte-500g/p",
+     "data": "2026-10-18",
+     "preco": 21.9,
+     "peso_g": 500,
+     "produto": "Café Brasileiro Standart Extra Forte 500g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-extraforte-cafe-brasileiro-pacote-500g/p",
+     "data": "2026-10-18",
+     "preco": 37.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Extraforte Café Brasileiro 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Café Brasileiro",
+   "linha": "Gourmet (Mogiana, Mantiqueira, Caparaó)",
+   "categoria": "Gourmet",
+   "preco_kg_min": 67.8,
+   "preco_kg_max": 153.96,
+   "embalagem": "250 g",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "Linha moída Gourmet não aparece com esse nome na planilha ABIC; estilo pelo nome da embalagem. 7 ofertas em 4 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-brasileiro-gourmet-mogiana-paulista-250g/p",
+     "data": "2026-10-18",
+     "preco": 16.95,
+     "peso_g": 250,
+     "produto": "Café Brasileiro Gourmet Mogiana Paulista 250g"
+    },
+    {
+     "loja": "Atacadão",
+     "url": "https://secure.atacadao.com.br/cafe-brasileiro-gourmet-mantiqueira-de-minas-13835/p",
+     "data": "2026-10-18",
+     "preco": 18.9,
+     "peso_g": 250,
+     "produto": "Café Brasileiro Gourmet Mantiqueira de Minas 250g"
+    },
+    {
+     "loja": "Covabra",
+     "url": "https://www.covabra.com.br/cafe-brasileiro-gourmet-mantiqueira-de-minas-250g/p",
+     "data": "2026-10-18",
+     "preco": 19.9,
+     "peso_g": 250,
+     "produto": "Café Brasileiro Gourmet Mantiqueira de Minas 250g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-mogiana-paulista-cafe-brasileiro-gourmet-250g/p",
+     "data": "2026-10-18",
+     "preco": 38.49,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Mogiana Paulista Café Brasileiro Gourmet 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Bom Jesus",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 39.96,
+   "preco_kg_max": 61.56,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch, caixa)",
+   "fabricante": "Melitta do Brasil Ind. e Com. Ltda. (Avaré-SP / sede SP)",
+   "obs": "9 ofertas em 9 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_tradicional_bom_jesus_caixa_500g_206458/p",
+     "data": "2026-10-18",
+     "preco": 19.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Tradicional Bom Jesus Caixa 500g"
+    },
+    {
+     "loja": "Coop",
+     "url": "https://www.coopsupermercado.com.br/cafe-torrado-e-moido-bom-jesus-tradicional-pouch-500g/p",
+     "data": "2026-10-18",
+     "preco": 21.29,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Bom Jesus Tradicional Pouch 500g"
+    },
+    {
+     "loja": "Mercantil Rodrigues",
+     "url": "https://www.mercantilrodrigues.com.br/cafe-em-po-torrado-e-moido-bom-jesus-tradicional-250g-1437032/p",
+     "data": "2026-10-18",
+     "preco": 11.9,
+     "peso_g": 250,
+     "produto": "Café em Pó torrado e Moído Bom Jesus Tradicional 250g"
+    },
+    {
+     "loja": "GBarbosa",
+     "url": "https://www.gbarbosa.com.br/cafe-em-po-bom-jesus-tradicional-torrado-e-moido-a-vacuo-250g-1437032/p",
+     "data": "2026-10-18",
+     "preco": 15.39,
+     "peso_g": 250,
+     "produto": "Café em Pó Bom Jesus Tradicional Torrado e Moído a Vácuo 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Bom Jesus",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 39.96,
+   "preco_kg_max": 49.96,
+   "embalagem": "500 g (almofada/pouch, caixa)",
+   "fabricante": "Melitta do Brasil Ind. e Com. Ltda. (Avaré-SP / sede SP)",
+   "obs": "3 ofertas em 3 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_extraforte_bom_jesus_caixa_500g_323004/p",
+     "data": "2026-10-18",
+     "preco": 19.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Extraforte Bom Jesus Caixa 500g"
+    },
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-torrado-e-moido-extraforte-bom-jesus-caixa-500g-239385/p",
+     "data": "2026-10-18",
+     "preco": 21.6,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído Extraforte Bom Jesus Caixa 500g"
+    },
+    {
+     "loja": "Prezunic",
+     "url": "https://www.prezunic.com.br/cafe-em-po-bom-jesus-torrado-e-moido-pacote-extraforte-500g-1858596002/p",
+     "data": "2026-10-18",
+     "preco": 24.98,
+     "peso_g": 500,
+     "produto": "Café em Pó Bom Jesus Torrado e Moído Pacote Extraforte 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Damasco",
+   "linha": "Tradicional / Extra Forte / Intenso",
+   "categoria": "Tradicional",
+   "preco_kg_min": 39.96,
+   "preco_kg_max": 39.96,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "ABIC: Damasco Tradicional e Intenso = Tradicional; Extraforte = Extraforte. Só Giassi (SC) com preço; marca do Sul. 3 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_a_vacuo_tradicional_damasco_pacote_500g_6088740/p",
+     "data": "2026-10-18",
+     "preco": 19.98,
+     "peso_g": 500,
+     "produto": "Café Torrado e Moído a Vácuo Tradicional Damasco Pacote 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Utam",
+   "linha": "Tradicional / Extra Forte",
+   "categoria": "Tradicional",
+   "preco_kg_min": 45.98,
+   "preco_kg_max": 59.92,
+   "embalagem": "250 g / 500 g (vácuo)",
+   "fabricante": "Café Utam S/A (SP)",
+   "obs": "Tradicional=Tradicional, Extra Forte/Momentos=Extraforte (ABIC). Preço só no Savegnago (SP). 7 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-utam-500g/p",
+     "data": "2026-10-18",
+     "preco": 22.99,
+     "peso_g": 500,
+     "produto": "Café Utam Tradicional 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Utam",
+   "linha": "Gourmet / Spresso (grão)",
+   "categoria": "Gourmet",
+   "preco_kg_min": 96.9,
+   "preco_kg_max": 109.9,
+   "embalagem": "1 kg (em grão)",
+   "fabricante": "Café Utam S/A (SP)",
+   "obs": "ABIC: Utam Expresso Gourmet Grãos = Gourmet; Utam Espresso Crema/Speciale = Superior. 2 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-grao-utam-1kg-spresso/p",
+     "data": "2026-10-18",
+     "preco": 96.9,
+     "peso_g": 1000,
+     "produto": "Café Grão Utam 1Kg Spresso"
+    },
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-graos-utam-gourmet-1kg",
+     "data": "2026-10-18",
+     "preco": 109.9,
+     "peso_g": 1000,
+     "produto": "Café em Grãos Utam Gourmet Torra Média 1kg"
+    }
+   ]
+  },
+  {
+   "marca": "Pimpinela",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 67.96,
+   "preco_kg_max": 67.96,
+   "embalagem": "250 g (vácuo)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "Marca carioca da 3 Corações; só Prezunic (RJ). 1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Prezunic",
+     "url": "https://www.prezunic.com.br/cafe-em-po-pimpinela-tradicional-torrado-e-moido-a-vacuo-250g-1887844/p",
+     "data": "2026-10-18",
+     "preco": 16.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Pimpinela Tradicional Torrado e Moído a Vácuo 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Pimpinela",
+   "linha": "Golden",
+   "categoria": "Superior",
+   "preco_kg_min": 65.96,
+   "preco_kg_max": 71.96,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "4 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Prezunic",
+     "url": "https://www.prezunic.com.br/cafe-em-po-pimpinela-golden-torrado-e-moido-pacote-250g-1482625/p",
+     "data": "2026-10-18",
+     "preco": 16.49,
+     "peso_g": 250,
+     "produto": "Café em Pó Pimpinela Golden Torrado e Moído Pacote 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Pimpinela",
+   "linha": "Gourmet Rio de Janeiro",
+   "categoria": "Gourmet",
+   "preco_kg_min": 119.96,
+   "preco_kg_max": 119.96,
+   "embalagem": "250 g (almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Prezunic",
+     "url": "https://www.prezunic.com.br/cafe-em-po-pimpinela-torrado-e-moido-rio-de-janeiro-gourmet-pacote-250g-1887900/p",
+     "data": "2026-10-18",
+     "preco": 29.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Pimpinela Torrado e Moído Rio de Janeiro Gourmet Pacote 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Maratá",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 57.56,
+   "preco_kg_max": 59.96,
+   "embalagem": "250 g (vácuo, almofada/pouch)",
+   "fabricante": "Jacobs Douwe Egberts BR Com. de Cafés Ltda. (JDE, São Paulo-SP)",
+   "obs": "ABIC: Maratá Tradicional (JDE); Maratá Premium = Superior. Preços no Nordeste (GBarbosa, Mercantil Rodrigues), 250 g. 4 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Mercantil Rodrigues",
+     "url": "https://www.mercantilrodrigues.com.br/cafe-marata-a-vacuo-250g/p",
+     "data": "2026-10-18",
+     "preco": 14.39,
+     "peso_g": 250,
+     "produto": "Café Maratá a Vácuo 250g"
+    },
+    {
+     "loja": "GBarbosa",
+     "url": "https://www.gbarbosa.com.br/cafe-em-po-marata-a-vacuo-250g-1129397/p",
+     "data": "2026-10-18",
+     "preco": 14.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Maratá a Vácuo 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Kimimo",
+   "linha": null,
+   "categoria": "Extraforte",
+   "preco_kg_min": 68.76,
+   "preco_kg_max": 71.96,
+   "embalagem": "250 g (vácuo, almofada/pouch)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "ABIC registra só 'KIMIMO' (Extraforte). Marca nordestina da 3 Corações. 3 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Mercantil Rodrigues",
+     "url": "https://www.mercantilrodrigues.com.br/cafe-em-po-kimimo-torrado-e-moido-a-vacuo-forte-e-encorpado-pacote-250g/p",
+     "data": "2026-10-18",
+     "preco": 17.19,
+     "peso_g": 250,
+     "produto": "Café em Pó Kimimo Torrado e Moído a Vácuo Forte e Encorpado Pacote 250g"
+    },
+    {
+     "loja": "GBarbosa",
+     "url": "https://www.gbarbosa.com.br/cafe-em-po-kimimo-a-vacuo-250g-1100325/p",
+     "data": "2026-10-18",
+     "preco": 17.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Kimimo a Vácuo 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Itamarati",
+   "linha": "Tradicional / Extra Forte",
+   "categoria": "Tradicional",
+   "preco_kg_min": 44.2,
+   "preco_kg_max": 44.2,
+   "embalagem": "500 g (vácuo)",
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "ABIC: Itamaraty Tradicional/Extra Forte (3 Corações). Só Super Muffato (PR). 2 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-itamaraty-tradicional-vacuo-500g-272032/p",
+     "data": "2026-10-18",
+     "preco": 22.1,
+     "peso_g": 500,
+     "produto": "Café Itamaraty Tradicional Vácuo 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Vasconcelos",
+   "linha": "Tradicional / Extra Forte",
+   "categoria": "Tradicional",
+   "preco_kg_min": 45.9,
+   "preco_kg_max": 45.9,
+   "embalagem": "500 g",
+   "fabricante": "Vasconcelos Ind. Com. Imp. e Exp. Ltda. (MG)",
+   "obs": "ABIC: Tradicional=Tradicional, Extra Forte=Extraforte, Gourmet, Especial (Especial com sustentabilidade). Só Savegnago. 4 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-vasconcelos-500g-vac-tradicional/p",
+     "data": "2026-10-18",
+     "preco": 22.95,
+     "peso_g": 500,
+     "produto": "Café Vasconcelos 500g Vac Tradicional"
+    }
+   ]
+  },
+  {
+   "marca": "Toko",
+   "linha": null,
+   "categoria": "Extraforte",
+   "preco_kg_min": null,
+   "preco_kg_max": null,
+   "embalagem": null,
+   "fabricante": "Café Três Corações S/A (Eusébio-CE; fábrica e sede comercial em MG conforme planilha ABIC)",
+   "obs": "ABIC: 'TOKO' = Extraforte (3 Corações). Preço não confirmado (um supermercado listava Toko Tradicional 500 g a R$ 26,40 em resultado de busca, sem data; não verificado).",
+   "precos_fontes": []
+  },
+  {
+   "marca": "Orfeu",
+   "linha": null,
+   "categoria": "Especial",
+   "preco_kg_min": 119.92,
+   "preco_kg_max": 271.92,
+   "embalagem": "250 g / 1 kg (almofada/pouch, caixa, em grão)",
+   "fabricante": "Café Fazenda Sertãozinho Ltda. (Botelhos, Sul de Minas-MG)",
+   "obs": "Toda a linha Orfeu é 'Especial' na ABIC (grão; há moído no varejo). 51 ofertas em 7 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Giassi",
+     "url": "https://www.giassi.com.br/cafe_torrado_e_moido_classico_orfeu_caixa_250g_1565249/p",
+     "data": "2026-10-18",
+     "preco": 29.98,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Clássico Orfeu Caixa 250g"
+    },
+    {
+     "loja": "Prezunic",
+     "url": "https://www.prezunic.com.br/cafe-em-po-orfeu-torrado-e-moido-bourbon-amarelo-caixa-250g-1865053001/p",
+     "data": "2026-10-18",
+     "preco": 40.99,
+     "peso_g": 250,
+     "produto": "Café em Pó Orfeu Torrado e Moído Bourbon Amarelo Caixa 250g"
+    },
+    {
+     "loja": "Zona Sul",
+     "url": "https://www.zonasul.com.br/cafe-moido-orfeu-varietais-arara-250g-1189387/p",
+     "data": "2026-10-18",
+     "preco": 43.9,
+     "peso_g": 250,
+     "produto": "Café Moído Orfeu Varietais Arara 250g"
+    },
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-em-graos-organico-especial-orfeu-250g/p",
+     "data": "2026-10-18",
+     "preco": 67.98,
+     "peso_g": 250,
+     "produto": "Café em Grãos Orgânico Especial Orfeu 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Baggio",
+   "linha": null,
+   "categoria": "Gourmet",
+   "preco_kg_min": 107.0,
+   "preco_kg_max": 185.96,
+   "embalagem": "250 g / 500 g (almofada/pouch, em grão)",
+   "fabricante": "Baggio Coffees Especiais Ltda. (Araras-SP)",
+   "obs": "ABIC: linhas Baggio Gourmet/Espresso = Gourmet. Muitos sabores aromatizados no varejo. 35 ofertas em 8 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Mambo",
+     "url": "https://www.mambo.com.br/cafe-torrado-e-moido-chocolate-com-menta-baggio-250g/p",
+     "data": "2026-10-18",
+     "preco": 26.75,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Chocolate com Menta Baggio 250g"
+    },
+    {
+     "loja": "Super Muffato",
+     "url": "https://www.supermuffato.com.br/cafe-torrado-e-moido-chocolate-com-avela-baggio-aromas-pacote-250g-283139/p",
+     "data": "2026-10-18",
+     "preco": 30.8,
+     "peso_g": 250,
+     "produto": "Café Torrado e Moído Chocolate com Avelã Baggio Aromas Pacote 250g"
+    },
+    {
+     "loja": "Savegnago",
+     "url": "https://www.savegnago.com.br/cafe-baggio-250g-aromas-chocolate-trufado/p",
+     "data": "2026-10-18",
+     "preco": 36.9,
+     "peso_g": 250,
+     "produto": "Café Baggio 250g Chocolate Trufado"
+    },
+    {
+     "loja": "Santa Luzia",
+     "url": "https://www.santaluzia.com.br/cafe-chocolate-com-menta-baggio-250g-832960/p",
+     "data": "2026-10-18",
+     "preco": 42.14,
+     "peso_g": 250,
+     "produto": "Café Moído com Aroma de Chocolate Com Menta Baggio 250g"
+    }
+   ]
+  },
+  {
+   "marca": "Jaguari",
+   "linha": "Tradicional / Extra Forte / Especial",
+   "categoria": "Tradicional",
+   "preco_kg_min": 44.98,
+   "preco_kg_max": 48.98,
+   "embalagem": "500 g (vácuo, almofada/pouch)",
+   "fabricante": "Café Jaguari Ltda. (SP)",
+   "obs": "ABIC: Jaguari Tradicional e 'Jaguari Especial' = Tradicional (o 'Especial' é nome comercial); Extra Forte = Extraforte; Gourmet = Gourmet. Só Tenda Atacado (SP). 5 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Tenda Atacado",
+     "url": "https://tendaatacado.com.br/produto/cafe-almofada-extra-forte-jaguari-500g",
+     "data": "2026-10-18",
+     "preco": 22.49,
+     "peso_g": 500,
+     "produto": "Café Almofada Extra Forte Jaguari 500g"
+    }
+   ]
+  },
+  {
+   "marca": "Rancheiro",
+   "linha": "Tradicional / Extra Forte",
+   "categoria": "Tradicional",
+   "preco_kg_min": 71.56,
+   "preco_kg_max": 71.58,
+   "embalagem": "250 g / 500 g (vácuo, almofada/pouch)",
+   "fabricante": "Rancheiro S.A. (Ouro Verde de Goiás-GO)",
+   "obs": "Preços só da loja online oficial do fabricante (rancheiro.com.br), não de rede varejista. Em resultados de busca (sem data, não verificados) apareceram supermercados de GO/DF entre R$ 24,99 e R$ 41,79 o pacote de 500 g. 6 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Rancheiro (loja oficial)",
+     "url": "https://www.rancheiro.com.br/cafe-rancheiro-tradicional-almofada-250g-/p",
+     "data": "2026-10-18",
+     "preco": 17.89,
+     "peso_g": 250,
+     "produto": "CAFÉ RANCHEIRO TRADICIONAL ALMOFADA 250G"
+    }
+   ]
+  },
+  {
+   "marca": "Rancheiro",
+   "linha": "Torrado em grãos",
+   "categoria": "Superior",
+   "preco_kg_min": 89.58,
+   "preco_kg_max": 89.58,
+   "embalagem": "500 g (em grão)",
+   "fabricante": "Rancheiro S.A. (GO)",
+   "obs": "Loja oficial do fabricante. 1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Rancheiro (loja oficial)",
+     "url": "https://www.rancheiro.com.br/cafe-rancheiro-torrado-graos-500g/p",
+     "data": "2026-10-18",
+     "preco": 44.79,
+     "peso_g": 500,
+     "produto": "CAFÉ RANCHEIRO TORRADO GRÃOS 500G"
+    }
+   ]
+  },
+  {
+   "marca": "Seleto",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 51.8,
+   "preco_kg_max": 53.8,
+   "embalagem": "500 g",
+   "fabricante": "Camil Alimentos S.A. (MG)",
+   "obs": "ABIC: Seleto Tradicional / Extra Forte (Camil). 3 ofertas em 3 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Santa Luzia",
+     "url": "https://www.santaluzia.com.br/cafe-tradicional-seleto-500g--642380/p",
+     "data": "2026-10-18",
+     "preco": 25.9,
+     "peso_g": 500,
+     "produto": "Café Tradicional Seleto 500g"
+    },
+    {
+     "loja": "Kalunga",
+     "url": "https://www.kalunga.com.br/prod/cafe-torrado-e-moido-seleto-500g-tradicional-seleto-pt-1-un/427386",
+     "data": "2026-10-18",
+     "preco": 25.9,
+     "peso_g": 500
+    },
+    {
+     "loja": "Nelsinho Supermercado",
+     "url": "https://ecommerce.nelsinhosupermercado.com.br/loja-01/produto/m/cafe-seleto-500g-tradicional-23791",
+     "data": "2026-10-18",
+     "preco": 26.9,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Dom Pedro",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 49.98,
+   "preco_kg_max": 49.98,
+   "embalagem": "500 g",
+   "fabricante": "Café Dom Pedro Ltda. (MG)",
+   "obs": "Só 1 preço verificado. ABIC: Dom Pedro Tradicional, Extra Forte, Mais Forte (Extraforte), Premium (Superior), Gourmet. 1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Supriforte (supermercado, plataforma Instabuy)",
+     "url": "https://supriforte.com.br/p/Cafe-Torrado-e-Moido-Tradicional-Cafe-Dom-Pedro-Pacote-500g",
+     "data": "2026-10-18",
+     "preco": 24.99,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Dom Pedro",
+   "linha": "Premium",
+   "categoria": "Superior",
+   "preco_kg_min": null,
+   "preco_kg_max": null,
+   "embalagem": null,
+   "fabricante": "Café Dom Pedro Ltda. (MG)",
+   "obs": "Preço não encontrado.",
+   "precos_fontes": []
+  },
+  {
+   "marca": "Moinho Fino",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 59.96,
+   "preco_kg_max": 75.0,
+   "embalagem": "500 g",
+   "fabricante": "Dicasa Ind. e Com. de Alimentos Ltda. (Goiás)",
+   "obs": "Supermercados regionais de Goiânia + loja do fabricante. 3 ofertas em 3 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Serrinha (Goiânia, Redestore)",
+     "url": "https://www.redestore.com.br/p/Cafe-Torrado-e-Moido-Tradicional-Moinho-Fino-Pacote-500g",
+     "data": "2026-10-18",
+     "preco": 29.98,
+     "peso_g": 500
+    },
+    {
+     "loja": "Supermercado Marinho (Goiânia, Instabuy)",
+     "url": "https://supermercadomarinho.com.br/p/Cafe-Torrado-e-Moido-Tradicional-Moinho-Fino-Pacote-500g",
+     "data": "2026-10-18",
+     "preco": 35.99,
+     "peso_g": 500
+    },
+    {
+     "loja": "Loja oficial Moinho Fino",
+     "url": "https://loja.cafemoinhofino.com.br/produto/cafes/moinho-fino-cafe-tradicional-500g/",
+     "data": "2026-10-18",
+     "preco": 37.5,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Moinho Fino",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 71.98,
+   "preco_kg_max": 75.0,
+   "embalagem": "500 g",
+   "fabricante": "Dicasa Ind. e Com. de Alimentos Ltda. (Goiás)",
+   "obs": "2 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Supermercado Marinho (Goiânia, Instabuy)",
+     "url": "https://supermercadomarinho.instabuy.com.br/p/Cafe-Torrado-e-Moido-Extraforte-Moinho-Fino-Pacote-500g",
+     "data": "2026-10-18",
+     "preco": 35.99,
+     "peso_g": 500
+    },
+    {
+     "loja": "Loja oficial Moinho Fino",
+     "url": "https://loja.cafemoinhofino.com.br/produto/marcas/moinho-fino/moinho-fino-extra-forte-a-vacuo-500g/",
+     "data": "2026-10-18",
+     "preco": 37.5,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Moinho Fino",
+   "linha": "Premium",
+   "categoria": "Superior",
+   "preco_kg_min": 75.0,
+   "preco_kg_max": 75.0,
+   "embalagem": "500 g",
+   "fabricante": "Dicasa Ind. e Com. de Alimentos Ltda. (Goiás)",
+   "obs": "Só preço da loja do fabricante. 1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Loja oficial Moinho Fino",
+     "url": "https://loja.cafemoinhofino.com.br/produto/cafes/cafe-torrado-moinho-fino-premium-500g/",
+     "data": "2026-10-18",
+     "preco": 37.5,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Cajubá",
+   "linha": null,
+   "categoria": "Tradicional",
+   "preco_kg_min": null,
+   "preco_kg_max": null,
+   "embalagem": null,
+   "fabricante": "Icatril Ind. de Café do Triângulo Ltda. (Uberlândia-MG)",
+   "obs": "ABIC: Cajubá Tradicional e Exportação = Tradicional; Class, Essencial e Gourmet = Gourmet. Preço não verificado: resultados de busca citaram R$ 32,50 (loja oficial, 500 g) e R$ 39,99 (Udi Carnes, Uberlândia), mas as páginas bloquearam acesso direto.",
+   "precos_fontes": []
+  },
+  {
+   "marca": "Produtor",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 67.8,
+   "preco_kg_max": 67.8,
+   "embalagem": "500 g",
+   "fabricante": "Prata dos Santos Ind. e Com. Ltda. (Uberaba-MG)",
+   "obs": "Fabricante de Uberaba (origem do dono). Só preço da loja do fabricante; Atacadão tem o produto cadastrado mas sem preço. ABIC: Produtor Tradicional, Extra Forte, Expresso (Gourmet), Torrado em Grão (Superior). Alias 'produtor' é genérico. 1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Loja oficial Café do Produtor",
+     "url": "https://cafedoprodutor.com.br/loja/cafe-tradicional-moido-500g/",
+     "data": "2026-10-18",
+     "preco": 33.9,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Alvorada",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 80.86,
+   "preco_kg_max": 80.86,
+   "embalagem": "500 g",
+   "fabricante": "Florão Alimentos Ltda. (PR)",
+   "obs": "Só 1 preço verificado (vácuo). 1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Condor (PR)",
+     "url": "https://www.condor.com.br/produtos/7570375/cafe-alvorada-500g-tradicional-a-vacuo",
+     "data": "2026-10-18",
+     "preco": 40.43,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Alvorada",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 59.96,
+   "preco_kg_max": 59.96,
+   "embalagem": "500 g",
+   "fabricante": "Florão Alimentos Ltda. (PR)",
+   "obs": "1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "MH Supermercados (Santo Antônio da Platina-PR)",
+     "url": "https://mhsupermercados.appmercados.com.br/produto/ver/167686/cafe-alvorada-extra-forte-vacuo-500g",
+     "data": "2026-10-18",
+     "preco": 29.98,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Alvorada",
+   "linha": "Superior",
+   "categoria": "Superior",
+   "preco_kg_min": null,
+   "preco_kg_max": null,
+   "embalagem": null,
+   "fabricante": "Florão Alimentos Ltda. (PR)",
+   "obs": "Loja Grupo 2 Irmãos mostra R$ 33,00 e R$ 44,90 na mesma página; preço ambíguo, não usado.",
+   "precos_fontes": []
+  },
+  {
+   "marca": "Pacaembu",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 47.98,
+   "preco_kg_max": 51.08,
+   "embalagem": "500 g",
+   "fabricante": "Massimo Zanetti Beverage Brasil Ltda. (SP)",
+   "obs": "ABIC: Pacaembu Tradicional, Extraforte, Superior, Gourmet. 2 ofertas em 2 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Supermercado São Domingos (Instabuy)",
+     "url": "https://supsaodomingos.com.br/p/Cafe-Torrado-e-Moido-Tradicional-Cafe-Pacaembu-Pacote-500g",
+     "data": "2026-10-18",
+     "preco": 23.99,
+     "peso_g": 500
+    },
+    {
+     "loja": "Pierim Online",
+     "url": "https://pierimonline.com.br/product?sku=38768",
+     "data": "2026-10-18",
+     "preco": 25.54,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Odebrecht",
+   "linha": "Tradicional",
+   "categoria": "Tradicional",
+   "preco_kg_min": 73.8,
+   "preco_kg_max": 73.8,
+   "embalagem": "500 g",
+   "fabricante": "Odebrecht Com. e Ind. de Café Ltda. (PR)",
+   "obs": "Só loja do fabricante (alto vácuo). ABIC: Odebrecht Tradicional, Golden e 'Premium' = Tradicional; Superior = Superior; Gourmet = Gourmet. 1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Loja oficial Café Odebrecht",
+     "url": "https://cafeodebrecht.com.br/products/cafe-odebrecht-torrado-e-moido-tradicional-alto-vacuo-500g",
+     "data": "2026-10-18",
+     "preco": 36.9,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Odebrecht",
+   "linha": "Extra Forte",
+   "categoria": "Extraforte",
+   "preco_kg_min": 73.8,
+   "preco_kg_max": 73.8,
+   "embalagem": "500 g",
+   "fabricante": "Odebrecht Com. e Ind. de Café Ltda. (PR)",
+   "obs": "1 ofertas em 1 lojas em 2026-10-18.",
+   "precos_fontes": [
+    {
+     "loja": "Loja oficial Café Odebrecht",
+     "url": "https://cafeodebrecht.com.br/products/cafe-odebrecht-torrado-e-moido-extraforte-500g",
+     "data": "2026-10-18",
+     "preco": 36.9,
+     "peso_g": 500
+    }
+   ]
+  },
+  {
+   "marca": "Morro Grande",
+   "linha": null,
+   "categoria": "Tradicional",
+   "preco_kg_min": null,
+   "preco_kg_max": null,
+   "embalagem": null,
+   "fabricante": "Torrefação Noivacolinenses Ltda. (SP)",
+   "obs": "ABIC: Blend Tradição = Tradicional; Todo Aroma = Superior; Expresso grão = Gourmet. Preço não confirmado (busca citou R$ 27,90-34,90 por 500 g, sem verificação).",
+   "precos_fontes": []
+  },
+  {
+   "marca": "Fazendão",
+   "linha": null,
+   "categoria": "Tradicional",
+   "preco_kg_min": null,
+   "preco_kg_max": null,
+   "embalagem": null,
+   "fabricante": "Ind. e Com. de Café Sabores do Brasil Ltda. (GO)",
+   "obs": "ABIC: 'FAZENDAO EXTRA FORTE' registrado com estilo Tradicional. Preço não verificado (busca citou R$ 17,50 / 500 g numa torrefação, página fora do ar).",
+   "precos_fontes": []
+  }
+ ]
+}
