@@ -43,7 +43,8 @@ ENCERRADA = compra_api("44444444000144", 4, "Aquisição de café", fim="2026-10
 ITENS = {
     "11111111000111/compras/2026/1": [item_api(1, "Arroz tipo 1, 5 kg", 100, 25.0),
                                       item_api(2, "Café torrado e moído, 500g, vácuo, selo ABIC", 1000, 30.0),
-                                      item_api(3, "Café solúvel, frasco 200g", 10, 30.0, sig=True)],
+                                      item_api(3, "Café torrado em grãos, pacote 1kg", 10, 30.0, sig=True),
+                                      item_api(4, "Café solúvel, frasco 200g", 10, 30.0)],  # fora do escopo
     "22222222000122/compras/2026/2": [item_api(1, "Feijão carioca 1 kg", 100, 8.0)],
     "44444444000144/compras/2026/4": [item_api(1, "Café em pó 500g", 10, 30.0)],
 }
@@ -96,11 +97,11 @@ def test_primeira_coleta_monta_registro_completo(destino: Path) -> None:
     assert embedded_data((destino / "index.html").read_text(encoding="utf-8")) == data
     assert [c["chave"] for c in data["compras"]] == [CAFE["numeroControlePNCP"]]  # só a de café aberta
     c = data["compras"][0]
-    assert [i["n"] for i in c["itens"]] == [2, 3]  # arroz fica de fora
-    tm, sol = c["itens"]
+    assert [i["n"] for i in c["itens"]] == [2, 3]  # arroz e solúvel ficam de fora (só café torrado)
+    tm, grao = c["itens"]
     assert (tm["kgu"], tm["kgt"], tm["rkg"], tm["tags"]) == (0.5, 500.0, 60.0, ["ABIC/pureza"])
-    assert sol["sig"] is True and sol["vu"] is None and sol["vt"] is None  # sigiloso não vira zero
-    assert c["vcafe"] == 30000.0 and c["kg"] == 502.0 and c["rkg"] == 60.0 and c["sig"] == "Sim"
+    assert grao["tipo"] == "Grão" and grao["sig"] is True and grao["vu"] is None and grao["vt"] is None  # sigiloso não vira zero
+    assert c["vcafe"] == 30000.0 and c["kg"] == 510.0 and c["rkg"] == 60.0 and c["sig"] == "Sim" and c["tipos"] == ["Torrado e moído", "Grão"]
     assert c["plat"] == "BLL Compras" and c["dist"] == 76 and c["dist_min"] == 72 and c["me"] == "Exclusivo ME/EPP"
     assert c["first_seen"] == "2026-10-19" and c["nova"] is False  # primeira carga não marca "nova"
     assert r.novas == [CAFE["numeroControlePNCP"]]
@@ -382,7 +383,7 @@ def test_reclassificar_preenche_nivel_sem_pncp(destino: Path) -> None:
     (destino / "data.json").write_text(json.dumps(data), encoding="utf-8")
     assert main(["reclassificar", "--destino", str(destino)]) == 0
     c = json.loads((destino / "data.json").read_text(encoding="utf-8"))["compras"][0]
-    assert c["niveis"] == ["Tradicional"] and c["itens"][0]["nivel"] == "Tradicional"  # selo ABIC
+    assert c["niveis"] == ["Sem categoria", "Tradicional"] and c["itens"][0]["nivel"] == "Tradicional"  # selo ABIC; o grão não pede categoria
     assert embedded_data((destino / "index.html").read_text(encoding="utf-8")) == json.loads((destino / "data.json").read_text())
 
 
@@ -418,12 +419,27 @@ def test_telegram_espera_quando_limitado(monkeypatch: pytest.MonkeyPatch) -> Non
     assert esperas == [telegram.PAUSA, 7.0]  # pausa entre mensagens + o tempo que o Telegram pediu
 
 
-def test_cartao_telegram_cesta_numero_e_apostrofo() -> None:
-    c = montar.montar_compra(compra_api("11111111000111", 1, "cesta", mun="Santa Bárbara d'Oeste", uf="SP") | {"numeroCompra": "114/2026"},
-                             [item_api(1, "Cesta básica com arroz, feijão, açúcar, óleo e café", 10, 150.0)])
+def test_cartao_telegram_numero_e_apostrofo() -> None:
+    c = montar.montar_compra(compra_api("11111111000111", 1, "café", mun="Santa Bárbara d'Oeste", uf="SP") | {"numeroCompra": "114/2026"},
+                             [item_api(1, "Café torrado e moído 500g", 10, 15.0)])
     assert c and c["num"] == "114/2026"  # o PNCP já manda o ano: não repete
-    txt = telegram.cartao(c, {})
-    assert "cestas: R$ 1.500" in txt and "d'Oeste" in txt
+    assert "d'Oeste" in telegram.cartao(c, {})
+
+
+def test_cartao_telegram_mostra_marcas_e_nivel_do_edital() -> None:
+    c = montar.montar_compra(compra_api("11111111000111", 1, "café"), [item_api(1, "Café torrado e moído 500g", 10, 15.0)])
+    assert c
+    c["itens"][0]["ed_trecho"] = "cafe torrado e moido categoria superior, marca de referencia pilao"
+    montar.reclassificar_nivel(c)
+    c["marcas"] = ["Pilão", "3 Corações", "Melitta", "Caboclo", "Café do Ponto"]
+    t = telegram.cartao(c, {})
+    assert "nível Superior (pelo edital)" in t and "Marcas de referência: Pilão, 3 Corações, Melitta, Caboclo e outras" in t
+
+
+@pytest.mark.parametrize("desc", ["Café solúvel 200g", "Cápsula de café espresso", "Café pronto para consumo, garrafa 1 litro",
+                                  "Cesta básica com arroz, feijão, açúcar, óleo, macarrão e café", "Café cru em grãos, saca 60 kg"])
+def test_so_cafe_torrado_entra(desc: str) -> None:
+    assert montar.montar_item(item_api(1, desc, 10, 30.0)) is None
 
 
 @pytest.mark.parametrize("n,esperado", [("37", "37/2026"), ("114/2026", "114/2026"), ("2809001/2026-PE", "2809001/2026-PE"),

@@ -67,13 +67,12 @@ def cartao(c: dict[str, Any], refs: dict[tuple[str, str], float]) -> str:
     nivel = pedido.get("nivel") if principal else next((n for n in reversed(cafe.NIVEIS) if n in (c.get("niveis") or [])), None)
     oque = [pedido["tipo"]]
     if nivel:
-        oque.append(f"nível {nivel}")
+        oque.append(f"nível {nivel}" + (" (pelo edital)" if "*" in pedido.get("cat", "") else ""))
     if pedido.get("qg"):
         oque.append(f"nota ≥ {_num(pedido['qg'], 1)}")
     outros = [t for t in c.get("tipos", []) if t != pedido["tipo"]]
     vol = f"{'≥ ' if c.get('kg_parcial') else ''}{_num(c['kg'])} kg" if c.get("kg") else "volume não informado"
-    valor = (f"cestas: {_valor(c['vcesta'], 'Não')}" if c.get("vcafe") is None and c.get("vcesta")
-             else _valor(c.get("vcafe"), c.get("sig", "Não")))
+    valor = _valor(c.get("vcafe"), c.get("sig", "Não"))
     linhas = [" · ".join(e(x) for x in oque) + (f" + {e(', '.join(outros).lower())}" if outros else ""), f"{vol} · {valor}"]
     if principal:
         cmp_ = referencia.comparar(principal, refs)
@@ -85,6 +84,8 @@ def cartao(c: dict[str, Any], refs: dict[tuple[str, str], float]) -> str:
             else:
                 preco += f" {'▲' if dif > 0 else '▼'} {_num(abs(dif) * 100)}% {referencia.rotulo(dif)} do nível (R$ {_num(ref, 2)})"
         linhas.append(preco)
+    if c.get("marcas"):
+        linhas.append("Marcas de referência: " + e(", ".join(c["marcas"][:4])) + (" e outras" if len(c["marcas"]) > 4 else ""))
     linhas.append(f"⏰ {_prazo(c.get('fim'))} · {e(c['mod'])} {e(c['num'])} · {e(c.get('plat_f') or c.get('plat', ''))}{me}")
     corpo = "\n".join(linhas)
     return (f"<b>{e(c['mun'])} · {e(c['uf'])}</b>{km}\n{e(_titulo(c.get('orgao', '')))}\n"

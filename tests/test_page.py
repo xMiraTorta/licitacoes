@@ -12,9 +12,9 @@ WFK = "monitorLicitacoes.meusDados.v1"
 UIK = "monitorLicitacoes.ui.v1"
 CLK = "monitorLicitacoes.checklist.v1"
 FIRST = "18243295000192-1-000080/2026"  # torrado e moído 500 g, R$ 66,03/kg
-SOLUVEL_ONLY = "77402196000175-1-000046/2026"  # T&M sem peso + solúvel 0,5 kg a R$ 300/kg
-MIXED = "01612911000132-1-000128/2026"  # T&M R$ 46,94/kg (696,5 kg) + solúvel R$ 151,55/kg
-CAPSULE = "75458836000133-1-000147/2026"  # T&M 400 kg + cápsulas sem peso
+NO_WEIGHT = "77402196000175-1-000046/2026"  # T&M sem peso (o solúvel saiu: só café torrado)
+MIXED = "01612911000132-1-000128/2026"  # T&M R$ 46,94/kg (696,5 kg); o solúvel saiu
+PARTIAL = "75458836000133-1-000147/2026"  # T&M 400 kg + T&M sem peso
 SIGILOSO = "95440517000108-1-000295/2026"
 DUP = "01612382000177-1-000090/2026"  # dup_of no conjunto de teste
 
@@ -55,9 +55,9 @@ def test_real_site_loads_without_errors(page: Page, real_url: str) -> None:
 
 def test_duplicates_hidden_by_default(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url)
-    assert page.evaluate("window.__monitor.count()") == 8  # 9 compras, 1 duplicata oculta
+    assert page.evaluate("window.__monitor.count()") == 7  # 8 compras, 1 duplicata oculta
     page.click('label.toggle:has-text("Ocultar possíveis duplicatas")')
-    assert page.evaluate("window.__monitor.count()") == 9
+    assert page.evaluate("window.__monitor.count()") == 8
 
 
 def test_search_and_quick_filter(page: Page, fixture_url: str) -> None:
@@ -65,10 +65,10 @@ def test_search_and_quick_filter(page: Page, fixture_url: str) -> None:
     page.fill("#q", "conceicao aparecida")
     page.wait_for_function("window.__monitor.count() === 1")
     page.fill("#q", "")
-    page.wait_for_function("window.__monitor.count() === 8")
+    page.wait_for_function("window.__monitor.count() === 7")
     page.click('[data-q="uf:MG"]')
     mg = page.evaluate("window.__monitor.count()")
-    assert 0 < mg < 8
+    assert 0 < mg < 7
 
 
 def test_detail_drawer_opens_closes_and_back_button(page: Page, fixture_url: str) -> None:
@@ -129,7 +129,7 @@ def test_agenda_lists_followed_deadlines(page: Page, fixture_url: str) -> None:
     page.click('[data-tab="agenda"]')
     assert page.locator("#agenda .row").count() == 1
     page.click('[data-ag="1"]')
-    assert page.locator("#agenda .row").count() == 8
+    assert page.locator("#agenda .row").count() == 7
 
 
 def test_price_input_parsing(page: Page, fixture_url: str) -> None:
@@ -209,27 +209,28 @@ def test_corrupted_storage_is_backed_up_not_erased(page: Page, fixture_url: str)
 
 
 
-def test_price_per_kg_separated_by_coffee_type(page: Page, fixture_url: str) -> None:
+def test_only_roasted_coffee_is_shown(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url)
-    assert "R$ 46,94" in row(page, MIXED).locator(".c-rkg").inner_text()  # antes: R$ 61,10 misturado
-    sol = row(page, SOLUVEL_ONLY).locator(".c-rkg").inner_text().lower()
-    assert "r$ 300,00" in sol and "solúvel" in sol  # identificado como solúvel, não como T&M
+    assert "R$ 46,94" in row(page, MIXED).locator(".c-rkg").inner_text()
+    assert "—" in row(page, NO_WEIGHT).locator(".c-rkg").inner_text()
     d = open_detail(page, MIXED)
-    assert "solúvel R$ 151,55" in d.locator(".facts").inner_text()
+    assert "solúvel" not in d.inner_text().lower() and "Copiar resumo" not in d.inner_text()
+    niveis = page.locator('.fsec[data-sec="niveis"]').inner_text()
+    assert "Não se aplica" not in niveis
 
 
 def test_median_and_sort_use_only_roast_and_ground(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url)
     kpi = page.locator('.kpi[data-k="rkg"]').inner_text()
-    # T&M visíveis (sem a duplicata oculta): 66,03; 46,94; 58,42; 63,52. Com o solúvel (300) daria outra.
+    # T&M visíveis (sem a duplicata oculta): 66,03; 46,94; 58,42; 63,52.
     assert "R$ 60,97" in kpi and "4 de torrado e moído" in kpi
     page.select_option("#sort", "rkg_desc")
-    assert page.locator("#list .row").first.get_attribute("data-ch") != SOLUVEL_ONLY
+    assert page.locator("#list .row").first.get_attribute("data-ch") != NO_WEIGHT
 
 
 def test_partial_volume_marked_when_item_has_no_weight(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url)
-    assert "≥ 400 kg" in row(page, CAPSULE).locator(".c-valor").inner_text()
+    assert "≥ 400 kg" in row(page, PARTIAL).locator(".c-valor").inner_text()
     assert "≥" not in row(page, FIRST).locator(".c-valor").inner_text()
 
 
@@ -240,7 +241,7 @@ def test_margin_uses_type_specific_price(page: Page, fixture_url: str) -> None:
     page.wait_for_timeout(450)
     calc = d.locator("[data-calc]").inner_text()
     assert "R$ 46,94/kg (torrado e moído)" in calc and "+10%" in calc
-    assert "só torrado e moído" in calc and "R$ 29.427" in calc and "697 kg" in calc  # 42,25 × 696,5 kg
+    assert "R$ 29.427" in calc and "697 kg" in calc  # 42,25 × 696,5 kg
 
 
 def test_single_type_price_matches_generator(page: Page, real_url: str) -> None:
@@ -257,7 +258,7 @@ def test_duplicate_with_my_data_is_never_hidden(page: Page, fixture_url: str) ->
     page.reload()
     wait_ready(page)
     assert row(page, DUP).count() == 1
-    assert page.evaluate("window.__monitor.count()") == 9
+    assert page.evaluate("window.__monitor.count()") == 8
 
 
 def test_mobile_layout_has_no_horizontal_overflow(browser: Any, fixture_url: str) -> None:
@@ -421,6 +422,41 @@ def test_copied_classification_text_gets_attention_point(page: Page, fixture_url
     assert "subgrupo empeliculado" in d.locator(".warn-list").inner_text()
 
 
+def test_edital_reading_shown_per_item(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
+      const c = j.compras.find(c => c.chave === '%s');
+      Object.assign(c, {edital_status: 'lido', edital_lido: true, edital_lido_em: '2026-10-18', edital_docs: ['2:TR.docx'],
+        marcas: ['3 Corações', 'Pilão'], ed_pz: '5 dias corridos'});
+      c.itens[0].ed_trecho = 'cafe torrado e moido, bebida classificada no minimo como superior';
+      const s = j.compras.find(c => c.chave === '%s'); Object.assign(s, {edital_status: 'sem documentos no PNCP', edital_lido: false});
+      window.__monitor.apply(j); }""" % (FIRST, MIXED))
+    d = open_detail(page, FIRST)
+    t = d.inner_text()
+    assert "Edital lido pelo coletor em 18/10/2026 (TR.docx)" in t and "5 dias corridos" in t
+    assert "3 Corações" in t and "No edital/TR, sobre este item:" in t and "como superior" in t
+    d.locator('[data-act="close"]').click()
+    d = open_detail(page, MIXED)
+    assert "ainda não publicou o edital" in d.inner_text() and "ainda não foi lido automaticamente" not in d.inner_text()
+
+
+def test_reference_brands_show_retail_price(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
+      j.marcas_ref = {pesquisa_em: '2026-10-18', marcas: {'Pilão': {linhas: [], basica: {linha: 'Tradicional', cat: 'Tradicional', min: 39.78, max: 91.96}}}};
+      j.compras.find(c => c.chave === '%s').marcas = ['Pilão', 'Toko']; window.__monitor.apply(j); }""" % FIRST)
+    d = open_detail(page, FIRST)
+    t = d.inner_text()
+    assert "Pilão · Tradicional (Tradicional): R$ 39,78 a R$ 91,96/kg" in t and "Toko" in t and "18/10/2026" in t
+    assert "custam R$ 39,78 a R$ 91,96/kg no varejo" in d.locator(".verdict").inner_text()
+    d.locator('[data-act="close"]').click()
+    page.click('.tab[data-tab="dash"]')
+    card = page.locator('#dash .ch:has(h3:has-text("Marcas de referência"))')
+    assert "Pilão" in card.inner_text() and "varejo Tradicional" in card.inner_text()
+    card.locator('[data-cf="marcas|Pilão"]').click()
+    page.wait_for_function("window.__monitor.count() === 1")
+
+
 def test_floor_inputs_keep_focus_and_reject_garbage(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url, tab="dash")
     page.locator('[data-piso="Tradicional"]').fill("60")
@@ -455,7 +491,7 @@ def test_floor_filter_ignored_without_floors(page: Page, fixture_url: str) -> No
     page.wait_for_timeout(100)
     assert page.evaluate("window.__monitor.F().viavel") is False
     page.click('[data-tab="list"]')
-    assert page.evaluate("window.__monitor.count()") == 8
+    assert page.evaluate("window.__monitor.count()") == 7
 
 
 def test_mobile_drawers_fit_screen(browser: Any, fixture_url: str) -> None:

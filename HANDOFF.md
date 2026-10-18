@@ -1,6 +1,6 @@
 # HANDOFF · licitacoes
 
-- **Atualizado em:** 2026-10-18 (anotações gravadas no GitHub, Minhas propostas novo, ícone; automação ativa na main)
+- **Atualizado em:** 2026-10-18 (só café torrado, leitor de editais, marcas de referência; automação ativa na main)
 - **Branch de trabalho:** `claude/confident-galileo-equwuz` · repositório `xMiraTorta/licitacoes` (renomeado pelo dono em 17/10/2026; site https://xmiratorta.github.io/licitacoes/). Merge automático autorizado (ver CLAUDE.md).
 - **Commit de partida:** `bd38a7f` (main). Último commit relevante: ver `git log` da branch.
 
@@ -11,6 +11,15 @@ CNAEs do dono: 1081-3/02 (torrefação e moagem de café, principal), 4611-7/00 
 
 ## Escopo aprovado
 O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. Segredos do Telegram cadastrados pelo dono (confirmado pelo envio do aviso de falha do run #1). Não autorizado: ampliar para outros CNAEs.
+
+## Sessão 18/10/2026 (5): só torrado, editais lidos um a um, marcas de referência
+- **Só café torrado** (pedido do dono): solúvel, cápsula, café pronto, cesta e café cru saem do coletor (`montar_item`) e dos dados (`reclassificar`): 331 → 282 compras. Filtro "Não se aplica" removido; "Copiar resumo" removido.
+- **Leitor de edital** (`coletor/edital.py`): baixa os documentos (TR primeiro), extrai texto (PDF com AES via cryptography, fontes CFF via fonttools, DOCX/ODT/RTF/.doc/ZIP/RAR via libarchive), acha o trecho de cada item (número na tabela; senão palavras próprias do item: comum × premium, peso; corta no produto seguinte; ignora pesquisa de preços/modelo de proposta), prazo de entrega e marcas. Categoria/nota do edital prevalecem (edital é a fonte principal, pedido do dono). Falha não apaga leitura boa anterior. Coleta diária lê até 40 (novas, alteradas no PNCP, sem documentos): custo estimado +5 a 10 min por execução.
+- **Leitura de todas** (282, ~1h20 por causa do limite do PNCP; 2ª passada com PDFs protegidos): 266 compras visíveis (16 duplicatas não lidas): 239 lidas automaticamente, 23 com documentos sem a especificação do café (vale a descrição do item), 3 escaneadas conferidas página a página (Jijoca de Jericoacoara, Tabuleiro do Norte, Capistrano: o TR repete a descrição do item), 1 escaneada sem conferir página (Presidente Figueiredo: a descrição do item já traz categoria Superior e nota 6,0). Itens por nível: Tradicional 189, Superior 68, Gourmet/especial 28, Sem categoria 72 (antes 83; os 72 foram lidos um a um: nem item nem edital pedem categoria, selo ou nota).
+- Correções achadas na revisão: "não será aceito o sabor extraforte" e "preparo tradicional por filtragem" não contam como categoria; item em grão não pega especificação de pó; "molho de tomate tradicional" da linha seguinte não vaza para o café.
+- **Marcas de referência**: pesquisa de 18/10/2026 (agente): varejo em supermercados online e estilo na planilha oficial da ABIC, 31 marcas com preço (`coletor/marcas_cafe.json`). Site: marcas no detalhe com faixa de varejo, frase no "Vale a pena?", cartão "Marcas de referência mais citadas" no Dashboard, filtro por marca. Telegram: linha de marcas e "(pelo edital)" no nível.
+- Testes: 238 (`pytest -q`), incluindo leitor de edital sem internet (`tests/test_edital.py`). RAR sem teste automático (não há como gerar .rar aqui); conferido em 3 editais reais.
+- Não verificado: se o runner do GitHub tem a libarchive (sem ela, .rar fica "sem texto", com aviso no log).
 
 ## Sessão 18/10/2026 (4): anotações no GitHub, Minhas propostas, ícone, rolagens
 - **Bug do favorito "fixo"**: favorita que saiu dos dados (prazo encerrado/cancelada) aparecia em Minhas propostas sem estrela no painel: não havia como tirar. Agora estrela e "Parar de acompanhar" (tira estrela e status, mantém preço e notas) no cartão e no detalhe, também fora dos dados.
