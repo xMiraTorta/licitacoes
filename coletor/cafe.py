@@ -101,13 +101,20 @@ _CATS = [
     # "superior a 6,0", "igual ou superior", "qualidade superior" (de marca equivalente) não são a categoria;
     # "categoria superior ou acima/melhor" é.
     ("Superior", re.compile(r"(?<!\bou )(?<!\be )(?<!qualidade )\bsuperior\b(?! (?:a|ao|as|aos|de)\b)(?! ou (?:igual|inferior)\b)")),
-    ("Tradicional", re.compile(r"\btradicional\b")),
+    # "preparo tradicional por filtragem" é o modo de preparo, não a categoria
+    ("Tradicional", re.compile(r"(?<!preparo )(?<!preparo o )(?<!forma )(?<!modo )(?<!metodo )(?<!maneira )\btradicional\b"
+                               r"(?! (?:por|de|em) (?:filtra|coa|coad|pano|papel))")),
     ("Extraforte", re.compile(r"extra ?-?forte|\bintensa\b")),
 ]
 
 
+_NEGA_CAT = re.compile(r"(?:nao (?:sera |serao )?(?:aceit|admitid|permitid)|vedad[oa]s?|proibid[oa]s?|exceto|nao pode)[^.;]{0,25}$")
+
+
 def categoria(t: str) -> str:
-    return "/".join(nome for nome, rx in _CATS if rx.search(t))
+    """Categorias citadas; "não será aceito o sabor extraforte" não conta."""
+    return "/".join(nome for nome, rx in _CATS if any(not _NEGA_CAT.search(t[max(0, m.start() - 45):m.start()])
+                                                       for m in rx.finditer(t)))
 
 
 # ---------------------------------------------------------------- peso e embalagem
