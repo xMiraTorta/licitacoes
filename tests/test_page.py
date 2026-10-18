@@ -553,16 +553,23 @@ def test_status_on_card_and_stop_following(page: Page, fixture_url: str) -> None
 class FakeGitHub:
     """Repositório falso: guarda dados/meus-dados.json e responde como a API de conteúdos do GitHub."""
 
-    def __init__(self, conflitos: int = 0) -> None:
+    def __init__(self, conflitos: int = 0, limite_anonimo: bool = False) -> None:
         self.doc: dict[str, Any] | None = None
         self.sha = 0
         self.puts = 0
         self.conflitos = conflitos  # quantos PUTs responder 409 (alguém gravou no meio)
         self.branch = False  # a branch "dados" só existe depois que o site a cria
+        self.limite_anonimo = limite_anonimo  # o endereço passou do limite de consultas sem chave: 403 em tudo sem Authorization
+        self.anonimas = 0  # pedidos recebidos sem chave
 
     def handler(self, route: Any) -> None:
         req = route.request
         auth = req.headers.get("authorization", "")
+        if not auth:
+            self.anonimas += 1
+            if self.limite_anonimo:
+                route.fulfill(status=403, json={"message": "API rate limit exceeded for 203.0.113.9. (But here's the good news: Authenticated requests get a higher rate limit.)"})
+                return
         if "/branches/dados" in req.url:
             route.fulfill(status=200 if self.branch else 404, json={"name": "dados"} if self.branch else {"message": "Branch not found"})
             return
@@ -660,6 +667,28 @@ def test_sync_rejected_key_keeps_data_local(browser: Any, fixture_url: str) -> N
     a.wait_for_function("window.__monitor.syncState().estado === 'erro'", timeout=8000)
     assert gh.doc is None and ls(a, WFK)[FIRST]["fav"] is True
     assert "recusada" in a.evaluate("window.__monitor.syncState().erro")
+
+
+def test_sync_anonymous_rate_limit_is_not_a_key_error(browser: Any, fixture_url: str) -> None:
+    """Sem chave o site só lê. Se o GitHub limitar o endereço (403 nas consultas sem chave, comum em rede de celular),
+    fica "só neste aparelho" sem acusar chave recusada; com chave, o mesmo endereço lê e grava normalmente."""
+    gh = FakeGitHub(limite_anonimo=True)
+    a = aparelho(browser, fixture_url, gh, token=None)
+    for _ in range(50):  # espera a leitura sem chave chegar e levar o 403
+        if gh.anonimas:
+            break
+        a.wait_for_timeout(100)
+    assert gh.anonimas >= 1
+    a.wait_for_timeout(500)
+    st = a.evaluate("window.__monitor.syncState()")
+    assert st["estado"] == "local" and st["erro"] == "", st
+    assert a.locator("#upd").get_attribute("data-sync") == "local"
+    row(a, FIRST).locator('[data-act="fav"]').click()
+    assert ls(a, WFK)[FIRST]["fav"] is True  # a anotação fica guardada no aparelho
+    b = aparelho(browser, fixture_url, gh)
+    row(b, FIRST).locator('[data-act="fav"]').click()
+    espera_salvo(b)
+    assert gh.doc["meus_dados"][FIRST]["fav"] is True
 
 
 def test_sync_connect_with_key_in_settings(browser: Any, fixture_url: str) -> None:
