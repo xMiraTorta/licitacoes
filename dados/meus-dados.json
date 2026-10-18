@@ -1,7 +1,7 @@
 {
  "app": "monitor-licitacoes",
  "versao": 2,
- "atualizado_em": "2026-10-18T06:35:40.764Z",
+ "atualizado_em": "2026-10-18T06:35:47.918Z",
  "meus_dados": {
   "18602037000155-1-000345/2026": {
    "upd": "2026-10-18T03:26:59.466Z"
@@ -12,10 +12,8 @@
   "upd": ""
  },
  "pisos": {
-  "valores": {
-   "Tradicional": 84
-  },
-  "upd": "2026-10-18T06:35:37.308Z"
+  "valores": {},
+  "upd": "2026-10-18T06:35:44.511Z"
  },
  "custos": {
   "valores": {},
