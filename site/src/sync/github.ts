@@ -67,7 +67,14 @@ async function gh(method: string, body: unknown, caminho = `contents/${SYNC_PATH
   const q = method === "GET" && caminho.startsWith("contents/") ? `?ref=${SYNC_BRANCH}&t=${Date.now()}` : "";
   return fetch(`https://api.github.com/repos/${REPO}/${caminho}${q}`, { method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: "no-store" });
 }
-const erroDe = (status: number): Error => new Error(status === 401 || status === 403 ? "chave" : "HTTP " + status);
+/* 401/403 com chave: a chave foi recusada. Sem chave, o GitHub responde 403 (ou 429) quando este endereço de internet
+   passou do limite de consultas sem identificação (60 por hora, comum em rede de celular ou de escritório): não é
+   problema de chave, é só esperar. */
+const erroDe = (status: number): Error => {
+  if ((status === 401 || status === 403) && store.get().sync.token) return new Error("chave");
+  if (status === 403 || status === 429) return new Error("limite");
+  return new Error("HTTP " + status);
+};
 
 /* Cria a branch "dados" a partir da main, se ainda não existir (primeira gravação). */
 async function garantirBranch(): Promise<void> {
@@ -114,10 +121,19 @@ export async function syncAgora(soLer = false): Promise<void> {
       throw erroDe(r.status);
     }
   } catch (e) {
-    console.error("Gravação no GitHub falhou:", e);
-    const chave = (e as Error).message === "chave";
-    setSync({ estado: "erro", erro: chave ? "A chave de acesso foi recusada (vencida, apagada ou sem permissão de escrita neste repositório)." : "Sem conexão com o GitHub agora. Suas alterações estão guardadas neste aparelho e serão enviadas na próxima tentativa." });
-    if (!chave) { window.clearTimeout(timer); timer = window.setTimeout(() => syncAgora(), 60000); }
+    const motivo = (e as Error).message, chave = motivo === "chave", limite = motivo === "limite";
+    if (!store.get().sync.token) {
+      // Sem chave só há leitura: nada do dono fica em risco. Continua "só neste aparelho" e lê de novo depois
+      // (a cada 15 min e ao voltar para a aba); não é erro para mostrar.
+      console.warn("Leitura das anotações no GitHub falhou:", e);
+      setSync({ estado: "local", erro: "" });
+    } else {
+      console.error("Gravação no GitHub falhou:", e);
+      setSync({ estado: "erro", erro: chave ? "A chave de acesso foi recusada (vencida, apagada ou sem permissão de escrita neste repositório)."
+        : limite ? "O GitHub limitou as consultas por enquanto. Suas alterações estão guardadas neste aparelho e serão enviadas na próxima tentativa."
+        : "Sem conexão com o GitHub agora. Suas alterações estão guardadas neste aparelho e serão enviadas na próxima tentativa." });
+    }
+    if (!chave && !limite) { window.clearTimeout(timer); timer = window.setTimeout(() => syncAgora(), 60000); } // limite: insistir só gasta a cota
   } finally {
     rodando = false;
     if (denovo) { denovo = false; void syncAgora(); }
