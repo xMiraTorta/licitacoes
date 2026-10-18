@@ -76,6 +76,25 @@ def _pdf_texto(dados: bytes) -> str:
         return ""
 
 
+def _rar_texto(nome: str, dados: bytes, profundidade: int) -> str:
+    try:
+        import libarchive
+    except (ImportError, OSError) as e:  # biblioteca libarchive ausente na máquina: documento fica "sem texto"
+        logger.warning("RAR {} não lido (libarchive indisponível: {})", nome, e)
+        return ""
+    partes = []
+    try:
+        with libarchive.memory_reader(dados) as arq:
+            for ent in arq:
+                if not ent.isfile or (ent.size or 0) > MAX_BYTES:
+                    continue
+                conteudo = b"".join(ent.get_blocks())
+                partes.append(texto_de(ent.pathname or "", conteudo, profundidade + 1))
+    except libarchive.ArchiveError as e:  # RAR protegido por senha ou corrompido
+        logger.warning("RAR {} ilegível: {}", nome, e)
+    return "\n".join(x for x in partes if x)
+
+
 def texto_de(nome: str, dados: bytes, profundidade: int = 0) -> str:
     """Texto de um arquivo pelo conteúdo (o título no PNCP nem sempre tem a extensão certa)."""
     n = nome.lower()
@@ -103,6 +122,8 @@ def texto_de(nome: str, dados: bytes, profundidade: int = 0) -> str:
         except (RuntimeError, NotImplementedError, zipfile.BadZipFile, zlib.error) as e:  # protegido por senha/corrompido
             logger.warning("ZIP {} ilegível: {}", nome, e)
             return ""
+    if dados[:4] == b"Rar!" and profundidade < 2:  # .rar (comum no PNCP): lido com a libarchive do sistema
+        return _rar_texto(nome, dados, profundidade)
     if dados[:4] == b"\xd0\xcf\x11\xe0":  # .doc antigo (Word 97-2003): o texto fica em blocos UTF-16 ou cp1252
         u16 = [b.decode("utf-16-le", "ignore") for b in re.findall(rb"(?:[\x20-\x7e\xc0-\xff\r\n]\x00){30,}", dados)]
         if sum(map(len, u16)) > 500:
@@ -157,6 +178,8 @@ def _cortar(j: str) -> str:
         fim = m.end()
     if (m := _OUTRO_PRODUTO.search(j, 40, fim)):
         fim = m.start()
+    if (m := _PESQUISA.search(j, 0, fim)):
+        fim = m.start()
     return j[:fim].strip()
 
 
@@ -171,13 +194,13 @@ def trechos_cafe(t: str) -> list[Trecho]:
         fim = min(len(t), m.end() + 650)
         if (prox := _LINHA_TABELA.search(t, m.end() + 20, fim)):
             fim = prox.start()
+        if _PESQUISA.search(t[m.start():min(fim, m.start() + 250)].split(". ")[0]):
+            continue  # pesquisa de preços ou modelo de proposta: repete o nome do item, não é a especificação
         j = _cortar(t[m.start():fim])
         if _FORA.search(j[:60]) and not re.search(r"torrad|moid", j[:200]):
             continue
         if re.match(r"cafe (?:soluvel|em capsulas?|capsulas?|pronto|cappuccino|com leite)\b", j):
             continue  # fora do escopo (só café torrado); o "café" seguinte é examinado
-        if _PESQUISA.search(j):
-            continue  # pesquisa de preços ou modelo de proposta: repete o nome do item, não é a especificação
         pistas = len(set(x.group(0) for x in _PISTAS.finditer(j)))
         if pistas >= 3 and re.search(r"torrad|moid|\bgraos?\b|\bpo\b", j):
             out.append(Trecho(m.start(), j, pistas, t[max(0, m.start() - 60):m.start()]))

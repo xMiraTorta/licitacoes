@@ -116,3 +116,34 @@ def test_doc_antigo_e_zip() -> None:
     with zipfile.ZipFile(b, "w") as z:
         z.writestr("anexos/TR.docx", _docx("Café torrado superior"))
     assert "Café torrado superior" in edital.texto_de("anexos.zip", b.getvalue())
+
+
+def test_linha_do_cafe_nao_vaza_para_o_produto_seguinte() -> None:
+    t = ("16 café 500gr torrado e moído embalado a vácuo, embalagem aluminizada. pct 276 R$ 28,63 R$ 7.901,88 "
+         "17 molho de tomate tradicional, 340 g, embalagem sachê. pct 72 R$ 3,59 R$ 258,48")
+    r = edital.analisar(t, [_item(16, "Café 500gr torrado e moído")])
+    assert "molho" not in r.itens[16] and edital.cafe.categoria(r.itens[16]) == ""
+
+
+def test_itens_parecidos_recebem_o_trecho_proprio() -> None:
+    t = ("01 café torrado e moído comum, embalado a vácuo, em pacote de 500 g, 100% café. R$ 31,21 R$ 118.910,10 "
+         "02 café torrado e moído extra forte, embalado a vácuo, em pacote de 500 g, 100% café. R$ 37,73 R$ 754,60 "
+         "03 café torrado e moído premium, embalado a vácuo, em pacote de 250 g, 100% café. R$ 17,64 R$ 882,00")
+    itens = [_item(1, "Café torrado e moído comum, embalado a vácuo, 500 g"), _item(2, "Café torrado e moído extra forte, 500 g"),
+             _item(3, "Café torrado e moído premium, embalado a vácuo, pacote de 250 g")]
+    r = edital.analisar(t, itens)
+    assert "comum" in r.itens[1] and "extra forte" in r.itens[2] and "premium" in r.itens[3]
+
+
+def test_pesquisa_de_precos_e_grao_sem_trecho_proprio() -> None:
+    t = ("Café torrado e moído categoria tradicional, torra média, pacote 500 g, selo ABIC. "
+         "Café apresentação: torrado moído, tipo único, pacote 500 grama, consolidação dos preços cotados, menor preço, mediana.")
+    r = edital.analisar(t, [_item(1, "Café apresentação: torrado moído, tipo: único"), _item(2, "Café em grãos para máquina, 1 kg")])
+    assert "categoria tradicional" in r.itens[1] and 2 not in r.itens  # sem trecho de café em grão: nada
+
+
+def test_categoria_negada_ou_modo_de_preparo() -> None:
+    cat = lambda t: edital.cafe.categoria(edital.cafe.norm(t))  # noqa: E731
+    assert cat("não será aceito o sabor extraforte") == ""
+    assert cat("moagem adequada ao preparo tradicional por filtragem") == ""
+    assert cat("café tradicional, torra média") == "Tradicional"

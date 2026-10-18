@@ -254,20 +254,19 @@ def _cat_do_edital(te: str) -> list[str]:
 
 def reclassificar_nivel(compra: dict[str, Any]) -> None:
     """Recalcula categoria, exigências, nível e nota de qualidade a partir do texto já gravado (sem PNCP).
-    A descrição do item vem primeiro; o que falta nela sai do trecho do edital daquele item (`ed_trecho`),
-    e a categoria tirada do edital leva * ("Superior*"). Itens antigos com usa_trecho e sem ed_trecho
+    Com o trecho do edital daquele item (`ed_trecho`), vale a categoria e a nota do edital (fonte principal; a
+    que a descrição do item não traz leva *: "Superior*"); sem categoria no edital, vale a da descrição. Itens antigos com usa_trecho e sem ed_trecho
     (leitura anterior, só a categoria guardada) mantêm o que tinham."""
     for i in compra["itens"]:
         t = cafe.norm(i["espec"])
         te = cafe.norm(i.get("ed_trecho") or "")
-        if te:
-            cats = [x for x in cafe.categoria(t).split("/") if x]
-            qg = cafe.nota_qg(t)
-            if not cats and qg is None:
-                cats = [x + "*" for x in _cat_do_edital(te)]
-            i["cat"] = "/".join(cats)
+        if te:  # o edital é a fonte principal; a descrição do item no PNCP costuma ser a genérica do catálogo
+            do_item = [x for x in cafe.categoria(t).split("/") if x]
+            do_edital = _cat_do_edital(te)
+            i["cat"] = "/".join([x if x in do_item else x + "*" for x in do_edital] if do_edital else do_item)
             i["tags"] = _uniq(cafe.exigencias(t) + cafe.exigencias(te))
-            i["qg"] = qg if qg is not None else cafe.nota_qg(te)
+            qg = cafe.nota_qg(te)
+            i["qg"] = qg if qg is not None else cafe.nota_qg(t)
             i["usa_trecho"] = True
         elif i.get("usa_trecho"):
             velhas = {x.rstrip("*") for x in i["cat"].split("/") if x}
