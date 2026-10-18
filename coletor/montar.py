@@ -104,8 +104,9 @@ def montar_item(raw: dict[str, Any]) -> dict[str, Any] | None:
     if c is None:
         return None
     qtd = _num(raw.get("quantidade"))
-    kgt = round(c.kgu * qtd, 4) if c.kgu is not None and qtd is not None else None
-    rkg = round(vt / kgt, 2) if vt is not None and kgt else None
+    # "or None": um valor que arredonda para 0 (ex.: preço simbólico de R$ 0,01) é tratado como ausente.
+    kgt = (round(c.kgu * qtd, 4) or None) if c.kgu is not None and qtd is not None else None
+    rkg = (round(vt / kgt, 2) or None) if vt is not None and kgt else None
     return {
         "n": raw.get("numeroItem"), "tipo": c.tipo, "cat": c.cat, "emb": c.emb, "kgu": c.kgu, "kg_src": c.kg_src,
         "qtd": qtd, "un": un, "vu": vu, "vt": vt, "sig": sig, "kgt": kgt, "rkg": rkg,
@@ -167,7 +168,7 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
     vts = [i["vt"] for i in cafe_it if i["vt"] is not None]
     kgs = [i["kgt"] for i in itens if i["kgt"] is not None]
     rk = [i for i in itens if i["rkg"] is not None and not i["conferir"]]
-    kg = round(sum(kgs), 4) if kgs else None
+    kg = (round(sum(kgs), 4) or None) if kgs else None
     plat, plat_src, plat_f = plataforma(c.get("linkSistemaOrigem"), c.get("usuarioNome"))
     me, me_f = _me(itens)
     embs = _uniq([i["emb"] for i in itens])
@@ -191,11 +192,11 @@ def montar_compra(c: dict[str, Any], itens_raw: list[dict[str, Any]]) -> dict[st
         "ed_tags": [], "ed_pz": "", "edital_lido": False, "trecho_edital": "",
         "tipos": sorted(_uniq([i["tipo"] for i in itens]), key=lambda t: ORDEM_TIPOS.get(t, 99)), "cats": cats or ["Não informada"], "cat_do_edital": False,
         "embs": "; ".join(embs), "emb_f": _emb_f(embs),
-        "vcafe": round(sum(vts), 2) if vts else None,
-        "vcesta": round(sum(i["vt"] for i in cesta_it if i["vt"] is not None), 2) if any(i["vt"] for i in cesta_it) else None,
+        "vcafe": (round(sum(vts), 2) or None) if vts else None,
+        "vcesta": (round(sum(i["vt"] for i in cesta_it if i["vt"] is not None), 2) or None) if any(i["vt"] for i in cesta_it) else None,
         "kg": kg,
         "kg_parcial": kg is not None and any(i["kgt"] is None and i["tipo"] != cafe.CESTA for i in itens),
-        "rkg": round(sum(i["vt"] for i in rk) / sum(i["kgt"] for i in rk), 2) if rk else None,
+        "rkg": (round(sum(i["vt"] for i in rk) / sum(i["kgt"] for i in rk), 2) or None) if rk else None,
         "sig": "Sim" if any(i["sig"] for i in itens) else "Não",
         "me": me, "me_f": me_f, "tags": _uniq([t for i in itens for t in i["tags"]]),
         "resumo": "; ".join(_resumo(i) for i in itens),

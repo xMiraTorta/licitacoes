@@ -1,6 +1,6 @@
 # HANDOFF · licitacoes
 
-- **Atualizado em:** 2026-10-17 (fim da sessão de nuvem 1; automação ativa na main)
+- **Atualizado em:** 2026-10-18 (revisão completa de bugs; automação ativa na main)
 - **Branch de trabalho:** `claude/confident-galileo-equwuz` · repositório `xMiraTorta/licitacoes` (renomeado pelo dono em 17/10/2026; site https://xmiratorta.github.io/licitacoes/). Merge automático autorizado (ver CLAUDE.md).
 - **Commit de partida:** `bd38a7f` (main). Último commit relevante: ver `git log` da branch.
 
@@ -11,6 +11,15 @@ CNAEs do dono: 1081-3/02 (torrefação e moagem de café, principal), 4611-7/00 
 
 ## Escopo aprovado
 O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. Segredos do Telegram cadastrados pelo dono (confirmado pelo envio do aviso de falha do run #1). Não autorizado: ampliar para outros CNAEs.
+
+## Sessão 18/10/2026: revisão completa de bugs (pedido do dono)
+Três revisões independentes (site, coletor, automação), cada achado reproduzido antes de corrigir e coberto por teste que falha no código antigo.
+- **Segurança**: texto do PNCP com `</script>` quebrava a página e rodava código (reproduzido no Chromium). `publicar.embutir_no_html` escapa `</` e `<!--`.
+- **Coletor**: valor que arredondava para 0 derrubava a publicação do dia; compra conhecida que some da listagem (paginação do PNCP por posição) agora é conferida pela chave em `/api/consulta/v1/orgaos/{cnpj}/compras/{ano}/{seq}` (revogada/suspensa/404 sai; erro mantém a anterior); classificador perdia "Aquisição de café", "Pacote de café", "Produto: café" etc.; "1.000g" lido como 1 g; cache `sem_cafe.json` agora `{versao, itens}` com `VERSAO_REGRAS` (2); compra sem itens não entra no cache; `nova` recalculada para mantidas; duplicata visível ontem continua visível; página vazia no meio da listagem é erro; `ValidationError` sai com código 2.
+- **Automação**: link do Telegram no agendamento saía `https://xMiraTorta.github.io//` (`github.event.repository` vazio em schedule); `git pull --rebase` antes do push; alerta de falha também em timeout/cancelamento e com texto neutro; `avisar.yml` com grupo de concorrência próprio. Reserva: confere de novo o `run_date` logo antes do push e nunca resolve conflito a favor da própria coleta.
+- **Site**: atualização automática quebrava o painel aberto de compra encerrada e parava de salvar sem aviso; redesenho apagava o que estava sendo digitado; Esc logo após digitar perdia a nota; ★ na Agenda não mudava e o 2º clique desfazia; link direto + × saía do site; duplicata exigia fechar 2 vezes e apagava os filtros; propostas sumiam de "Minhas propostas" quando a compra encerrava (agora ficam como "Fora dos dados", editáveis, via campo `ref`); importar o data.json por engano marcava todo o checklist; CSV deixava texto virar fórmula; preço 0 ignorado sem aviso.
+- **Coleta real de validação** (18/10, neste ambiente, numa cópia: dados publicados intactos para o Telegram de segunda avisar as novas do fim de semana): 20.911 listadas, 4.144 candidatas (cache zerado pela versão nova), 4.623 chamadas, 0 falhas, 35 min, 334 compras = as mesmas 334 publicadas. Só o cache novo (`versao` 2, 3.810 itens) foi para o repositório, para a coleta de segunda no GitHub não reverificar tudo.
+- Não corrigido (registrado): fuso local de AM/MT/MS/RO/AC/RR (hipótese, ver abaixo); `tamanhoPagina=1000` nos itens sem compra real com mais de 500 itens para testar.
 
 ## Sessão 17/10/2026 noite: decisões do dono e entregas
 Decisões (perguntadas e respondidas): repositório **continua público** (Pages grátis; dados já são públicos); nome **"Monitor de Licitações"**; escopo **só café por enquanto**; **reserva no Claude Code** aprovada. Dono quer renomear o repositório para `licitacoes`: o agente não tem ferramenta para isso; o dono faz em Settings. O código não depende do nome (link do Telegram vem do workflow).

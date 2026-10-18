@@ -11,8 +11,10 @@ on:
 permissions:
   contents: write
 
+# Grupo próprio: no grupo da coleta, um aviso esperando na fila podia ser descartado pelo GitHub
+# quando outro run entrasse na fila (só um pendente por grupo).
 concurrency:
-  group: atualizar-licitacoes
+  group: avisar-licitacoes
   cancel-in-progress: false
 
 jobs:
@@ -22,9 +24,10 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      PAINEL_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
     steps:
       - uses: actions/checkout@v5
+      - name: Endereço do site
+        run: echo "PAINEL_URL=https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -40,4 +43,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm -q avisos/pendentes.json
           git commit -m "Avisos de licitações novas enviados no Telegram"
-          git push
+          git pull --rebase origin main
+          git push origin HEAD:main

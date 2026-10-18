@@ -53,6 +53,13 @@ def test_tipo(desc: str, esperado: str) -> None:
     "CESTA RETANGULAR P/ PÃO DE CAFÉ DA MANHÃ - PCESTA RETANGULAR PARA PÃO, alimentos",
     "KIT COZINHA INFANTIL COM PANELINHAS, COOKTOP E UTENSÍLIOS: café, arroz e feijão de brinquedo",
     "FORNECIMENTO DE ALIMENTAÇÃO, almoço: arroz, feijão, salada, sal, café",
+    # prefixos aceitos desde VERSAO_REGRAS 2 não podem abrir passagem para utensílios
+    "Aquisição de cafeteira elétrica",
+    "Pacote de açúcar para café",
+    "Caixa térmica para café",
+    "Pacote de biscoito sabor café",
+    "Descrição: filtro de papel para café",
+    "Fornecimento de café da manhã",
 ])
 def test_nao_e_cafe(desc: str) -> None:
     assert cafe.classificar(desc, "Unidade") is None
@@ -64,6 +71,14 @@ def test_nao_e_cafe(desc: str) -> None:
     "[COTA RESERVADA ME/EPP] - Café torrado e moído 500g",
     "(L3) 8910.10465-Café, TIPO: Torrado e moído",
     "LOTE UNICO - GENEROS ALIMENTICIOS - CAFE, torrado e moido",
+    "Aquisição de café torrado e moído 500g",
+    "Fornecimento de café torrado e moído",
+    "Pacote de café 500g",
+    "Pct de cafe 500 g",
+    "Caixa de café 10x500g",
+    "Produto: Café torrado",
+    "Descrição: café torrado e moído",
+    "Material de copa e cozinha - café torrado",
 ])
 def test_cafe_com_ruido_no_inicio(desc: str) -> None:
     assert cafe.classificar(desc, "Pacote") is not None
@@ -81,6 +96,8 @@ def test_cafe_com_ruido_no_inicio(desc: str) -> None:
     ("Café torrado e moído, 500g", "cx", 303.22, None, "fardo/caixa sem nº de pacotes"),  # caixa com vários
     ("Café solúvel frasco 180g, embalagem de 200g", "Frasco", 30.0, None, "vários tamanhos na descrição"),
     ("Café torrado e moído", "Unidade", 20.0, None, "tamanho não informado"),
+    ("Café torrado e moído, pacote 1.000g", "Pacote", 40.0, 1.0, "descrição do item"),  # ponto de milhar
+    ("Café torrado e moído, pacote 0.500 kg", "Pacote", 20.0, 0.5, "descrição do item"),
     ("Café em pó, características químicas exigidas para cada 100g; pacote 500g", "PCT", 30.0, 0.5, "descrição do item"),
 ])
 def test_peso_unitario(desc: str, un: str, vu: float, kgu: float | None, src: str) -> None:

@@ -225,9 +225,9 @@ def test_undo_import_restores_previous_data(page: Page, fixture_url: str) -> Non
     page.click('[data-tab="check"]')
     page.click('[data-cl="2"]')
     before_wf, before_cl = ls(page, WFK), ls(page, CLK)
-    imp = {"meus_dados": {"X-1-000001/2026": {"notas": "outra", "upd": "2030-01-01T00:00:00Z"}}, "checklist": {"5": 1}}
+    imp = {"meus_dados": {"99999999000199-1-000001/2026": {"notas": "outra", "upd": "2030-01-01T00:00:00Z"}}, "checklist": {"5": 1}}
     page.evaluate("t => window.__monitor.importText(t)", json.dumps(imp))
-    assert "X-1-000001/2026" in ls(page, WFK)
+    assert "99999999000199-1-000001/2026" in ls(page, WFK)
     page.click("#dataBtn")
     page.click("#undoImp")
     assert ls(page, WFK) == before_wf and ls(page, CLK) == before_cl
@@ -297,3 +297,118 @@ def test_mobile_layout_has_no_horizontal_overflow(browser: Any, fixture_url: str
     assert box and box["x"] + box["width"] <= 390  # valor visível, não cortado à direita
     ctx.close()
 
+
+
+GONE = "99999999000199-1-000001/2026"  # chave válida que não está nos dados de teste
+
+
+def test_auto_update_closes_drawer_of_removed_purchase_and_keeps_saving(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    open_detail(page, FIRST)
+    # dados novos sem a compra aberta (encerrou): o painel fecha sem erro e o cabeçalho atualiza
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
+      j.compras = j.compras.filter(c => c.chave !== '%s'); window.__monitor.apply(j); }""" % FIRST)
+    page.wait_for_function("!document.querySelector('#drawer').classList.contains('show')")
+    assert "01/01/2099" in page.locator("#upd").inner_text()
+    other = page.evaluate("window.__monitor.data().compras[0].chave")
+    d = open_detail(page, other)
+    d.locator('[data-w="notas"]').fill("ainda salva")
+    d.locator('[data-w="notas"]').blur()
+    page.wait_for_timeout(400)
+    assert ls(page, WFK)[other]["notas"] == "ainda salva"
+
+
+def test_update_waits_while_typing_in_drawer(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
+    d.locator('[data-w="notas"]').type("abc")
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
+      window.__monitor.offer(j); }""")
+    d.locator('[data-w="notas"]').type("d")
+    page.wait_for_timeout(500)
+    assert ls(page, WFK)[FIRST]["notas"] == "abcd"
+    assert d.locator('[data-w="notas"]').input_value() == "abcd"
+    d.locator('[data-w="notas"]').blur()
+    page.wait_for_function("document.querySelector('#upd').innerText.includes('2099')", timeout=3000)
+
+
+def test_escape_right_after_typing_still_saves(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
+    d.locator('[data-w="notas"]').type("ligar pregoeiro")
+    page.keyboard.press("Escape")
+    page.wait_for_function("!document.querySelector('#drawer').classList.contains('show')")
+    page.wait_for_timeout(450)
+    assert ls(page, WFK)[FIRST]["notas"] == "ligar pregoeiro"
+
+
+def test_star_in_agenda_updates_and_toggles(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.click('[data-tab="agenda"]')
+    star = page.locator('#agenda .row').first.locator('[data-act="fav"]')
+    ch = page.locator('#agenda .row').first.get_attribute("data-ch")
+    star.click()
+    assert page.locator(f'#agenda .row[data-ch="{ch}"] [data-act="fav"]').inner_text() == "★"
+    page.locator(f'#agenda .row[data-ch="{ch}"] [data-act="fav"]').click()
+    assert page.locator(f'#agenda .row[data-ch="{ch}"] [data-act="fav"]').inner_text() == "☆"
+    assert ch not in (ls(page, WFK) or {})
+
+
+def test_direct_link_then_close_stays_on_site(page: Page, fixture_url: str) -> None:
+    page.goto("about:blank")
+    page.goto(fixture_url + "/index.html#c=" + FIRST.replace("/", "%2F"))
+    wait_ready(page)
+    page.locator("#drawer.show").wait_for()
+    page.click('#drawer [data-act="close"]')
+    page.wait_for_function("!document.querySelector('#drawer').classList.contains('show')")
+    assert page.url.startswith(fixture_url) and "#c=" not in page.url
+
+
+def test_duplicate_link_then_close_closes_once_and_keeps_filters(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.click('[data-q="uf:MG"]')
+    filtros = page.evaluate("JSON.stringify(window.__monitor.F())")
+    dup_of = page.evaluate("window.__monitor.data().compras.find(c => c.chave === '%s').dup_of" % DUP)
+    page.evaluate("k => window.__monitor.open(k)", dup_of)
+    page.locator(f'#drawer.show [data-goto="{DUP}"]').click()
+    page.wait_for_function("document.querySelector('#drawer h2') && location.hash.includes('000090')")
+    page.click('#drawer [data-act="close"]')
+    page.wait_for_function("!document.querySelector('#drawer').classList.contains('show')")
+    page.wait_for_timeout(300)
+    assert not page.evaluate("document.querySelector('#drawer').classList.contains('show')")
+    assert page.evaluate("JSON.stringify(window.__monitor.F())") == filtros
+
+
+def test_followed_purchase_stays_on_board_after_leaving_data(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
+    d.locator('[data-w="status"]').select_option("Enviada")
+    page.keyboard.press("Escape")
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
+      j.compras = j.compras.filter(c => c.chave !== '%s'); window.__monitor.apply(j); }""" % FIRST)
+    page.click('[data-tab="mine"]')
+    card = page.locator(f'#board .mini[data-ch="{FIRST}"]')
+    assert "Fora dos dados" in card.inner_text() and "Conceição" in card.inner_text()
+    assert page.locator("#n-mine").inner_text() == "1"
+    card.click()
+    d = page.locator("#drawer.show")
+    d.wait_for()
+    d.locator('[data-w="status"]').select_option("Ganha")
+    assert ls(page, WFK)[FIRST]["status"] == "Ganha"
+
+
+def test_import_rejects_site_data_file(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    data = page.evaluate("JSON.stringify(window.__monitor.data())")
+    err = page.evaluate("t => { try { window.__monitor.importText(t); return ''; } catch (e) { return e.message; } }", data)
+    assert err and ls(page, WFK) is None and ls(page, CLK) is None
+
+
+def test_csv_neutralizes_formulas(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
+    d.locator('[data-w="notas"]').fill("=HYPERLINK(\"x\")")
+    d.locator('[data-w="notas"]').blur()
+    page.wait_for_timeout(400)
+    csv = page.evaluate("window.__monitor.csvText().csv")
+    assert "\"'=HYPERLINK(\"\"x\"\")\"" in csv
