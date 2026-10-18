@@ -73,6 +73,18 @@ def main(argv: list[str] | None = None) -> int:
         if not data:
             logger.error("Sem {}: nada para reclassificar", args.destino / "data.json")
             return 2
+        ok = montar.item_gravado_em_andamento
+        sairam = [c["chave"] for c in data["compras"] if not any(ok(i) for i in c["itens"])]
+        parciais = [c["chave"] for c in data["compras"] if c["chave"] not in sairam and not all(ok(i) for i in c["itens"])]
+        if sairam:
+            logger.warning("{} compras saem: todos os itens de café cancelados/concluídos no PNCP: {}", len(sairam), sairam)
+        if parciais:
+            logger.warning("{} compras com parte dos itens fora de andamento; totais só são refeitos na próxima coleta: {}",
+                           len(parciais), parciais)
+        visiveis = {c["chave"] for c in data["compras"] if not c.get("dup_of")}
+        data["compras"] = [c for c in data["compras"] if c["chave"] not in sairam]
+        if sairam:  # uma duplicata que apontava para a compra removida volta a aparecer
+            montar.marcar_duplicatas(data["compras"], visiveis)
         for c in data["compras"]:
             montar.reclassificar_nivel(c)
         try:

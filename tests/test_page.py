@@ -460,4 +460,13 @@ def test_drawer_starts_with_verdict_and_specs(page: Page, fixture_url: str) -> N
     assert "nível Superior" in d.locator(".verdict").inner_text() and "R$ 66,03/kg" in d.locator(".verdict").inner_text()
     assert "Nível de exigência" in d.locator(".spec-grid").inner_text()
     d.locator('[data-act="pisos"]').click()
-    page.wait_for_function("document.activeElement && document.activeElement.dataset.piso === 'Sem exigência'")
+    page.wait_for_function("document.activeElement && document.activeElement.dataset.piso === 'Sem categoria'")
+
+
+def test_copied_classification_text_gets_attention_point(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
+      const i = j.compras.find(c => c.chave === '%s').itens[0];
+      i.espec = 'CAFÉ INSOLUVEL - Café torrado e moído, grupo especial, subgrupo empeliculado, tipo 1'; window.__monitor.apply(j); }""" % FIRST)
+    d = open_detail(page, FIRST)
+    assert "subgrupo empeliculado" in d.locator(".warn-list").inner_text()

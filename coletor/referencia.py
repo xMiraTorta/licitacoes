@@ -1,4 +1,4 @@
-"""Referência de preço por nível de exigência: mediana do R$/kg estimado pelos órgãos entre as
+"""Referência de preço por nível de exigência ("preço típico" para o dono): mediana do R$/kg estimado pelos órgãos entre as
 licitações abertas do mesmo tipo e nível. É comparação entre licitações (inferência), não custo real.
 
 A página (index.html, função refPrecos) usa a mesma regra; mudou aqui, mude lá.
@@ -11,7 +11,7 @@ from typing import Any
 from coletor import cafe
 
 MIN_AMOSTRA = 5  # menos que isso, a mediana não diz muito: sem referência
-FAIXA = 0.10  # até 10% de diferença da mediana conta como "na média"
+FAIXA = 0.10  # até 10% de diferença da mediana conta como "no preço típico"
 
 
 def grupo(tipo: str) -> str:
@@ -47,7 +47,7 @@ def comparar(i: dict[str, Any], refs: dict[tuple[str, str], float]) -> tuple[flo
 
 def rotulo(dif: float) -> str:
     if dif >= FAIXA:
-        return "acima da mediana"
+        return "acima do preço típico"
     if dif <= -FAIXA:
-        return "abaixo da mediana"
-    return "na mediana"
+        return "abaixo do preço típico"
+    return "no preço típico"

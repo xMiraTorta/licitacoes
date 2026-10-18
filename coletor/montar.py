@@ -92,7 +92,27 @@ def _num(v: Any) -> float | None:
     return f if f > 0 else None
 
 
+# Situação do item no PNCP: 1 Em andamento, 2 Homologado, 3 Anulado/Revogado/Cancelado, 4 Deserto, 5 Fracassado.
+# A compra pode seguir aberta por causa de outros itens; item de café que não está em andamento não é oportunidade.
+SIT_EM_ANDAMENTO = 1
+
+
+def item_em_andamento(raw: dict[str, Any]) -> bool:
+    sit = raw.get("situacaoCompraItem")
+    if sit is not None:
+        return sit == SIT_EM_ANDAMENTO
+    nome = raw.get("situacaoCompraItemNome")
+    return nome is None or cafe.norm(nome) == "em andamento"  # sem informação: mantém
+
+
+def item_gravado_em_andamento(i: dict[str, Any]) -> bool:
+    """Mesma regra para um item já gravado em data.json (campo sit)."""
+    return cafe.norm(i.get("sit") or "em andamento") == "em andamento"
+
+
 def montar_item(raw: dict[str, Any]) -> dict[str, Any] | None:
+    if not item_em_andamento(raw):
+        return None
     sig = bool(raw.get("orcamentoSigiloso"))
     vu = None if sig else _num(raw.get("valorUnitarioEstimado"))
     vt = None if sig else _num(raw.get("valorTotal"))

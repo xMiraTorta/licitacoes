@@ -152,7 +152,7 @@ def test_nota_qualidade_global(texto: str, nota: float | None) -> None:
 
 
 @pytest.mark.parametrize("desc,nivel", [
-    ("Café torrado e moído 500g", "Sem exigência"),
+    ("Café torrado e moído 500g", "Sem categoria"),
     ("Café torrado e moído 500g, selo de pureza ABIC", "Tradicional"),
     ("Café torrado e moído tradicional 500g", "Tradicional"),
     ("Café torrado e moído, nota de qualidade global mínima de 4,5", "Tradicional"),
@@ -163,12 +163,12 @@ def test_nota_qualidade_global(texto: str, nota: float | None) -> None:
     ("Café torrado, nota de qualidade sensorial igual ou superior a 7,3", "Gourmet/especial"),
     ("Café em grãos torrados superior 1kg", "Superior"),
     # pesquisa de 18/10/2026 (IN MAPA 8/2003, Portaria SDA 570/2022, editais reais)
-    ("Café torrado e moído, bebida mole a dura, tipo 6", "Sem exigência"),  # faixa que aceita café comercial
-    ("Café com classificação de bebida mole a rio", "Sem exigência"),
+    ("Café torrado e moído, bebida mole a dura, tipo 6", "Sem categoria"),  # faixa que aceita café comercial
+    ("Café com classificação de bebida mole a rio", "Sem categoria"),
     ("Café torrado bebida estritamente mole", "Gourmet/especial"),
-    ("Café torrado e moído, grupo especial, subgrupo empeliculado", "Sem exigência"),  # termo de classificação
-    ("Café torrado e moído, Melitta especial ou equivalente", "Sem exigência"),  # marca, não categoria
-    ("Café, cor padrão SCA 55, torra escura", "Sem exigência"),  # cor de torra, não nota
+    ("Café torrado e moído, grupo especial, subgrupo empeliculado", "Sem categoria"),  # termo de classificação
+    ("Café torrado e moído, Melitta especial ou equivalente", "Sem categoria"),  # marca, não categoria
+    ("Café, cor padrão SCA 55, torra escura", "Sem categoria"),  # cor de torra, não nota
     ("Café torrado e moído, padrões definidos pela BSCA/SCA, 100% arábica especial", "Gourmet/especial"),
     ("Café solúvel 200g", None),  # solúvel/cápsula/bebida não entram na comparação por qualidade
     ("Cápsula de café 100% arábica", None),
@@ -182,3 +182,16 @@ def test_exigencias_que_mexem_no_custo() -> None:
     assert "Sem PVA (grãos selecionados)" in cafe.exigencias(cafe.norm("isento de grãos pretos, verdes e ardidos"))
     assert "Aceita conilon/blend" in cafe.exigencias(cafe.norm("blend de arábica e conilon"))
     assert "Aceita conilon/blend" in cafe.exigencias(cafe.norm("predominantemente arábica"))
+
+
+def test_revisao_dos_itens_sem_categoria() -> None:
+    """Casos reais de 18/10/2026 que estavam como 'Sem exigência'."""
+    i = cafe.classificar("Café torrado e moído almofada 250 g, com escala sensorial mínima 4,5 pontos, comprovado através de laudo", "Pacote")
+    assert i and (i.nivel, i.qg) == ("Tradicional", 4.5)
+    i = cafe.classificar("Café torrado e moído premium, embalado a vácuo, em pacote de 500 g", "Pacote")
+    assert i and i.nivel == "Sem categoria" and "Premium/1ª qualidade (termo comercial)" in i.tags
+    i = cafe.classificar("Café torrado e moído de primeira qualidade, obtido a partir de grãos selecionados", "Pacote")
+    assert i and {"Premium/1ª qualidade (termo comercial)", "Grãos selecionados"} <= set(i.tags)
+    i = cafe.classificar("CAFÉ INSOLUVEL - Café torrado e moído, grupo especial, subgrupo empeliculado, tipo 1, embalagem de 250 g. "
+                         "Validade mínima de 6 (seis) meses", "UND")
+    assert i and i.nivel == "Sem categoria" and "Validade ≥6 meses" in i.tags

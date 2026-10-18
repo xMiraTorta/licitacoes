@@ -198,6 +198,8 @@ _TAGS = [
     ("Amostra", r"\bamostras?\b"),
     ("Agric. familiar", r"agricultura familiar|agricultor(es)? familia"),
     ("Sem PVA (grãos selecionados)", r"(isent[oa]s?|livres?|ausencia|sem) de (graos )?(defeitos )?(pretos|verdes|ardidos|pva|fermentados)"),
+    ("Premium/1ª qualidade (termo comercial)", r"\bpremium\b|primeira qualidade|\b1[ao]? qualidade"),
+    ("Grãos selecionados", r"graos? (?:de cafe )?selecionados"),
     ("Aceita conilon/blend", r"conilon|robusta|canephora|predominantemente arabic|blend|arabica e (o )?conilon"),
 ]
 _VALIDADE = re.compile(
@@ -217,11 +219,14 @@ def exigencias(t: str) -> list[str]:
 
 
 # ---------------------------------------------------------------- nível de exigência
+# "Sem categoria": o texto não pede categoria (Tradicional/Superior/Gourmet), selo ABIC/PQC nem nota de qualidade;
+# pode pedir outras coisas (vácuo, validade, "premium"), que aparecem como exigências.
 # Escala do PQC/ABIC para a nota de Qualidade Global (0 a 10): Tradicional/Extraforte 4,5 a 5,9;
 # Superior 6,0 a 7,2; Gourmet 7,3 a 10. Pontuação em 0-100 (ex.: "70 pontos", "80 pontos SCA") vira /10.
-NIVEIS = ("Sem exigência", "Tradicional", "Superior", "Gourmet/especial")
+NIVEIS = ("Sem categoria", "Tradicional", "Superior", "Gourmet/especial")
 _TIPOS_COM_NIVEL = (TM, TM_DESCAF, GRAO)
-_QG = re.compile(r"(?:qualidade global|pontuacao(?: global| sensorial| final)?|nota(?: de qualidade| sensorial| global| final)?|\bqg\b)"
+_QG = re.compile(r"(?:qualidade global|pontuacao(?: global| sensorial| final)?|nota(?: de qualidade| sensorial| global| final)?|\bqg\b|"
+                 r"escala sensorial|avaliacao sensorial|analise sensorial)"
                  r"([^.;]{0,45}?)(?<![\d,.])(\d{1,3}(?:[,.]\d{1,2})?)(?![\d%])(\s*\w*)")
 _QG_FAIXA = re.compile(r"\s*(?:pontos\s*)?(?:-|a|ate|e)\s*(\d{1,3}(?:[,.]\d{1,2})?)(?![\d%])")
 # "nota: validade mínima de 90 dias", "nota fiscal nº 12": número que não é nota de qualidade.
@@ -259,7 +264,7 @@ def nivel(t: str, tipo: str, cat: str, tags: list[str], qg: float | None) -> str
         return "Superior"
     if cats & {"Tradicional", "Extraforte"} or qg is not None or {"ABIC/pureza", "PQC"} & set(tags):
         return "Tradicional"
-    return "Sem exigência"
+    return "Sem categoria"
 
 
 # ---------------------------------------------------------------- item completo

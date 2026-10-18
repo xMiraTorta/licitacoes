@@ -75,7 +75,7 @@ def cartao(c: dict[str, Any], refs: dict[tuple[str, str], float]) -> str:
         if cmp_:
             ref, dif = cmp_
             if abs(dif) < referencia.FAIXA:
-                preco += f" ≈ na mediana do nível (R$ {_num(ref, 2)})"
+                preco += f" ≈ no preço típico do nível (R$ {_num(ref, 2)})"
             else:
                 preco += f" {'▲' if dif > 0 else '▼'} {_num(abs(dif) * 100)}% {referencia.rotulo(dif)} do nível (R$ {_num(ref, 2)})"
         linhas.append(preco)
@@ -120,7 +120,7 @@ def mensagens(novas: list[dict[str, Any]], data: dict[str, Any]) -> list[str]:
     cab = f"{_cabecalho(data)}\n{resumo}\n{situacao}\n"
     perto = sorted((c for c in novas if c["uf"] in PERTO), key=lambda c: (c.get("fim") or "9999", c["chave"]))
     demais = sorted((c for c in novas if c["uf"] not in PERTO), key=lambda c: (c.get("fim") or "9999", c["chave"]))
-    nota = ("\n<i>Mediana: R$/kg estimado nas licitações abertas do mesmo tipo e nível de exigência "
+    nota = ("\n<i>Preço típico: o R$/kg do meio nas licitações abertas do mesmo tipo e nível de exigência "
             "(comparação entre licitações, não custo).</i>") if any(referencia.item_principal(c) for c in novas) else ""
     fim_txt = rodape + nota
     out: list[str] = []
