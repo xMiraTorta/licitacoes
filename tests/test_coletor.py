@@ -285,7 +285,7 @@ def test_mensagens_telegram() -> None:
     m = msgs[0]
     assert "<b>2 licitações novas</b>" in m and "Segunda, 19/10/2026" in m
     assert m.index("PERTO DE VOCÊ") < m.index("Sacramento · MG") < m.index("DEMAIS ESTADOS") < m.index("Curitiba · PR")
-    assert "nível Superior" in m and "▲" in m and "acima da mediana do nível" in m
+    assert "nível Superior" in m and "▲" in m and "acima do preço típico do nível" in m
     assert "#c=00000000000050-1-000050%2F2026" in m  # abre direto a licitação no monitor
     assert _html_equilibrado(m)
     muitas = telegram.mensagens([compra(100 + i, "BA", "Salvador", 30.0) for i in range(60)], painel)
@@ -384,3 +384,49 @@ def test_reclassificar_preenche_nivel_sem_pncp(destino: Path) -> None:
     c = json.loads((destino / "data.json").read_text(encoding="utf-8"))["compras"][0]
     assert c["niveis"] == ["Tradicional"] and c["itens"][0]["nivel"] == "Tradicional"  # selo ABIC
     assert embedded_data((destino / "index.html").read_text(encoding="utf-8")) == json.loads((destino / "data.json").read_text())
+
+
+@pytest.mark.parametrize("sit,nome,entra", [
+    (1, "Em andamento", True), (3, "Anulado/Revogado/Cancelado", False), (2, "Homologado", False),
+    (4, "Deserto", False), (5, "Fracassado", False), (None, "Anulado/Revogado/Cancelado", False), (None, None, True),
+])
+def test_item_fora_de_andamento_nao_entra(sit: int | None, nome: str | None, entra: bool) -> None:
+    raw = item_api(1, "Café torrado e moído 500g", 100, 30.0) | {"situacaoCompraItem": sit, "situacaoCompraItemNome": nome}
+    assert (montar.montar_item(raw) is not None) is entra
+
+
+def test_compra_com_cafe_cancelado_sai_do_painel(destino: Path) -> None:
+    itens = {**ITENS, "11111111000111/compras/2026/1": [
+        item_api(2, "Café torrado e moído, 500g", 1000, 30.0) | {"situacaoCompraItem": 3,
+                                                                 "situacaoCompraItemNome": "Anulado/Revogado/Cancelado"}]}
+    valida = compra_api("55555555000155", 5, "Aquisição de café")
+    itens["55555555000155/compras/2026/5"] = [item_api(1, "Café torrado e moído 250g", 100, 18.0)]
+    rodar(destino, [CAFE, valida], itens)
+    chaves = {c["chave"] for c in json.loads((destino / "data.json").read_text())["compras"]}
+    assert chaves == {valida["numeroControlePNCP"]}  # a compra segue aberta no PNCP, mas o café foi cancelado
+
+
+def test_telegram_espera_quando_limitado(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    esperas: list[float] = []
+    monkeypatch.setattr(telegram.time, "sleep", esperas.append)
+    respostas = iter([httpx.Response(200, json={"ok": True}),
+                      httpx.Response(429, json={"ok": False, "parameters": {"retry_after": 7}}),
+                      httpx.Response(200, json={"ok": True})])
+    telegram.enviar(["a", "b"], httpx.Client(transport=httpx.MockTransport(lambda req: next(respostas))))
+    assert esperas == [telegram.PAUSA, 7.0]  # pausa entre mensagens + o tempo que o Telegram pediu
+
+
+def test_cartao_telegram_cesta_numero_e_apostrofo() -> None:
+    c = montar.montar_compra(compra_api("11111111000111", 1, "cesta", mun="Santa Bárbara d'Oeste", uf="SP") | {"numeroCompra": "114/2026"},
+                             [item_api(1, "Cesta básica com arroz, feijão, açúcar, óleo e café", 10, 150.0)])
+    assert c and c["num"] == "114/2026"  # o PNCP já manda o ano: não repete
+    txt = telegram.cartao(c, {})
+    assert "cestas: R$ 1.500" in txt and "d'Oeste" in txt
+
+
+@pytest.mark.parametrize("n,esperado", [("37", "37/2026"), ("114/2026", "114/2026"), ("2809001/2026-PE", "2809001/2026-PE"),
+                                         ("PMCA 044/26", "PMCA 044/26"), ("90076/PE/NATURATINS", "90076/PE/NATURATINS/2026")])
+def test_numero_da_compra_sem_ano_repetido(n: str, esperado: str) -> None:
+    assert montar.numero(n, 2026) == esperado

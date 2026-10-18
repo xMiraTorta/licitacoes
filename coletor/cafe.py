@@ -93,7 +93,9 @@ _CATS = [
     # "especial" só quando qualifica o café ("café especial", "categoria especial", "arábica especial"):
     # "grupo especial" (termo de classificação), "Melitta especial" (marca) e "farinha especial" não contam.
     ("Gourmet/especial", re.compile(r"\bgourmet\b|\b(?:categoria|estilo|qualidade|cafes?|arabica|po|moido)\s+especia(?:l|is)\b")),
-    ("Superior", re.compile(r"(?<!ou )(?<!e )\bsuperior\b(?! (a|ao|as|aos|ou|de)\b)")),
+    # "superior a 6,0", "igual ou superior", "qualidade superior" (de marca equivalente) não são a categoria;
+    # "categoria superior ou acima/melhor" é.
+    ("Superior", re.compile(r"(?<!\bou )(?<!\be )(?<!qualidade )\bsuperior\b(?! (?:a|ao|as|aos|de)\b)(?! ou (?:igual|inferior)\b)")),
     ("Tradicional", re.compile(r"\btradicional\b")),
     ("Extraforte", re.compile(r"extra ?-?forte|\bintensa\b")),
 ]
@@ -192,21 +194,33 @@ _TAGS = [
     ("Marca ref.", r"marca\s+(de\s+)?refer|referencia\s*:|ou similar|similar ou|equivalente ou superior|ou equivalente"),
     ("Nota QG/sensorial", r"qualidade global|nota (minima )?(de )?\d|analise sensorial|\bsensorial"),
     ("Laudo", r"\blaudo"),
-    ("100% arábica", r"100\s*%\s*(da especie |de cafe |de graos? |de )?(cafe )?arabica"),
+    ("100% arábica", r"100\s*%\s*(da especie |de cafe |de graos? |de )?(cafe )?arabica(?!\w| ?(e/ou|ou|e|/) ?(cafe )?(conilon|robusta|canephora))"),
     ("PQC", r"\bpqc\b|programa de qualidade do cafe"),
     ("Sem glúten (rótulo)", r"gluten"),
     ("Amostra", r"\bamostras?\b"),
     ("Agric. familiar", r"agricultura familiar|agricultor(es)? familia"),
     ("Sem PVA (grãos selecionados)", r"(isent[oa]s?|livres?|ausencia|sem) de (graos )?(defeitos )?(pretos|verdes|ardidos|pva|fermentados)"),
-    ("Aceita conilon/blend", r"conilon|robusta|canephora|predominantemente arabic|blend|arabica e (o )?conilon"),
+    ("Premium/1ª qualidade (termo comercial)", r"\bpremium\b|primeira qualidade|\b1[ao]? qualidade"),
+    ("Grãos selecionados", r"graos? (?:de cafe )?selecionados"),
+    # "não aceita conilon", "proibido robusta" e "embalagem robusta" não contam (ver exigencias).
+    ("Aceita conilon/blend", r"conilon|canephora|(?:cafe|especie|coffea|graos?|arabica)\W+(?:\w+\W+){0,2}robusta|robusta\W*(?:/|ou|e)\W*conil|predominantemente arabic|arabica (?:e|/|ou) (?:o |cafe )?(?:conilon|robusta)"),
 ]
 _VALIDADE = re.compile(
     r"validade[^.;]{0,60}?(?:minim[ao]|nao inferior a|superior a|de no minimo|minimo de|pelo menos|acima de)?\s*"
     r"(?:de\s+)?(\d{1,3})\s*(?:\([a-z ]+\)\s*)?(meses|mes|dias|anos?)\b")
 
 
+_NEGA = re.compile(r"(?:nao|vedad[oa]s?|proibid[oa]s?|sem|isent[oa] de|nao sera aceit\w*|nao se aceita|nao e permitid\w*)\W+(?:\w+\W+){0,3}$")
+
+
 def exigencias(t: str) -> list[str]:
-    tags = [nome for nome, rx in _TAGS if re.search(rx, t)]
+    tags = []
+    for nome, rx in _TAGS:
+        ms = list(re.finditer(rx, t))
+        if nome == "Aceita conilon/blend":  # "não aceita conilon", "vedado o uso de robusta"
+            ms = [m for m in ms if not _NEGA.search(t[max(0, m.start() - 40):m.start()])]
+        if ms:
+            tags.append(nome)
     m = _VALIDADE.search(t)
     if m:
         n, u = int(m.group(1)), m.group(2)
@@ -217,15 +231,22 @@ def exigencias(t: str) -> list[str]:
 
 
 # ---------------------------------------------------------------- nível de exigência
+# "Sem categoria": o texto não pede categoria (Tradicional/Superior/Gourmet), selo ABIC/PQC nem nota de qualidade;
+# pode pedir outras coisas (vácuo, validade, "premium"), que aparecem como exigências.
 # Escala do PQC/ABIC para a nota de Qualidade Global (0 a 10): Tradicional/Extraforte 4,5 a 5,9;
 # Superior 6,0 a 7,2; Gourmet 7,3 a 10. Pontuação em 0-100 (ex.: "70 pontos", "80 pontos SCA") vira /10.
-NIVEIS = ("Sem exigência", "Tradicional", "Superior", "Gourmet/especial")
+NIVEIS = ("Sem categoria", "Tradicional", "Superior", "Gourmet/especial")
 _TIPOS_COM_NIVEL = (TM, TM_DESCAF, GRAO)
-_QG = re.compile(r"(?:qualidade global|pontuacao(?: global| sensorial| final)?|nota(?: de qualidade| sensorial| global| final)?|\bqg\b)"
+_QG = re.compile(r"(?:qualidade global|pontuacao(?: global| sensorial| final)?|nota(?: de qualidade| sensorial| global| final)?|\bqg\b|"
+                 r"escala sensorial|avaliacao sensorial|analise sensorial)"
                  r"([^.;]{0,45}?)(?<![\d,.])(\d{1,3}(?:[,.]\d{1,2})?)(?![\d%])(\s*\w*)")
 _QG_FAIXA = re.compile(r"\s*(?:pontos\s*)?(?:-|a|ate|e)\s*(\d{1,3}(?:[,.]\d{1,2})?)(?![\d%])")
 # "nota: validade mínima de 90 dias", "nota fiscal nº 12": número que não é nota de qualidade.
-_QG_NAO = re.compile(r"validade|prazo|fiscal|entrega|empenho|dias|meses|anos|horas|item|lote|\bn[o°º]?\b")
+_QG_NAO = re.compile(r"validade|prazo|fiscal|entrega|empenho|dias|meses|anos|horas|item|lote|provador|amostra|pacote|"
+                     r"unidade|norma|\bn\.?\s*$")  # "nº 12" (o º some na normalização); "no mínimo" continua valendo
+# "análise sensorial realizada por 5 provadores": nessas palavras, o número só é nota se vier com nota/mínima/pontos.
+_SENSORIAL = re.compile(r"escala sensorial|avaliacao sensorial|analise sensorial")
+_NOTA_PERTO = re.compile(r"nota|minim|pontos|escala|igual ou superior|acima de|maior que")
 
 
 def nota_qg(t: str) -> float | None:
@@ -233,18 +254,27 @@ def nota_qg(t: str) -> float | None:
     for m in _QG.finditer(t):
         if _QG_NAO.search(m.group(1)) or _QG_NAO.search(m.group(3)):
             continue
-        vs = [float(m.group(2).replace(",", "."))]
+        if _SENSORIAL.match(m.group(0)) and not _NOTA_PERTO.search(m.group(0)[len(_SENSORIAL.match(m.group(0)).group(0)):]
+                                                                    + t[m.end(): m.end() + 12]):
+            continue
+        v = _escala_10(float(m.group(2).replace(",", ".")))
+        if not 4 <= v <= 10:
+            continue
         if (faixa := _QG_FAIXA.match(t, m.end(2))):  # "7,2 - 6,0", "4,5 a 5,9": vale o mínimo
-            vs.append(float(faixa.group(1).replace(",", ".")))
-        vs = [v / 10 if 10 < v <= 100 else v for v in vs]
-        if all(4 <= v <= 10 for v in vs):
-            return round(min(vs), 2)
+            v2 = _escala_10(float(faixa.group(1).replace(",", ".")))
+            if 4 <= v2 <= 10:  # "nota 7,0 - 500g": o 500 não é parte da faixa
+                v = min(v, v2)
+        return round(v, 2)
     return None
+
+
+def _escala_10(v: float) -> float:
+    return v / 10 if 10 < v <= 100 else v
 
 
 # Bebida fina da classificação oficial (IN MAPA 8/2003): "mole"/"apenas mole" = Superior ou acima.
 # "Mole a dura", "mole a rio" são faixas que aceitam café comercial (padrão CEPEA: tipo 6, bebida dura).
-_MOLE = re.compile(r"bebida (?:\w+ )?(?:apenas |estritamente )?mole\b(?! (?:a|ou|ate) (?:dura|rio|riad|apenas|\w+ dura))")
+_MOLE = re.compile(r"bebida\W+(?:\w+\W+)?(?:apenas |estritamente )?mole\b(?! (?:a|ou|ate) (?:dura|rio|riad|apenas|\w+ dura))")
 
 
 def nivel(t: str, tipo: str, cat: str, tags: list[str], qg: float | None) -> str | None:
@@ -259,7 +289,7 @@ def nivel(t: str, tipo: str, cat: str, tags: list[str], qg: float | None) -> str
         return "Superior"
     if cats & {"Tradicional", "Extraforte"} or qg is not None or {"ABIC/pureza", "PQC"} & set(tags):
         return "Tradicional"
-    return "Sem exigência"
+    return "Sem categoria"
 
 
 # ---------------------------------------------------------------- item completo

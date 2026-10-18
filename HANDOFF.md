@@ -1,6 +1,6 @@
 # HANDOFF · licitacoes
 
-- **Atualizado em:** 2026-10-18 (Dashboard, nível de exigência, Telegram novo; automação ativa na main)
+- **Atualizado em:** 2026-10-18 (ajustes do dono, mapa do Brasil, 2ª revisão de bugs; automação ativa na main)
 - **Branch de trabalho:** `claude/confident-galileo-equwuz` · repositório `xMiraTorta/licitacoes` (renomeado pelo dono em 17/10/2026; site https://xmiratorta.github.io/licitacoes/). Merge automático autorizado (ver CLAUDE.md).
 - **Commit de partida:** `bd38a7f` (main). Último commit relevante: ver `git log` da branch.
 
@@ -11,6 +11,16 @@ CNAEs do dono: 1081-3/02 (torrefação e moagem de café, principal), 4611-7/00 
 
 ## Escopo aprovado
 O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. Segredos do Telegram cadastrados pelo dono (confirmado pelo envio do aviso de falha do run #1). Não autorizado: ampliar para outros CNAEs.
+
+## Sessão 18/10/2026 (3): ajustes do dono e 2ª revisão de bugs
+- **Itens cancelados**: o PNCP mantém a compra aberta por causa de outros itens; 12 itens de café "Anulado/Revogado/Cancelado" e 2 "Homologado" (3 compras) apareciam. Agora só entra item com `situacaoCompraItem == 1` (Em andamento); `reclassificar` tirou as 3 compras publicadas (331 restantes).
+- **"Sem exigência" virou "Sem categoria"** (o edital pode pedir vácuo, validade etc., só não pede categoria/selo/nota). Piso salvo com o nome antigo é migrado no navegador. Revisão dos 84 itens: nota lida também em "escala/avaliação/análise sensorial" (1 item virou Tradicional); exigências novas "Premium/1ª qualidade (termo comercial)" e "Grãos selecionados"; aviso no detalhe quando o texto usa termos de classificação de outro grão ("grupo especial, subgrupo empeliculado, tipo 1" = estrutura da IN MAPA 32/2016 do amendoim; não existe para café torrado, Portaria SDA 570/2022). Decisão aberta para o dono: "premium" não conta como Superior (termo comercial, sem padrão oficial).
+- **Termos do dia a dia**: mediana → "preço típico"; metade central/quartis → "faixa comum" (site e Telegram).
+- **Mapa do Brasil** real no Dashboard (malha IBGE simplificada, `coletor/mapa.py`, linha `MAPA_UF`), com lista dos 10 estados.
+- **2ª revisão de bugs** (2 revisores independentes, todos os achados verificados e corrigidos com teste):
+  - coletor: "no mínimo 6,0" não lia a nota; faixa "7,0 - 500g" descartava a nota; "análise sensorial por 5 provadores" virava nota 5; "bebida 'mole'"/"bebida: mole" não reconhecidos; "superior ou acima" e "café superior" perdiam a categoria ("qualidade superior" de marca equivalente continua fora); "não aceita conilon"/"embalagem robusta" viravam "aceita conilon"; "100% arábica e/ou conilon" dava 100% arábica; reclassificar não somava exigências novas em itens com trecho do edital; número com ano repetido ("114/2026/2026", 12 compras); Telegram: compra só de cesta mostrava "valor não informado", nível diferente do site sem R$/kg, sem pausa entre mensagens (dia com muitas novas parava no 429; agora 1,1 s e respeita `retry_after`), "R$ 1.000 mil", apóstrofo virando entidade.
+  - site: campos de piso perdiam foco/valor (redesenho no `change` e na atualização automática); detalhe com rolagem lateral no celular (151 compras; 0 agora); "nota com teto" falso em 13 de 23 avisos; "melhores oportunidades" dizia "só as que cobrem o piso" mas mostrava níveis sem piso; cliques do Dashboard acumulavam filtros; R$/kg da linha diferente do comparado (item principal agora prefere torrado e moído, também no Telegram); filtro "cobre meu piso" sem piso escondia tudo; texto inválido apagava o piso; "por que nível" dizia "bebida mole" para "mole a dura"; importação trocava piso sem avisar; Dashboard sem teclado; link do piso ia sempre para o 1º nível; cartão "Vale a pena?" espremido no celular.
+- Testes: 217 passando (`pytest -q`).
 
 ## Sessão 18/10/2026 (2): Dashboard, preço × exigência, Telegram (pedido do dono)
 Decisões do dono: referência = mediana do nível + "meu piso" por nível; Dashboard substitui a aba Painel e abre primeiro.

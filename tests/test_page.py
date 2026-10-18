@@ -460,4 +460,60 @@ def test_drawer_starts_with_verdict_and_specs(page: Page, fixture_url: str) -> N
     assert "nível Superior" in d.locator(".verdict").inner_text() and "R$ 66,03/kg" in d.locator(".verdict").inner_text()
     assert "Nível de exigência" in d.locator(".spec-grid").inner_text()
     d.locator('[data-act="pisos"]').click()
-    page.wait_for_function("document.activeElement && document.activeElement.dataset.piso === 'Sem exigência'")
+    page.wait_for_function("document.activeElement && document.activeElement.dataset.piso === 'Superior'")  # vai para o nível da compra
+
+
+def test_copied_classification_text_gets_attention_point(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00';
+      const i = j.compras.find(c => c.chave === '%s').itens[0];
+      i.espec = 'CAFÉ INSOLUVEL - Café torrado e moído, grupo especial, subgrupo empeliculado, tipo 1'; window.__monitor.apply(j); }""" % FIRST)
+    d = open_detail(page, FIRST)
+    assert "subgrupo empeliculado" in d.locator(".warn-list").inner_text()
+
+
+def test_floor_inputs_keep_focus_and_reject_garbage(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, tab="dash")
+    page.locator('[data-piso="Tradicional"]').fill("60")
+    page.keyboard.press("Tab")
+    page.wait_for_timeout(100)
+    assert page.evaluate("document.activeElement.dataset.piso") == "Superior"  # o Tab não se perde
+    page.locator('[data-piso="Tradicional"]').fill("abc")
+    page.locator('[data-piso="Tradicional"]').blur()
+    assert ls(page, PISOK) == {"Tradicional": 60}  # texto inválido não apaga o piso
+    assert page.locator('[data-piso="Tradicional"]').input_value() == "60,00"
+
+
+def test_dashboard_click_starts_from_clean_filters(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, tab="dash")
+    page.click('#dash [data-cf="niveis|Superior"]')
+    page.click('[data-tab="dash"]')
+    page.locator('#dash .maptop [data-cf="ufs|MG"]').click()
+    f = page.evaluate("window.__monitor.F()")
+    assert f["ufs"] == ["MG"] and f["niveis"] == []
+
+
+def test_floor_filter_ignored_without_floors(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, tab="dash")
+    piso = page.locator('[data-piso="Superior"]')
+    piso.fill("70")
+    piso.blur()
+    page.click('[data-tab="list"]')
+    page.locator('[data-t="viavel"]').check()
+    page.click('[data-tab="dash"]')
+    page.locator('[data-piso="Superior"]').fill("")
+    page.locator('[data-piso="Superior"]').blur()
+    page.wait_for_timeout(100)
+    assert page.evaluate("window.__monitor.F().viavel") is False
+    page.click('[data-tab="list"]')
+    assert page.evaluate("window.__monitor.count()") == 8
+
+
+def test_mobile_drawers_fit_screen(browser: Any, fixture_url: str) -> None:
+    page = browser.new_page(viewport={"width": 390, "height": 844})
+    goto(page, fixture_url, tab="dash")
+    ruins = page.evaluate("""() => window.__monitor.data().compras.map(c => c.chave).filter(k => { window.__monitor.open(k);
+      const d = document.querySelector('.d-body'), v = document.querySelector('.verdict');
+      return d.scrollWidth > d.clientWidth + 1 || !v || v.getBoundingClientRect().height < 60; })""")
+    assert ruins == []
+    page.close()

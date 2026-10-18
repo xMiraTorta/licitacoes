@@ -30,7 +30,7 @@ class Item(_Base):
     tags: list[str]
     espec: str
     usa_trecho: bool
-    nivel: Literal["Sem exigência", "Tradicional", "Superior", "Gourmet/especial"] | None = None  # inferido
+    nivel: Literal["Sem categoria", "Tradicional", "Superior", "Gourmet/especial"] | None = None  # inferido
     qg: float | None = Field(default=None, ge=4, le=10)  # nota mínima de Qualidade Global exigida (0-10)
 
 

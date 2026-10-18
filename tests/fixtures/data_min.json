@@ -282,6 +282,7 @@
    ],
    "tags": [
     "Marca ref.",
+    "Premium/1ª qualidade (termo comercial)",
     "Validade ≥12 meses"
    ],
    "resumo": "T&M 500g ×1393 UN; Solúvel 200g ×545 UN",
@@ -308,6 +309,7 @@
      "sit": "Em andamento",
      "tags": [
       "Marca ref.",
+      "Premium/1ª qualidade (termo comercial)",
       "Validade ≥12 meses"
      ],
      "espec": "CAFÉ TORRADO E MOÍDO DO TIPO SUPERIOR, DE PRIMEIRA QUALIDADE, COM AS SEGUINTES CARACTERÍSTICAS: MARCAS DE REFERÊNCIA: MELITTA SUPERIOR OU EQUIVALENTE. BEBIDA (SABOR): DO TIPO INTENSO, EMBALAGEM: TIPO ALTO VÁCUO OU VÁCUO PURO EM PACOTES DE 500 GRAMAS; INTENSIDADE 8 • DEVERÁ CONSTAR NA EMBALAGEM A DATA DE FABRICAÇÃO E PRAZO DE VALIDADE, QUE DEVERÁ SER DE, NO MÍNIMO, 12 (DOZE) MESES; • NO ATO DA ENTREGA DO PRODUTO, PODERÃO TER TRANSCORRIDO, NO MÁXIMO, 60 (SESSENTA) DIAS DA DATA DE SUA FABRICAÇÃO.",
@@ -460,8 +462,8 @@
      "me": "Não se aplica",
      "sit": "Em andamento",
      "tags": [
-      "ABIC/pureza",
       "100% arábica",
+      "ABIC/pureza",
       "Validade ≥6 meses",
       "Amostra",
       "Marca ref."
@@ -736,7 +738,8 @@
     "Não se aplica / não informado"
    ],
    "tags": [
-    "ABIC/pureza"
+    "ABIC/pureza",
+    "Premium/1ª qualidade (termo comercial)"
    ],
    "resumo": "Solúvel ×437 PAC; T&M 500g ×3406 PAC; T&M 500g ×1675 PAC; T&M 500g ×3937 PAC",
    "dup": "",
@@ -784,7 +787,8 @@
      "me": "Não se aplica",
      "sit": "Em andamento",
      "tags": [
-      "ABIC/pureza"
+      "ABIC/pureza",
+      "Premium/1ª qualidade (termo comercial)"
      ],
      "espec": "Café torrado e moído ESPECIAL ou PREMIUM, Intensidade 7, Certificado pureza e qualidade ABIC, embalagem alto vácuo, pacote com 500 gramas",
      "usa_trecho": false,
@@ -898,6 +902,7 @@
    ],
    "tags": [
     "ABIC/pureza",
+    "Premium/1ª qualidade (termo comercial)",
     "Validade ≥6 meses"
    ],
    "resumo": "T&M 250g ×600 PCT",
@@ -926,6 +931,7 @@
      "sit": "Em andamento",
      "tags": [
       "ABIC/pureza",
+      "Premium/1ª qualidade (termo comercial)",
       "Validade ≥6 meses"
      ],
      "espec": "CAFÉ – torrado e moído embalagem comum de 250 gramas, de primeira qualidade, com selo de pureza da Associação Brasileira da Indústria do Café - ABIC. O produto deverá ter registro no Ministério da Saúde e atender a Portaria 451/97 do Ministério da Saúde. Prazo de validade mínimo de 6 (seis) meses a partir data de entrega.",
@@ -989,6 +995,7 @@
    ],
    "tags": [
     "ABIC/pureza",
+    "Premium/1ª qualidade (termo comercial)",
     "Validade ≥6 meses"
    ],
    "resumo": "T&M 250g ×600 Pacote",
@@ -1017,6 +1024,7 @@
      "sit": "Em andamento",
      "tags": [
       "ABIC/pureza",
+      "Premium/1ª qualidade (termo comercial)",
       "Validade ≥6 meses"
      ],
      "espec": "LOTE 01 - CAFE torrado e moido embalagem comum de 250 gramas, de primeira qualidade, com selo de pureza da Associacao Brasileira da Industria do Cafe - ABIC. O produto devera ter registro no Ministerio da Saude e atender a Portaria 451/97 do Ministerio da Saude. Prazo de validade minimo de 6 (seis) meses a partir data de entrega.",
