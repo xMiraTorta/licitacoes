@@ -1,0 +1,34 @@
+{
+ "atualizado_em": "2026-10-18",
+ "aviso": "Premissas padrão do custo por oportunidade. O dono ajusta as dele no site (Dashboard > Meus custos); estas valem para quem não ajustou e para o Telegram. Estimativas, não orçamento.",
+ "perda_torra": 0.18,
+ "torra_rs_kg_verde": 5.0,
+ "embalagem_rs_kg": 5.0,
+ "frete": {
+  "fixo_por_envio": 180.0,
+  "rs_kg": 2.10,
+  "rs_kg_100km": 0.23,
+  "ad_valorem": 0.008,
+  "lotacao_fixo": 451.84,
+  "lotacao_rs_km": 4.0738,
+  "folga": 0.20,
+  "entregas": 1,
+  "entregas_registro_precos": 3
+ },
+ "pct_preco": {"das": 0.045, "financeiro": 0.026, "perdas": 0.01},
+ "por_licitacao": {"plataforma": 129.0, "laudo": 0.0, "amostra_kg": 2.0},
+ "fontes": {
+  "torra_embalagem_perda": "Informados pelo dono em 18/10/2026: torra terceirizada ~R$ 5/kg (de café verde) com perda de ~18%; empacotamento terceirizado ~R$ 5/kg. Perda de 13% (clara) a 20% (escura) na literatura (UEL, 2005).",
+  "grao": "coletor/mercado.json (semanal): CEPEA/ESALQ e Escritório Carvalhaes, receita de blend por nível pelas Resoluções SAA-SP 28, 30 e 31/2007. Café da fazenda entra pelo preço que se receberia vendendo.",
+  "frete_fracionado": "Ajuste sobre 42 cotações Jadlog Rodo saindo de Uberaba em 18/10/2026 (100 a 1.000 kg; erro médio 17%, até ~30% em alguns destinos). Ad valorem: mediana 0,8% da nota (0,7% a 2,4%).",
+  "frete_lotacao": "Piso mínimo de frete ANTT, carga geral, 2 eixos (Res. 6.084/2026 e Portaria SUROC 22/2026, vigente desde 30/09/2026); sem pedágio, lucro e tributos.",
+  "frete_folga": "20% de folga sugerida pela pesquisa (preço de balcão sem contrato, taxa de difícil entrega em prefeituras).",
+  "entregas": "Registro de preços costuma ter entregas parceladas; 3 entregas é premissa (cada entrega a mais custa ~R$ 180 no fracionado).",
+  "das": "Simples Nacional, Anexo II (industrialização por encomenda do próprio café verde, SC Cosit 212/2014), 1ª faixa 4,5% (até R$ 180 mil em 12 meses); 2ª faixa até 6,15% efetivo. Sem DIFAL em venda a órgão de outro estado; café torrado sem ST em MG. Confirmar com o contador.",
+  "financeiro": "1,5 mês até receber (estimativa) x 1,73% ao mês (capital de giro PJ, Banco Central, ago/2026). CNM dez/2025: 28,8% das prefeituras com pagamentos atrasados.",
+  "perdas": "1% (estimativa, sem dado público).",
+  "plataforma": "R$ 129 por processo (Portal de Compras Públicas, crédito avulso, 18/10/2026); Compras.gov.br grátis; BLL 1,5% do lote vencido até R$ 600; Licitanet R$ 98; BNC R$ 118,80; Licitar Digital R$ 138,90.",
+  "laudo": "Laudo sensorial/microscopia: sem preço público (orçar em laboratório credenciado); 0 até o dono informar.",
+  "amostra": "2 kg de produto por licitação (ex.: Prefeitura de SP pede 4 x 500 g), ao custo direto do café."
+ }
+}

@@ -1,6 +1,6 @@
 # HANDOFF · licitacoes
 
-- **Atualizado em:** 2026-10-18 (só café torrado, leitor de editais, marcas de referência; automação ativa na main)
+- **Atualizado em:** 2026-10-18 (custo e margem por oportunidade, preços semanais de mercado; automação ativa na main)
 - **Branch de trabalho:** `claude/confident-galileo-equwuz` · repositório `xMiraTorta/licitacoes` (renomeado pelo dono em 17/10/2026; site https://xmiratorta.github.io/licitacoes/). Merge automático autorizado (ver CLAUDE.md).
 - **Commit de partida:** `bd38a7f` (main). Último commit relevante: ver `git log` da branch.
 
@@ -11,6 +11,15 @@ CNAEs do dono: 1081-3/02 (torrefação e moagem de café, principal), 4611-7/00 
 
 ## Escopo aprovado
 O dono autorizou implementar "o que for válido" e, em 17/10/2026, **fazer merge automaticamente** dos PRs (PR #1 mergeado nesta data). Ele revogou o acesso OAuth do Grok no GitHub (restam só GitHub CLI e VS Code) e **apagou o bot antigo; o novo bot é @LicitacoesGovernoBot**. Segredos do Telegram cadastrados pelo dono (confirmado pelo envio do aviso de falha do run #1). Não autorizado: ampliar para outros CNAEs.
+
+## Sessão 18/10/2026 (7): custo e margem, preços semanais (pedido do dono)
+- **Dados do dono**: grão da fazenda ou comprado (depende); torra terceirizada ~R$ 5/kg com perda ~18%; embalagem ~R$ 5/kg; empresa nova no Simples Nacional em MG; margem variável (quer ver a margem de cada oferta ao preço do órgão).
+- **3 pesquisas (agentes, ~640 mil tokens no total)**, guardadas em `docs/pesquisas/`: grão por nível (CEPEA + Carvalhaes; receita de blend pelas Res. SAA-SP 28/30/31-2007), frete (42 cotações Jadlog saindo de Uberaba + piso ANTT Res. 6.084/2026), impostos e outros custos (Simples Anexo II 4,5%, sem DIFAL, sem ST em MG; plataformas; custo financeiro; perdas).
+- **Implementado**: `coletor/mercado.py` (café verde por nível, semanal), `coletor/varejo.py` (marcas, semanal), workflow `precos.yml` (segunda 6h23; parte que falha mantém o anterior e avisa no Telegram), `coletor/custos.py` + `custos.json` (premissas), no site: margem na lista (computador e celular), ordenar por "Maior margem estimada", cartão "Custo e margem" no detalhe (decomposição, lucro, preço para empatar), margem ao "meu preço" em Minha proposta, Dashboard > Meus custos (ajustável, sincroniza com a branch `dados`), método em Sobre. Telegram: linha "Margem estimada".
+- Resultado hoje (premissas padrão): 131 de 153 licitações com estimativa dão lucro ao preço do órgão; margem típica ~21%.
+- Testes: 258 (`pytest -q`), incluindo site × coletor com a mesma margem, ajuste de custo gravado no GitHub simulado, leitura das páginas CEPEA/Carvalhaes e das lojas com respostas simuladas.
+- **Pendências do dono**: orçar laudo de qualidade (sensorial + microscopia) e informar em Meus custos; pedir 2 a 3 cotações de frete com o CNPJ para recalibrar a fórmula (R$ 180 + R$ 2,10/kg + R$ 0,23/kg a cada 100 km + 0,8%); confirmar com o contador o Anexo II e a faixa do Simples.
+- Não verificado: lojas e CEPEA respondendo a partir dos servidores do GitHub (1ª execução semanal: segunda 26/10/2026; dá para rodar antes pelo botão "Run workflow").
 
 ## Sessão 18/10/2026 (6): checagens pedidas pelo dono
 - **Cestas básicas fora** (pedido do dono): regra pelo objeto (`cafe.objeto_de_cesta`: cesta básica/de alimentos/natalina, kit de alimentação/lanche, composição de cestas, benefícios eventuais; "cesta de preços" não) e pela descrição do item ("café em pó, cesta básica"). Saíram 23 compras (22 com objeto de cesta + Turvo, "benefícios eventuais"). Revisados os 19 editais restantes que citam cesta no texto: citação de passagem (pesquisa de preços, nome de fornecedor, item de cesta separado do café): ficam.

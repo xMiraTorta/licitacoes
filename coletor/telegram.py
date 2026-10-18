@@ -12,7 +12,7 @@ from urllib.parse import quote
 import httpx
 from loguru import logger
 
-from coletor import cafe, referencia
+from coletor import cafe, custos, mercado, referencia
 
 # O workflow passa o endereço do site (muda se o repositório for renomeado).
 PAINEL_URL = os.environ.get("PAINEL_URL") or "https://xmiratorta.github.io/licitacoes/"
@@ -84,6 +84,8 @@ def cartao(c: dict[str, Any], refs: dict[tuple[str, str], float]) -> str:
             else:
                 preco += f" {'▲' if dif > 0 else '▼'} {_num(abs(dif) * 100)}% {referencia.rotulo(dif)} do nível (R$ {_num(ref, 2)})"
         linhas.append(preco)
+        if (mg := custos.margem(c, principal, mercado.carregar())) is not None:
+            linhas.append(f"Margem estimada ~{_num(mg['margem_pct'] * 100)}% (custo ~R$ {_num(mg['custo'], 2)}/kg com frete e impostos)")
     if c.get("marcas"):
         linhas.append("Marcas de referência: " + e(", ".join(c["marcas"][:4])) + (" e outras" if len(c["marcas"]) > 4 else ""))
     linhas.append(f"⏰ {_prazo(c.get('fim'))} · {e(c['mod'])} {e(c['num'])} · {e(c.get('plat_f') or c.get('plat', ''))}{me}")

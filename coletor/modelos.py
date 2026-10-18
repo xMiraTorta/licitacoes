@@ -103,5 +103,6 @@ class Painel(_Base):
     compras: list[Compra]
     checklist: list[dict[str, Any]]
     coffee_break: list[dict[str, Any]]
+    custos: dict[str, Any] = {}  # premissas padrão de custo e margem (coletor/custos.json)
     mercado: dict[str, Any] = {}  # café verde por nível de exigência (coletor/mercado.json)
     marcas_ref: dict[str, Any] = {}  # varejo e categoria ABIC das marcas de referência (coletor/marcas_cafe.json)

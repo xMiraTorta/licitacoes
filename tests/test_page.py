@@ -6,7 +6,7 @@ from typing import Any
 
 from playwright.sync_api import Locator, Page
 
-from tests.conftest import wait_ready
+from tests.conftest import ROOT, wait_ready
 
 WFK = "monitorLicitacoes.meusDados.v1"
 UIK = "monitorLicitacoes.ui.v1"
@@ -660,3 +660,28 @@ def test_status_on_card_and_stop_following(page: Page, fixture_url: str) -> None
     w = ls(page, WFK)[FIRST]
     assert not w.get("fav") and not w.get("status") and w["notas"] == "ligar"  # notas ficam
     assert page.locator("#board .prop").count() == 0 and page.locator("#n-mine").inner_text() == "0"
+
+
+def test_margin_estimate_matches_collector_and_follows_my_costs(browser: Any, fixture_url: str) -> None:
+    from coletor import custos, referencia
+    data = json.loads((ROOT / "tests" / "fixtures" / "data_min.json").read_text(encoding="utf-8"))
+    c = next(x for x in data["compras"] if x["chave"] == FIRST)
+    py = custos.margem(c, referencia.item_principal(c), data["mercado"], data["custos"])
+    assert py is not None
+    gh = FakeGitHub()
+    page = aparelho(browser, fixture_url, gh)
+    js = page.evaluate(f"(() => {{ const c = window.__monitor.data().compras.find(x => x.chave === '{FIRST}'); "
+                       "return {custo: c._mg.custo, mp: c._mg.mp, empate: c._mg.empate}; })()")
+    assert abs(js["custo"] - py["custo"]) < 0.01 and abs(js["mp"] - py["margem_pct"]) < 0.0001  # mesma regra nos dois lados
+    assert f"margem ~{round(py['margem_pct'] * 100)}%" in row(page, FIRST).inner_text()
+    d = open_detail(page, FIRST)
+    card = d.locator('.card:has(h3:has-text("Custo e margem"))').inner_text()
+    assert "Preço para empatar" in card and "Frete até" in card
+    d.locator('[data-act="custos"]').click()  # leva a Meus custos
+    page.locator('[data-custo="torra"]').fill("15")
+    page.keyboard.press("Tab")
+    page.wait_for_function(f"window.__monitor.data().compras.find(x => x.chave === '{FIRST}')._mg.custo > {js['custo']} + 10")
+    espera_salvo(page)
+    assert gh.doc["custos"]["valores"]["torra"] == 15  # gravado com as anotações
+    page.locator('[data-act="custos-padrao"]').click()
+    page.wait_for_function(f"Math.abs(window.__monitor.data().compras.find(x => x.chave === '{FIRST}')._mg.custo - {js['custo']}) < 0.01")

@@ -17,7 +17,7 @@ from typing import Any
 
 from loguru import logger
 
-from coletor import marcas, mercado
+from coletor import custos, marcas, mercado
 
 DATA_PREFIX = "const DATA0 = "
 LIMITE_FALHAS = 0.05
@@ -137,6 +137,7 @@ def atualizar_cabecalho(html: str, gerado_em: datetime) -> str:
 def gravar(data: dict[str, Any], destino: Path, gerado_em: datetime) -> None:
     data["marcas_ref"] = marcas.resumo()  # pesquisa de varejo das marcas citadas em editais (coletor/marcas_cafe.json)
     data["mercado"] = mercado.carregar()  # café verde por nível (coletor/mercado.json, semanal)
+    data["custos"] = custos.premissas()  # premissas padrão da margem (coletor/custos.json)
     validar(data)
     texto = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     html_path = destino / "index.html"
