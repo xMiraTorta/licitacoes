@@ -1,5 +1,5 @@
 {
- "atualizado_em": "2026-10-18",
+ "atualizado_em": "2026-10-19",
  "perda_torra": 0.18,
  "cepea": {
   "arabica": {
@@ -109,6 +109,19 @@
    "regra": "Edital sem exigência: o blend mais simples que passa no mínimo legal (nota 4,5, Portaria MAPA 570/2022), igual ao Tradicional."
   }
  },
+ "historico": [
+  {
+   "data": "2026-10-16",
+   "arabica": 1601.25,
+   "robusta": 963.28,
+   "niveis": {
+    "Tradicional": 1248.86,
+    "Superior": 1572.24,
+    "Gourmet/especial": 1859.51,
+    "Sem categoria": 1248.86
+   }
+  }
+ ],
  "fontes": {
   "cepea": "https://www.cepea.org.br/br/indicador/cafe.aspx (CC BY-NC 4.0)",
   "carvalhaes": "https://www.carvalhaes.com.br/cotacoes/cotacoes.asp"
