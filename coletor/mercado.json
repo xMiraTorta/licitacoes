@@ -12,31 +12,31 @@
   }
  },
  "carvalhaes": {
-  "data": "2026-10-16",
+  "data": "2026-10-19",
   "saca60": {
    "cd_finos": [
     1884.3,
     1983.47
    ],
    "finos": [
-    1735.54,
-    1804.96
+    1785.12,
+    1834.71
    ],
    "boa_qualidade": [
-    1685.95,
-    1735.54
+    1735.54,
+    1785.12
    ],
    "duro_fraco": [
-    1487.6,
-    1537.19
+    1537.19,
+    1586.78
    ],
    "riados": [
-    1338.84,
-    1388.43
+    1388.43,
+    1438.02
    ],
    "rio": [
-    1289.26,
-    1338.84
+    1338.84,
+    1388.43
    ],
    "consumo_dura": [
     1289.26,
@@ -50,11 +50,11 @@
  },
  "niveis": {
   "Tradicional": {
-   "saca60_min": 1158.87,
+   "saca60_min": 1188.62,
    "saca60_max": 1338.84,
-   "kg_min": 19.31,
+   "kg_min": 19.81,
    "kg_max": 22.31,
-   "kg_medio": 20.81,
+   "kg_medio": 21.06,
    "receita_min": {
     "rio": 0.6,
     "robusta": 0.4
@@ -65,11 +65,11 @@
    "regra": "Res. SAA-SP 28/2007: até tipo 8, bebida mole a rio (sem rio zona), até 20% de grãos pretos/verdes/ardidos; aceita conilon sem predominar (40% é premissa nossa, a norma não fixa)."
   },
   "Superior": {
-   "saca60_min": 1408.95,
-   "saca60_max": 1735.54,
-   "kg_min": 23.48,
-   "kg_max": 28.93,
-   "kg_medio": 26.2,
+   "saca60_min": 1451.1,
+   "saca60_max": 1785.12,
+   "kg_min": 24.18,
+   "kg_max": 29.75,
+   "kg_medio": 26.97,
    "receita_min": {
     "duro_fraco": 0.85,
     "robusta": 0.15
@@ -80,11 +80,11 @@
    "regra": "Res. SAA-SP 30/2007: arábica tipos 2 a 6, bebida dura ou mole, até 15% de conilon, até 10% de defeitos."
   },
   "Gourmet/especial": {
-   "saca60_min": 1735.54,
+   "saca60_min": 1785.12,
    "saca60_max": 1983.47,
-   "kg_min": 28.93,
+   "kg_min": 29.75,
    "kg_max": 33.06,
-   "kg_medio": 30.99,
+   "kg_medio": 31.4,
    "receita_min": {
     "finos": 1.0
    },
@@ -94,11 +94,11 @@
    "regra": "Res. SAA-SP 31/2007: 100% arábica, bebida apenas mole a estritamente mole, tipos 2 a 4, sem defeitos (pode exigir catação, que tira peso: não incluída)."
   },
   "Sem categoria": {
-   "saca60_min": 1158.87,
+   "saca60_min": 1188.62,
    "saca60_max": 1338.84,
-   "kg_min": 19.31,
+   "kg_min": 19.81,
    "kg_max": 22.31,
-   "kg_medio": 20.81,
+   "kg_medio": 21.06,
    "receita_min": {
     "rio": 0.6,
     "robusta": 0.4
@@ -119,6 +119,17 @@
     "Superior": 1572.24,
     "Gourmet/especial": 1859.51,
     "Sem categoria": 1248.86
+   }
+  },
+  {
+   "data": "2026-10-19",
+   "arabica": 1601.25,
+   "robusta": 963.28,
+   "niveis": {
+    "Tradicional": 1263.73,
+    "Superior": 1618.11,
+    "Gourmet/especial": 1884.3,
+    "Sem categoria": 1263.73
    }
   }
  ],
