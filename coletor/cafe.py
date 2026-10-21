@@ -289,7 +289,11 @@ _QG = re.compile(r"(?:qualidade global|pontuacao(?: global| sensorial| final)?|n
 _QG_FAIXA = re.compile(r"\s*(?:pontos\s*)?(?:-|a|ate|e)\s*(\d{1,3}(?:[,.]\d{1,2})?)(?![\d%])")
 # "nota: validade mínima de 90 dias", "nota fiscal nº 12": número que não é nota de qualidade.
 _QG_NAO = re.compile(r"validade|prazo|fiscal|entrega|empenho|dias|meses|anos|horas|item|lote|provador|amostra|pacote|"
-                     r"unidade|norma|tecnica|explicativa|informativa|\bn\.?\s*$")  # "nº 12" (o º some na normalização), "Nota Técnica 5/2023"; "no mínimo" continua valendo
+                     r"unidade|norma|\bn\.?\s*$")  # "nº 12" (o º some na normalização); "no mínimo" continua valendo
+# "Nota Técnica 5/2023", "Nota Conjunta 12/2024": documento, não nota de qualidade. Só logo depois de "nota" (ancorado):
+# "nota de qualidade global (avaliação técnica) mínima 6,0" continua valendo.
+_QG_DOCUMENTO = re.compile(r"^\s*(?:tecnica|explicativa|informativa|conjunta|sei)\b")
+_QG_NUMERO_DE_DOC = re.compile(r"/\d{2,4}\b")  # o número seguido de "/2023"
 # "análise sensorial realizada por 5 provadores": nessas palavras, o número só é nota se vier com nota/mínima/pontos.
 _SENSORIAL = re.compile(r"escala sensorial|avaliacao sensorial|analise sensorial")
 _NOTA_PERTO = re.compile(r"nota|minim|pontos|escala|igual ou superior|acima de|maior que")
@@ -299,6 +303,8 @@ def nota_qg(t: str) -> float | None:
     """Nota mínima de qualidade exigida (0 a 10), quando o texto cita uma. "Mínima de 4,5 a 5,9" -> 4,5."""
     for m in _QG.finditer(t):
         if _QG_NAO.search(m.group(1)) or _QG_NAO.search(m.group(3)):
+            continue
+        if _QG_DOCUMENTO.match(m.group(1)) or _QG_NUMERO_DE_DOC.match(t, m.end(2)):
             continue
         if _SENSORIAL.match(m.group(0)) and not _NOTA_PERTO.search(m.group(0)[len(_SENSORIAL.match(m.group(0)).group(0)):]
                                                                     + t[m.end(): m.end() + 12]):

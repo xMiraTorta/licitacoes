@@ -189,6 +189,13 @@ def test_item_de_cesta_basica() -> None:
     ("nota: validade residual minima de 90 dias", None),
     ("nota fiscal n 12345", None),
     ("intensidade 7, certificado abic", None),
+    # número de documento, não nota de qualidade
+    ("cafe torrado e moido 500 g, conforme nota tecnica 5/2023 do mapa", None),
+    ("nota tecnica mapa 45/2023", None),
+    ("nota conjunta 5/2023 do ministerio", None),
+    # "tecnica" no meio da frase não cancela uma nota de verdade
+    ("nota de qualidade global (avaliacao tecnica) minima 6,0", 6.0),
+    ("nota de qualidade global, ficha tecnica, minimo 7,3", 7.3),
 ])
 def test_nota_qualidade_global(texto: str, nota: float | None) -> None:
     assert cafe.nota_qg(texto) == nota
