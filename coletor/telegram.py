@@ -20,7 +20,7 @@ from loguru import logger
 from coletor import cafe, custos, mercado, referencia
 
 # O workflow passa o endereço do site (muda se o repositório for renomeado).
-PAINEL_URL = os.environ.get("PAINEL_URL") or "https://xmiratorta.github.io/licitacoes/"
+PAINEL_URL = os.environ.get("PAINEL_URL") or "https://xmiratorta.github.io/monitor-licitacoes/"  # os workflows passam a URL certa pelo nome do repositório
 LIMITE_MSG = 3900  # Telegram aceita 4096 caracteres por mensagem
 PERTO = ("MG", "SP", "GO")
 DIAS = ("segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo")

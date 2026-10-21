@@ -1,4 +1,4 @@
-# CLAUDE.md · licitacoes
+# CLAUDE.md · monitor-licitacoes
 
 **Ao iniciar qualquer sessão: leia `HANDOFF.md` primeiro.** Atualize-o a cada etapa relevante concluída (não só no fim), com evidência do que foi testado.
 
@@ -58,4 +58,4 @@ No ambiente de nuvem do Claude Code o Chromium fica em `/opt/pw-browsers/chromiu
 - Custos: tudo que for caro ou demorado no dia a dia (APIs pagas, coletas longas, mais chamadas ao PNCP) deve ser levado ao dono para decidir antes de implementar.
 - Textos para o dono: sem jargão estatístico. Mediana = "preço típico", metade central = "faixa comum".
 - Preferências do dono: Python com `.venv`, type hints, loguru (nunca print), pytest, Pydantic, `requirements.txt` com `>=`; no site, TypeScript estrito, vitest, nomes em português. Nada de silenciar erros. Commits pequenos e descritivos. Sem travessão longo em textos para o dono. Mensagens do Telegram: curtas, profissionais, sem exclamação, no máximo 1 emoji (pedido de 18/10/2026).
-- Nomes: o repositório é `xMiraTorta/licitacoes` (o dono quer uniformidade: pasta, sessão e repositório com o mesmo nome).
+- Nomes: o repositório é `xMiraTorta/monitor-licitacoes` (renomeado de `licitacoes` em 21/10/2026 a pedido do dono; ele quer uniformidade: pasta, sessão e repositório com o mesmo nome). O site fica em https://xmiratorta.github.io/monitor-licitacoes/; o endereço antigo não redireciona. Nada no código depende do nome: `vite.config.ts` usa caminhos relativos, os workflows montam a URL pelo nome do repositório e o site descobre o repositório pelo próprio endereço.

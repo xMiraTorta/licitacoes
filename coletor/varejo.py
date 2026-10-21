@@ -138,7 +138,7 @@ def atualizar(base_path: Path, hoje: str, cliente: httpx.Client | None = None) -
     por_marca: dict[str, list[dict[str, Any]]] = {}
     for ln in base["linhas"]:
         por_marca.setdefault(ln["marca"], []).append(ln)
-    cliente = cliente or httpx.Client(timeout=25, headers={"User-Agent": "Mozilla/5.0 (monitor de licitacoes de cafe)"},
+    cliente = cliente or httpx.Client(timeout=25, headers={"User-Agent": "Mozilla/5.0 (monitor-licitacoes; github.com/xMiraTorta)"},
                                       follow_redirects=True)
     tarefas = [(loja, m, f"cafe {marcas.MARCAS[m][0][0]}") for m in por_marca for loja in LOJAS]
     with ThreadPoolExecutor(max_workers=3) as ex:
