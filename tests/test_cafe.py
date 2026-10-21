@@ -17,6 +17,17 @@ from tests.conftest import ROOT
     ("Café torrado em grãos, 100% arábica, 1 kg", cafe.GRAO),
     ("CÁPSULA DE CAFÉ (COMPATÍVEL SISTEMA DOLCE GUSTO)", cafe.CAPSULA),
     ("CAFÉ PRONTO, GARRAFA DE 5 LITROS, coado no momento da entrega", cafe.BEBIDA),
+    ("Café torrado e moído pronto para servir em garrafa térmica 2 litros", cafe.BEBIDA),
+    # "isento de grãos verdes/crus" e "pronto para consumo" são exigências do café TORRADO, não café cru nem bebida
+    ("CAFÉ EM PÓ, ISENTO DE GRÃOS PRETOS, VERDES E ARDIDOS, EMBALAGEM 500G", cafe.TM),
+    ("Café moído, isento de grãos pretos, verdes e ardidos, pacote 500g", cafe.TM),
+    ("CAFÉ ISENTO DE GRÃOS PRETOS, FERMENTADOS E CRUS, EMBALAGEM 500G", cafe.TM),
+    ("Café torrado e moído, embalagem 500g, produto pronto para consumo", cafe.TM),
+    # café cru de verdade continua fora
+    ("café arábica cru beneficiado", cafe.CRU),
+    ("Café cru, isento de grãos pretos e verdes, saca 60kg", cafe.CRU),
+    ("Café em grãos crus, máximo 20 defeitos, saca 60kg", cafe.CRU),
+    ("CAFÉ VERDE EM GRÃO CRU, SACA 60 KG", cafe.CRU),
     ("BEBIDA CAFÉ: litro de café líquido sem leite para consumo em eventos", cafe.BEBIDA),
     ("Cafe em po 500 gramas para preparo de cafe coado", cafe.TM),
     ("CAFÉ DESCAFEINADO Café torrado e moído a vácuo, 250 gr", cafe.TM_DESCAF),
@@ -53,13 +64,17 @@ def test_tipo(desc: str, esperado: str) -> None:
     "CESTA RETANGULAR P/ PÃO DE CAFÉ DA MANHÃ - PCESTA RETANGULAR PARA PÃO, alimentos",
     "KIT COZINHA INFANTIL COM PANELINHAS, COOKTOP E UTENSÍLIOS: café, arroz e feijão de brinquedo",
     "FORNECIMENTO DE ALIMENTAÇÃO, almoço: arroz, feijão, salada, sal, café",
-    # prefixos aceitos desde VERSAO_REGRAS 2 não podem abrir passagem para utensílios
+    # prefixos aceitos desde VERSAO_REGRAS 2 e 3 não podem abrir passagem para utensílios
     "Aquisição de cafeteira elétrica",
     "Pacote de açúcar para café",
     "Caixa térmica para café",
     "Pacote de biscoito sabor café",
     "Descrição: filtro de papel para café",
     "Fornecimento de café da manhã",
+    "COTA PRINCIPAL - CAFETEIRA ELÉTRICA",
+    "AMPLA PARTICIPAÇÃO - FILTRO DE PAPEL PARA CAFÉ",
+    "GÊNEROS ALIMENTÍCIOS NÃO PERECÍVEIS - AÇÚCAR PARA CAFÉ",
+    "PARA CAFÉ: filtro de papel nº 103",
 ])
 def test_nao_e_cafe(desc: str) -> None:
     assert cafe.classificar(desc, "Unidade") is None
@@ -79,6 +94,13 @@ def test_nao_e_cafe(desc: str) -> None:
     "Produto: Café torrado",
     "Descrição: café torrado e moído",
     "Material de copa e cozinha - café torrado",
+    # VERSAO_REGRAS 3: prefixos de cota/exclusividade e "gêneros não perecíveis"
+    "ITEM EXCLUSIVO PARA ME/EPP - CAFÉ TORRADO E MOÍDO 500G",
+    "COTA PRINCIPAL 75% - CAFÉ TORRADO E MOÍDO 500G",
+    "AMPLA PARTICIPAÇÃO - CAFÉ TORRADO E MOÍDO 500G",
+    "GÊNEROS ALIMENTÍCIOS NÃO PERECÍVEIS - CAFÉ TORRADO E MOÍDO 500G",
+    "LOTE 02 - COTA PRINCIPAL - CAFÉ TORRADO E MOÍDO 500G",
+    "EXCLUSIVO PARA MICROEMPRESAS - CAFÉ TORRADO E MOÍDO 500G",
 ])
 def test_cafe_com_ruido_no_inicio(desc: str) -> None:
     assert cafe.classificar(desc, "Pacote") is not None

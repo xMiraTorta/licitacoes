@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, PositiveFloat
 
 
 class _Base(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow", allow_inf_nan=False)  # Infinity/NaN não existem em JSON: o navegador não leria o arquivo
 
 
 class Item(_Base):
@@ -94,7 +94,8 @@ class Compra(_Base):
 
 
 class Painel(_Base):
-    gerado_em: str
+    gerado_em: str  # hora da coleta no PNCP (o que o site mostra como "Dados de")
+    publicado_em: str | None = None  # hora da última gravação do arquivo (coleta, preços, reclassificação): o site troca os dados por ela
     run_date: str
     seed_date: str
     novas_desde: str

@@ -5,4 +5,5 @@ __pycache__/
 node_modules/
 site/dist/
 site/.vite/
+site/public/data.json
 novas.json

@@ -52,7 +52,7 @@ export function Hoje() {
           <Stacked partes={[{ v: k.boas, cls: "bom", t: "com margem boa" }, { v: k.apertadas, cls: "ap", t: "apertadas" }, { v: k.preju, cls: "preju", t: "prejuízo" }, { v: k.sem, cls: "sem", t: "sem preço" }]} />
           <span className="tiny muted">{k.boas} boas · {k.apertadas} apertadas · {k.preju} prejuízo · {k.sem} sem preço</span>
         </button>
-        <button type="button" className="kpi card fade" data-k="urg" onClick={() => irLista({ urg: true })}>
+        <button type="button" className="kpi card fade" data-k="urg" onClick={() => irLista({}, "prazo")}>
           <span className="lbl">Fecham em 7 dias</span>
           <span className="v"><Contador valor={k.fecham7} fmt={(x) => n0(Math.round(x))} /></span>
           <span className="s serious" style={{ fontWeight: 600 }}>{k.fecham3} em até 3 dias · {k.amanha} amanhã</span>
@@ -221,7 +221,7 @@ function Prazos({ O }: { O: PCompra[] }) {
         <div><h2>Prazos</h2><div className="sub">{vista === "dia" ? `Quantas fecham por dia · pico ${pico && pico.total ? fmtPrazo(pico.dia) : "—"}` : `Quantas fecham por semana · ${dados[0]?.total ?? 0} já na próxima`}</div></div>
         <Segmentado rotulo="Agrupar por" valor={vista} onChange={setVista} opcoes={[["dia", "Dia"], ["semana", "Semana"]]} pequeno />
       </figcaption>
-      <div className="card-b"><Barras dados={dados} onClick={() => { setF({ ...DEF(), urg: vista === "dia" }); setSort("prazo"); navegar("oportunidades"); }} /></div>
+      <div className="card-b"><Barras dados={dados} onClick={() => { setF(DEF()); setSort("prazo"); navegar("oportunidades"); }} /></div>
     </figure>
   );
 }

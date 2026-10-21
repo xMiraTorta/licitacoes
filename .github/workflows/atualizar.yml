@@ -76,17 +76,25 @@ jobs:
             echo "Nada mudou nos dados."
           else
             git commit -m "Atualiza licitações de café, $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M') (Brasília)"
-            # A coleta leva ~1 h; se a main mudou nesse tempo (outro commit), traz antes de enviar.
-            # Conflito nos dados (ex.: a reserva já publicou) faz o passo falhar e avisa: não sobrescreve.
-            git pull --rebase origin main
-            git push origin HEAD:main
+            # A coleta leva ~1 h; se a main mudou nesse tempo (outro commit), traz antes de enviar. Se alguém
+            # enviar entre o pull e o push (preços, reserva), tenta de novo até 3 vezes; conflito nos dados
+            # (ex.: a reserva já publicou) continua falhando e avisando: não sobrescreve.
+            enviado=0
+            for tentativa in 1 2 3; do
+              if git pull --rebase origin main && git push origin HEAD:main; then enviado=1; break; fi
+              git rebase --abort 2>/dev/null || true
+              echo "Envio para a main falhou (tentativa $tentativa de 3); aguardando 20 s"
+              sleep 20
+            done
+            if [ "$enviado" != 1 ]; then echo "::error::Não consegui enviar os dados para a main depois de 3 tentativas"; exit 1; fi
           fi
           # O push de data.json dispara o pages.yml, que monta e publica o site (1 a 2 min). Commits feitos com o
-          # GITHUB_TOKEN não disparam outros workflows: pede a execução pela API.
-          curl -sS -o /dev/null -w "Publicar site: HTTP %{http_code}\n" -X POST \
+          # GITHUB_TOKEN não disparam outros workflows: pede a execução pela API. Sem resposta 2xx o passo falha
+          # (e avisa): dados na main sem site novo é o pior dos casos, ninguém perceberia.
+          curl -sS -f -o /dev/null -w "Publicar site: HTTP %{http_code}\n" -X POST \
             -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
             "${{ github.api_url }}/repos/${{ github.repository }}/actions/workflows/pages.yml/dispatches" \
-            -d '{"ref":"main"}'
+            -d '{"ref":"main"}' || { echo "::error::O pages.yml não foi disparado: o site ficou com a versão anterior"; exit 1; }
 
       - name: Avisar no Telegram
         if: github.event_name == 'schedule' || inputs.acao == 'coletar'

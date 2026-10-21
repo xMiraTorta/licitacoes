@@ -48,6 +48,7 @@ class Leitura:
     marcas: list[str] = field(default_factory=list)
     prazo_entrega: str = ""
     itens: dict[Any, str] = field(default_factory=dict)  # número do item -> trecho do edital sobre ele
+    falhas: int = 0  # documentos que não baixaram: leitura parcial, vale tentar de novo na próxima coleta
 
 
 # ---------------------------------------------------------------- texto dos arquivos
@@ -103,9 +104,6 @@ def texto_de(nome: str, dados: bytes, profundidade: int = 0) -> str:
     if dados[:2] == b"PK":
         try:
             z = zipfile.ZipFile(io.BytesIO(dados))
-        except zipfile.BadZipFile:
-            return ""
-        try:
             nomes = z.namelist()
             if "word/document.xml" in nomes:  # DOCX
                 return _xml_texto(z.read("word/document.xml").decode("utf-8", "ignore"))
@@ -119,8 +117,8 @@ def texto_de(nome: str, dados: bytes, profundidade: int = 0) -> str:
                     continue
                 partes.append(texto_de(info.filename, z.read(info), profundidade + 1))
             return "\n".join(p for p in partes if p)
-        except (RuntimeError, NotImplementedError, zipfile.BadZipFile, zlib.error) as e:  # protegido por senha/corrompido
-            logger.warning("ZIP {} ilegível: {}", nome, e)
+        except Exception as e:  # noqa: BLE001 - protegido por senha, corrompido ou formato raro (BadZipFile, lzma, UnicodeDecodeError, ValueError...)
+            logger.warning("ZIP {} ilegível: {}", nome, e)  # vira "documentos sem texto legível", como um PDF escaneado
             return ""
     if dados[:4] == b"Rar!" and profundidade < 2:  # .rar (comum no PNCP): lido com a libarchive do sistema
         return _rar_texto(nome, dados, profundidade)
@@ -296,16 +294,7 @@ def analisar(texto: str, itens: list[dict[str, Any]]) -> Leitura:
 
 # ---------------------------------------------------------------- download e leitura de uma compra
 def _baixar(p: PNCP, url: str) -> bytes:
-    p._aguardar_vez()  # mesmo ritmo das outras chamadas ao PNCP (limite de rajadas)
-    with p.client.stream("GET", url, follow_redirects=True, timeout=120) as r:
-        if r.status_code != 200:
-            raise ColetaErro(f"{url} -> HTTP {r.status_code}")
-        dados = bytearray()
-        for bloco in r.iter_bytes():
-            dados.extend(bloco)
-            if len(dados) > MAX_BYTES:
-                raise ColetaErro(f"{url}: arquivo maior que {MAX_BYTES // 2**20} MB")
-        return bytes(dados)
+    return p.baixar(url, MAX_BYTES)  # mesmo ritmo e mesmas novas tentativas (429, 5xx, rede) das outras chamadas
 
 
 def ler(p: PNCP, chave: str, itens: list[dict[str, Any]], salvar_em: Path | None = None) -> Leitura:
@@ -337,12 +326,13 @@ def ler(p: PNCP, chave: str, itens: list[dict[str, Any]], salvar_em: Path | None
     if not lidos:
         return Leitura(STATUS_FALHA)
     if not textos:
-        return Leitura(STATUS_SEM_TEXTO, docs=lidos)
+        return Leitura(STATUS_SEM_TEXTO, docs=lidos, falhas=falhas)
     if salvar_em is not None:
         salvar_em.mkdir(parents=True, exist_ok=True)
         (salvar_em / (re.sub(r"\W", "_", chave) + ".txt")).write_text("\n\n=====\n\n".join(textos), encoding="utf-8")
     r = analisar("\n".join(textos), itens)
     r.docs = lidos
+    r.falhas = falhas
     return r
 
 
@@ -350,7 +340,12 @@ def ler(p: PNCP, chave: str, itens: list[dict[str, Any]], salvar_em: Path | None
 def aplicar(compra: dict[str, Any], r: Leitura, hoje: str) -> None:
     """Grava a leitura na compra. Cada item torrado recebe o trecho do edital que fala dele (`ed_trecho`);
     o nível é recalculado (o que falta na descrição do item vem do edital, marcado com *).
-    Leitura sem sucesso não apaga uma leitura boa anterior: só registra o status."""
+    Leitura sem sucesso não apaga uma leitura boa anterior (automática ou revisão manual): o status continua
+    descrevendo a leitura que vale, e a tentativa fica em `edital_tentativa`."""
+    anterior = compra.get("edital_status") or ""
+    if r.status != STATUS_LIDO and compra.get("edital_lido") and anterior.startswith(STATUS_LIDO):
+        compra["edital_tentativa"] = f"{hoje}: {r.status}"
+        return
     compra["edital_status"] = r.status
     if r.status == STATUS_FALHA or (r.status != STATUS_LIDO and compra.get("edital_lido")):
         return
@@ -361,6 +356,7 @@ def aplicar(compra: dict[str, Any], r: Leitura, hoje: str) -> None:
         compra["edital_lido"] = False
         return
     compra["edital_lido"] = True
+    compra.pop("edital_tentativa", None)  # a leitura nova substitui a anterior: a tentativa antiga não interessa mais
     compra["trecho_edital"] = " || ".join(r.trechos)
     compra["ed_tags"] = r.tags
     compra["marcas"] = r.marcas
@@ -394,9 +390,17 @@ def ler_varias(p: PNCP, compras: list[dict[str, Any]], versoes: dict[str, str], 
         fila = fila[:limite]
 
     def uma(c: dict[str, Any]) -> str:
-        r = ler(p, c["chave"], c["itens"], salvar_em)
+        try:
+            r = ler(p, c["chave"], c["itens"], salvar_em)
+        except Exception as e:  # noqa: BLE001 - um documento estranho nunca pode derrubar a coleta do dia; fica registrado e tenta de novo amanhã
+            logger.opt(exception=True).error("Edital {}: leitura falhou: {}", c["chave"], e)
+            r = Leitura(STATUS_FALHA)
         aplicar(c, r, hoje)
-        if r.status != STATUS_FALHA:
+        if r.status == STATUS_FALHA:
+            pass  # sem versão: lê de novo na próxima coleta
+        elif r.falhas:  # leitura parcial (algum documento não baixou): não vale como versão lida
+            logger.warning("Edital {}: leitura parcial ({} documento(s) não baixado(s)); lê de novo na próxima coleta", c["chave"], r.falhas)
+        else:
             c["edital_ver"] = versoes.get(c["chave"], "")
         return r.status
 

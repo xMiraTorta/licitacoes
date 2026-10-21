@@ -26,6 +26,9 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -45,3 +48,12 @@ jobs:
           path: site/dist
       - id: deploy
         uses: actions/deploy-pages@v4
+      # Este é o único caminho que põe dados novos no ar: se falhar (montagem, publicação), a coleta e os preços
+      # continuam "verdes" na main e ninguém perceberia que o site parou no tempo. Não vale para cancelado:
+      # com cancel-in-progress, uma publicação mais nova cancela a anterior de propósito.
+      - name: Avisar falha no Telegram
+        if: failure() && env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        run: |
+          curl -sS -f -o /dev/null -w "Telegram: HTTP %{http_code}\n" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=Monitor de Licitações: a publicação do site falhou; o site segue com a versão anterior até a próxima publicação dar certo. Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

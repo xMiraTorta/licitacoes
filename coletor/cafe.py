@@ -52,10 +52,24 @@ _UTENSILIO = re.compile(r"^(\W|\d)*\s*(jogo|conjunto|porta|potes?|kit (de )?cozi
                         r"\[[^\]]*\]\s*-?\s*conjunto)")
 
 
+_CRU = re.compile(r"\b(cru|crus|verde|verdes)\b")
+# "isento de grãos pretos, verdes e ardidos", "livre de grãos crus": defeitos que o café TORRADO não pode ter,
+# não café cru. O "cru"/"verde" com uma dessas palavras logo antes, na mesma frase, não conta.
+_DEFEITO_ANTES = re.compile(r"(?:isent[oa]s?|livres?|ausencia|sem|pretos?|preto-|fermentados?|ardidos?|defeitos?)\b[^.;]{0,35}$")
+_LITROS = {"litro", "l", "l (l)", "litros"}
+_BEBIDA = re.compile(r"cafe (com leite )?pronto|pronto para (servir|consumo)|coado no momento|bebida (de )?cafe|cafe liquido|"
+                     r"liquido aquecido|garrafa (termica )?(de|com) ?\d+ ?(l|litros)")
+_BEBIDA_PISTA = re.compile(r"\d+ ?(l|litros|ml)\b|garrafa|termica|coado no momento|liquido")
+
+
+def _eh_cru(t: str) -> bool:
+    return any(not _DEFEITO_ANTES.search(t[max(0, m.start() - 45):m.start()]) for m in _CRU.finditer(t[:80]))
+
+
 def _tipo(t: str, un: str) -> str:
     """Tipo pelo começo da descrição (onde fica o produto); o resto costuma ser especificação."""
     t = t[:200]
-    if re.search(r"\b(cru|crus|verde|verdes)\b", t[:80]) and not re.search(r"torrad", t[:120]):
+    if _eh_cru(t) and not re.search(r"torrad", t[:120]):
         return CRU  # café verde/cru (beneficiado), não torrado
     if re.search(r"\bdescafeinado\b", t) and not re.search(r"soluvel|capsula", t):
         return TM_DESCAF
@@ -63,8 +77,9 @@ def _tipo(t: str, un: str) -> str:
         return CAPSULA
     if re.search(r"\bsoluvel\b", t):
         return SOLUVEL
-    if re.search(r"cafe (com leite )?pronto|pronto para (servir|consumo)|coado no momento|bebida (de )?cafe|cafe liquido|"
-                 r"liquido aquecido|garrafa (termica )?(de|com) ?\d+ ?(l|litros)", t) or norm(un) in {"litro", "l", "l (l)", "litros"}:
+    # Café pronto (líquido): pela unidade (litro), ou pela frase quando o texto não é de café torrado/moído/em pó,
+    # ou quando há pista de líquido. "Café torrado e moído 500 g, produto pronto para consumo" é torrado.
+    if norm(un) in _LITROS or (_BEBIDA.search(t) and (not re.search(r"torrad|moid|\bem po\b", t) or _BEBIDA_PISTA.search(t))):
         return BEBIDA
     if re.search(r"em graos?\b|grao inteiro|torrado em grao|graos? (inteiros|para maquina)", t) and not re.search(r"moid|moagem|\bem po\b", t):
         return GRAO
@@ -73,11 +88,14 @@ def _tipo(t: str, un: str) -> str:
 
 # Versão das regras de classificação. Mude ao alterar o que conta como café: o cache de compras
 # "sem café" (coletor/cache/sem_cafe.json) de outra versão é descartado e tudo é verificado de novo.
-VERSAO_REGRAS = 2  # nível/nota (18/10) não muda o que é café: cache continua válido
+VERSAO_REGRAS = 3  # 21/10/2026: mais prefixos de ruído; "isento de grãos verdes" e "pronto para consumo" não excluem mais o torrado
 
 # Ruído antes do nome do produto: "(COTA)", "[COTA RESERVADA ME/EPP] -", "Lote 1: Item 4 -", "(L3) 8910.10465-",
-# "GENEROS ALIMENTICIOS -", e embalagem/verbo/rótulo: "Aquisição de", "Pacote de", "Pct de", "Produto:".
-_RUIDO = re.compile(r"^(?:[\W\d_]+|lote\b|item\b|unico\b|cota\b|ampla\b|concorrencia\b|reservada\b|exclusiv\w*|"
+# "GENEROS ALIMENTICIOS NAO PERECIVEIS -", "ITEM EXCLUSIVO PARA ME/EPP -", "COTA PRINCIPAL 75% -", "AMPLA PARTICIPACAO -",
+# e embalagem/verbo/rótulo: "Aquisição de", "Pacote de", "Pct de", "Produto:". "para" só antes de ME/EPP/MEI
+# ("PARA CAFÉ: filtro de papel" não é café).
+_RUIDO = re.compile(r"^(?:[\W\d_]+|lote\b|item\b|unico\b|cota\b|ampla\b|concorrencia\b|reservada\b|exclusiv\w*|principal\b|"
+                    r"participacao\b|nao\b|pereciveis?\b|para(?=\s+(?:me\b|epp\b|micro|mei\b))|microempresas?\b|mei\b|"
                     r"me/epp\b|me\b|epp\b|generos?\b|alimenticios?\b|\(l\d+\)|l\d+\b|"
                     r"aquisicao\b|compra\b|fornecimento\b|pacotes?\b|pcts?\b|caixas?\b|cx\b|fardos?\b|embalage(?:m|ns)\b|"
                     r"unidades?\b|produtos?\b|descricao\b|especificacao\b|objeto\b|nome\b|"
@@ -271,7 +289,7 @@ _QG = re.compile(r"(?:qualidade global|pontuacao(?: global| sensorial| final)?|n
 _QG_FAIXA = re.compile(r"\s*(?:pontos\s*)?(?:-|a|ate|e)\s*(\d{1,3}(?:[,.]\d{1,2})?)(?![\d%])")
 # "nota: validade mínima de 90 dias", "nota fiscal nº 12": número que não é nota de qualidade.
 _QG_NAO = re.compile(r"validade|prazo|fiscal|entrega|empenho|dias|meses|anos|horas|item|lote|provador|amostra|pacote|"
-                     r"unidade|norma|\bn\.?\s*$")  # "nº 12" (o º some na normalização); "no mínimo" continua valendo
+                     r"unidade|norma|tecnica|explicativa|informativa|\bn\.?\s*$")  # "nº 12" (o º some na normalização), "Nota Técnica 5/2023"; "no mínimo" continua valendo
 # "análise sensorial realizada por 5 provadores": nessas palavras, o número só é nota se vier com nota/mínima/pontos.
 _SENSORIAL = re.compile(r"escala sensorial|avaliacao sensorial|analise sensorial")
 _NOTA_PERTO = re.compile(r"nota|minim|pontos|escala|igual ou superior|acima de|maior que")

@@ -355,7 +355,7 @@ button.hb-row:hover .hb-t { color: var(--accent-ink); }
 .glide-menu li { position: relative; padding: 7px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; }
 .glide-hl { position: absolute; inset: 0; background: var(--accent-soft); border-radius: 7px; }
 .glide-t { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.hold { position: relative; overflow: hidden; }
+.hold { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } /* toque longo no celular não vira seleção nem menu */
 .hold-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--crit-soft); pointer-events: none; }
 .hold-t { position: relative; }
 .chk { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; }

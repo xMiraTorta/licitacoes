@@ -32,6 +32,7 @@ window.__monitor = {
   data: () => store.get().data,
   apply: aplicarExterno,
   offer: aplicarExterno,
+  buscar: () => buscar(),
   state: () => store.get(),
   rkCheck: () => (store.get().prep?.compras || []).filter((c) => c._rk && !c._rk.outros.length && c.rkg != null && Math.abs(c._rk.main.v - c.rkg) > 0.011).map((c) => [c.chave, c.rkg, c._rk!.main.v]),
 };
@@ -43,6 +44,7 @@ export function App() {
   const bad = useStore((s) => s.bad);
   const locked = useStore((s) => s.locked);
   const opened = useStore((s) => s.opened);
+  const temDados = useStore((s) => !!s.prep);
   const densidade = useStore((s) => s.ui.densidade || "normal");
   const celular = useCelular();
   useAtalhos();
@@ -62,7 +64,7 @@ export function App() {
             </div>
           )}
           {erro && <div className="note alert" role="alert"><b>Sem dados.</b> {erro} <button type="button" className="linkbtn" onClick={() => void buscar(true)}>Tentar de novo</button></div>}
-          {carregando && !erro ? <Carregando /> : (
+          {carregando && !erro ? <Carregando /> : !temDados ? null : ( // sem dados (falha na carga) só o aviso acima aparece
             <>
               {tab === "hoje" && <Hoje />}
               {tab === "oportunidades" && <Oportunidades />}
@@ -114,13 +116,15 @@ function useAtalhos() {
       if (digitando || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === "/") { e.preventDefault(); setPaleta(true); return; }
       if (e.key === "?") { navegar("ajustes"); return; }
-      if (e.key.toLowerCase() === "t") { alternarTema(); return; }
-      if (e.key.toLowerCase() === "g") { g.current = Date.now(); return; }
-      if (Date.now() - g.current < 900) {
+      const k = e.key.toLowerCase();
+      if (Date.now() - g.current < 900) { // segunda tecla da sequência "G + letra" (inclusive G G = Guia)
         const m: Record<string, Parameters<typeof navegar>[0]> = { h: "hoje", o: "oportunidades", p: "propostas", m: "mercado", g: "guia", c: "ajustes" };
-        const alvo = m[e.key.toLowerCase()];
-        if (alvo) { navegar(alvo); g.current = 0; }
+        const alvo = m[k];
+        g.current = 0;
+        if (alvo) { navegar(alvo); return; }
       }
+      if (k === "t") { alternarTema(); return; }
+      if (k === "g") { g.current = Date.now(); return; }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -131,9 +135,17 @@ function useAtalhos() {
 function usePuxarParaAtualizar() {
   useEffect(() => {
     let y0 = -1, puxou = false;
-    const ini = (e: TouchEvent) => { y0 = window.scrollY <= 0 ? e.touches[0].clientY : -1; puxou = false; };
+    const ini = (e: TouchEvent) => {
+      const t = e.target as HTMLElement | null;
+      // dentro do painel de detalhe, dos filtros ou da paleta a rolagem é do próprio painel, não da página
+      const emPainel = !!t && !!t.closest(".drawer-wrap,.filters-overlay,.paleta,[role=dialog]");
+      y0 = window.scrollY <= 0 && !emPainel ? e.touches[0].clientY : -1; puxou = false;
+    };
     const mov = (e: TouchEvent) => { if (y0 >= 0 && e.touches[0].clientY - y0 > 90) puxou = true; };
-    const fim = () => { if (puxou) { puxou = false; toast("Buscando dados novos…"); void buscar(); } y0 = -1; };
+    const fim = () => {
+      if (puxou) { puxou = false; toast("Buscando dados novos…"); void buscar().then((novo) => { if (!novo) toast("Já está com os dados mais recentes."); }); }
+      y0 = -1;
+    };
     window.addEventListener("touchstart", ini, { passive: true });
     window.addEventListener("touchmove", mov, { passive: true });
     window.addEventListener("touchend", fim);

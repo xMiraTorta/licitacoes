@@ -203,7 +203,10 @@ def enviar(textos: list[str], client: httpx.Client | None = None, pausa: float =
                          json={"chat_id": chat, "text": t, "parse_mode": "HTML", "disable_web_page_preview": True})
             if r.status_code != 429 or tentativa == TENTATIVAS_429:
                 break
-            espera = min(ESPERA_MAX, float(((r.json() or {}).get("parameters") or {}).get("retry_after") or 5))
+            try:
+                espera = min(ESPERA_MAX, float(((r.json() or {}).get("parameters") or {}).get("retry_after") or 5))
+            except ValueError:  # 429 com página HTML (Cloudflare) em vez de JSON: espera padrão
+                espera = 5.0
             logger.warning("Telegram pediu para esperar {:.0f}s (mensagem {}/{}, tentativa {})", espera, i, len(textos), tentativa)
             time.sleep(espera)
         ok = r.status_code == 200 and r.json().get("ok")

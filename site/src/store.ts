@@ -90,8 +90,9 @@ aoFalharGravacao((m) => toast(m, "erro"));
 /* ---------------- dados publicados */
 export function aplicarDados(data: Painel): void {
   const prep = preparar(data, state.pisos, state.custos);
-  const F = { ...state.F };
-  if (F.dist >= prep.distMax) F.dist = 0;
+  // Mantém o MESMO objeto de filtros se nada mudou: a lista usa a identidade dele para voltar ao início
+  // (limite de linhas e cursor), e a atualização automática não pode fazer isso no meio da leitura.
+  const F = state.F.dist && state.F.dist >= prep.distMax ? { ...state.F, dist: 0 } : state.F;
   const opened = state.opened && !(prep.byk[state.opened] || temAnotacao(state.wf[state.opened])) ? null : state.opened;
   store.set({ data, prep, carregando: false, erroCarga: "", F, opened });
 }

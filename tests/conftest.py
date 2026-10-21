@@ -32,7 +32,8 @@ def _dist_desatualizado() -> bool:
     if not idx.exists():
         return True
     t = idx.stat().st_mtime
-    fontes = [*(SITE / "src").rglob("*"), *(SITE / "public").rglob("*"), SITE / "index.html", SITE / "vite.config.ts", SITE / "package.json"]
+    fontes = [*(SITE / "src").rglob("*"), *(SITE / "public").rglob("*"), SITE / "index.html", SITE / "vite.config.ts", SITE / "tsconfig.json",
+              SITE / "package.json", SITE / "package-lock.json"]
     return any(p.is_file() and p.stat().st_mtime > t for p in fontes)
 
 
@@ -42,7 +43,9 @@ def dist_dir() -> Path:
     if _dist_desatualizado():
         if not (SITE / "node_modules").exists():
             raise RuntimeError("site/node_modules não existe: rode `npm install` em site/ (precisa de Node 22)")
-        subprocess.run(["npm", "run", "build"], cwd=SITE, check=True, capture_output=True)
+        r = subprocess.run(["npm", "run", "build"], cwd=SITE, capture_output=True, text=True)
+        if r.returncode != 0:  # mostra o erro do TypeScript/Vite em vez de só "exit status 1"
+            raise RuntimeError(f"npm run build falhou (código {r.returncode}):\n{r.stdout}\n{r.stderr}")
     return DIST
 
 
@@ -71,9 +74,15 @@ class _QuietHandler(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+class _Servidor(socketserver.ThreadingTCPServer):
+    """Uma conexão por thread: o Chromium abre várias ao mesmo tempo (e os testes de sincronização, duas páginas)."""
+    daemon_threads = True
+    allow_reuse_address = True
+
+
 def _serve(directory: Path) -> Iterator[str]:
     handler = functools.partial(_QuietHandler, directory=str(directory))
-    with socketserver.TCPServer(("127.0.0.1", 0), handler) as httpd:
+    with _Servidor(("127.0.0.1", 0), handler) as httpd:
         t = threading.Thread(target=httpd.serve_forever, daemon=True)
         t.start()
         yield f"http://127.0.0.1:{httpd.server_address[1]}"

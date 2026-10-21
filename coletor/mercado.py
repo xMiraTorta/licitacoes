@@ -16,6 +16,8 @@ import html
 import json
 import re
 from pathlib import Path
+
+from coletor.arquivos import gravar_atomico
 from typing import Any
 
 import httpx
@@ -60,11 +62,14 @@ def _num(s: str) -> float:
     return float(s.replace(".", "").replace(",", "."))
 
 
+PRECO = r"\d{1,3}(?:\.\d{3})*,\d{2}"  # "963,28", "1.601,25", "12.345,67": com ou sem ponto de milhar (abaixo de R$ 1.000 acontece)
+
+
 def ler_cepea(pagina: str) -> dict[str, dict[str, Any]]:
     t = _texto(pagina)
     out = {}
     for chave, titulo in (("arabica", "INDICADOR DO CAFÉ ARÁBICA"), ("robusta", "INDICADOR DO CAFÉ ROBUSTA")):
-        m = re.search(re.escape(titulo) + r".{0,120}?(\d{2}/\d{2}/\d{4}) (\d{1,3}(?:\.\d{3})*,\d{2})", t)
+        m = re.search(re.escape(titulo) + rf".{{0,120}}?(\d{{2}}/\d{{2}}/\d{{4}}) ({PRECO})", t)
         if not m:
             raise ValueError(f"CEPEA: {titulo} não encontrado na página")
         d, mes, a = m.group(1).split("/")
@@ -76,7 +81,7 @@ def ler_carvalhaes(pagina: str) -> dict[str, Any]:
     t = _texto(pagina)
     classes, data = {}, ""
     for chave, nome in CLASSES.items():
-        m = re.search(re.escape(nome) + r"[^/]{0,60}?(\d{2}/\d{2}/\d{2}) (\d{1,2}\.\d{3},\d{2})/(\d{1,2}\.\d{3},\d{2})", t)
+        m = re.search(re.escape(nome) + rf"[^/]{{0,60}}?(\d{{2}}/\d{{2}}/\d{{2}}) ({PRECO})/({PRECO})", t)
         if not m:
             raise ValueError(f"Carvalhaes: classe '{nome}' não encontrada na página")
         d, mes, a = m.group(1).split("/")
@@ -124,7 +129,7 @@ def atualizar(hoje: str, cliente: httpx.Client | None = None, destino: Path = BA
     dados = {"atualizado_em": hoje, "perda_torra": 0.18, "cepea": cepea, "carvalhaes": carv, "niveis": nv,
              "historico": historico(destino, carv["data"], cepea, nv),
              "fontes": {"cepea": CEPEA + " (CC BY-NC 4.0)", "carvalhaes": CARVALHAES}}
-    destino.write_text(json.dumps(dados, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    gravar_atomico(destino, json.dumps(dados, ensure_ascii=False, indent=1) + "\n")  # nunca um JSON pela metade
     logger.info("Mercado do café verde ({}): arábica CEPEA R$ {}, robusta R$ {}; níveis {}", hoje,
                 cepea["arabica"]["saca60"], cepea["robusta"]["saca60"],
                 {n: (v["saca60_min"], v["saca60_max"]) for n, v in dados["niveis"].items()})

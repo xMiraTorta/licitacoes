@@ -13,6 +13,7 @@ WFK = "monitorLicitacoes.meusDados.v1"
 UIK = "monitorLicitacoes.ui.v1"
 CLK = "monitorLicitacoes.checklist.v1"
 PISOK = "monitorLicitacoes.pisos.v1"
+CUSTOSK = "monitorLicitacoes.custos.v1"
 SYNCK = "monitorLicitacoes.github.v1"
 FIRST = "18243295000192-1-000080/2026"  # torrado e moído 500 g, R$ 66,03/kg
 NO_WEIGHT = "77402196000175-1-000046/2026"  # T&M sem peso
@@ -64,7 +65,7 @@ def glide(page: Page, testid: str, opcao: str) -> None:
 def hold(loc: Locator, page: Page) -> None:
     """Segura o botão de confirmação (HoldButton) até ele disparar."""
     loc.dispatch_event("pointerdown")
-    page.wait_for_timeout(900)
+    page.wait_for_timeout(1100)  # o botão confirma aos 700 ms; folga para máquina carregada
     if loc.count():  # depois de confirmar, o botão pode ter saído da tela
         loc.dispatch_event("pointerup")
 
@@ -91,9 +92,90 @@ def test_opens_on_today_and_kpi_filters_list(page: Page, fixture_url: str) -> No
     wait_ready(page)
     assert page.locator(".page.hoje").is_visible() and page.locator('.tab[data-tab="hoje"]').get_attribute("aria-selected") == "true"
     assert page.locator(".faixa-row").count() == 4  # um por nível de exigência
-    page.click('.kpi[data-k="urg"]')
+    page.click('.kpi[data-k="urg"]')  # "Fecham em 7 dias": lista por prazo, sem o filtro de 3 dias (o cartão diz 7)
     page.wait_for_selector(".page.opp")
-    assert page.evaluate("window.__monitor.F().urg") is True
+    assert page.evaluate("window.__monitor.F().urg") is False
+    assert page.evaluate("window.__monitor.state().ui.sort") == "prazo"
+
+
+def test_malformed_link_still_loads_the_site(page: Page, fixture_url: str) -> None:
+    """Link colado pela metade ("%E0%A4%A") não pode travar a página no "Carregando"."""
+    page.goto(fixture_url + "/index.html#c=%E0%A4%A")
+    wait_ready(page)
+    page.wait_for_selector(".page.opp")
+    assert page.evaluate("window.__monitor.count()") > 0
+
+
+def test_link_to_gone_purchase_explains_and_cleans_hash(page: Page, fixture_url: str) -> None:
+    """Link do Telegram para uma licitação que já saiu dos dados: aviso e hash limpo (nada de #c= morto)."""
+    page.goto(fixture_url + "/index.html#c=" + GONE.replace("/", "%2F"))
+    wait_ready(page)
+    page.wait_for_selector(".page.opp")
+    page.wait_for_selector('.toast:has-text("não está mais no monitor")')
+    assert page.evaluate("location.hash") == "#/oportunidades" and detail(page).count() == 0
+
+
+def test_shortcut_g_g_opens_guide(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "hoje")
+    page.keyboard.press("g")
+    page.keyboard.press("g")
+    page.wait_for_selector(".page.guia")
+    page.keyboard.press("g")
+    page.keyboard.press("o")
+    page.wait_for_selector(".page.opp")
+    page.keyboard.press("t")  # "t" sozinho continua trocando o tema
+    assert page.evaluate("document.documentElement.dataset.theme") == "light"
+
+
+def test_data_load_failure_shows_retry_instead_of_blank_page(browser: Any, fixture_url: str) -> None:
+    pg = nova_pagina(browser)
+    quebrado = {"on": True}
+    pg.route("**/data.json*", lambda r: r.fulfill(status=500, body="erro") if quebrado["on"] else r.continue_())
+    pg.goto(fixture_url + "/index.html#/hoje")
+    pg.wait_for_selector('.note.alert:has-text("Sem dados")')
+    assert pg.locator("#root").inner_html() != "" and pg.locator(".page.hoje").count() == 0
+    quebrado["on"] = False
+    pg.click('.note.alert button:has-text("Tentar de novo")')
+    wait_ready(pg)
+    pg.wait_for_selector(".page.hoje")
+    fechar(pg)
+
+
+def test_refresh_keeps_cursor_and_list_position(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.keyboard.press("j")
+    page.keyboard.press("j")
+    assert page.locator(".row.foco").get_attribute("data-ch") == page.evaluate("window.__monitor.lista()[1]")
+    page.evaluate("""() => { const j = structuredClone(window.__monitor.data()); j.gerado_em = '2099-01-01T08:00:00-03:00'; window.__monitor.apply(j); }""")
+    page.wait_for_function("document.querySelector('#upd b').textContent.includes('01/01/2099')")
+    assert page.locator(".row.foco").get_attribute("data-ch") == page.evaluate("window.__monitor.lista()[1]")  # a atualização não zera o cursor
+
+
+def test_newer_publicado_em_replaces_data_even_with_same_gerado_em(page: Page, fixture_url: str) -> None:
+    """Preços de mercado regravam o data.json com o mesmo gerado_em: a página aberta tem de perceber pelo publicado_em."""
+    goto(page, fixture_url)
+    base = page.evaluate("window.__monitor.data()")
+    n = page.evaluate("window.__monitor.count()")
+    novo = {**base, "publicado_em": "2099-01-01T09:00:00-03:00", "compras": [c for c in base["compras"] if c["chave"] != FIRST]}
+    page.route("**/data.json*", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(novo)))
+    assert page.evaluate("window.__monitor.buscar()") is True
+    assert page.evaluate("window.__monitor.count()") == n - 1
+    row(page, FIRST).wait_for(state="detached")  # a linha some depois da animação de saída
+    assert page.evaluate("window.__monitor.buscar()") is False  # a mesma versão de novo não troca nada
+
+
+def test_cost_inputs_reject_100_percent_and_read_thousands(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "ajustes")
+    perda = page.locator('[data-testid="custo-perda_torra"]')
+    perda.fill("100")
+    perda.press("Enter")
+    page.wait_for_selector('.toast:has-text("menor que 100")')
+    assert "perda_torra" not in (ls(page, CUSTOSK) or {})  # 100% de perda dividiria por zero
+    grao = page.locator('[data-testid="custo-grao-2"]')  # Superior, R$/saca; o site mostra "1.572" como sugestão
+    grao.fill("1.800")
+    grao.press("Enter")
+    page.wait_for_function("JSON.parse(localStorage.getItem('monitorLicitacoes.custos.v1') || '{}')['grao|Superior'] === 1800")
+    assert grao.input_value() == "1.800"
 
 
 def test_duplicates_hidden_by_default(page: Page, fixture_url: str) -> None:
@@ -180,10 +262,9 @@ def test_agenda_lists_followed_deadlines(page: Page, fixture_url: str) -> None:
 def test_price_input_parsing(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url)
     d = open_detail(page, FIRST)
-    for typed, expected in (("55,5", 55.5), ("1.234,56", 1234.56), ("R$ 60", 60.0)):
+    for typed, expected in (("55,5", 55.5), ("1.234,56", 1234.56), ("R$ 60", 60.0), ("1.800", 1800.0), ("1.8", 1.8)):
         d.locator('[data-w="preco"]').fill(typed)
-        page.wait_for_timeout(450)
-        assert ls(page, WFK)[FIRST]["preco"] == expected, typed
+        page.wait_for_function("([k, v]) => JSON.parse(localStorage.getItem(k) || '{}')[%s]?.preco === v" % json.dumps(FIRST), arg=[WFK, expected], timeout=5000)
 
 
 def test_margin_against_estimate(page: Page, fixture_url: str) -> None:
@@ -298,26 +379,45 @@ def test_duplicate_with_my_data_is_never_hidden(page: Page, fixture_url: str) ->
     assert page.evaluate("window.__monitor.count()") == 8
 
 
-def test_mobile_layout_has_no_horizontal_overflow(browser: Any, fixture_url: str) -> None:
-    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+def nova_pagina(browser: Any, largura: int = 1280, altura: int = 900) -> Page:
+    """Página num contexto próprio (localStorage limpo) que guarda os erros de JavaScript em page.erros."""
+    ctx = browser.new_context(viewport={"width": largura, "height": altura})
     pg = ctx.new_page()
+    erros: list[str] = []
+    pg.on("pageerror", lambda e: erros.append(str(e)))
+    # Respostas HTTP de erro que o próprio teste provoca (GitHub falso com 404/401/409, data.json com 500) aparecem
+    # no console como "Failed to load resource": não são erro de JavaScript.
+    pg.on("console", lambda m: erros.append(m.text) if m.type == "error" and "ilegíveis" not in m.text and not m.text.startswith("Failed to load resource") else None)
+    pg.erros = erros  # type: ignore[attr-defined]
+    return pg
+
+
+def fechar(pg: Page, esperado: str | None = None) -> None:
+    """Fecha o contexto e falha se houve erro de JavaScript (exceto os que contêm `esperado`, quando o teste provoca um)."""
+    erros = [e for e in pg.erros if not (esperado and esperado in e)]  # type: ignore[attr-defined]
+    pg.context.close()
+    assert not erros, f"erros de JavaScript na página: {erros}"
+
+
+def test_mobile_layout_has_no_horizontal_overflow(browser: Any, fixture_url: str) -> None:
+    pg = nova_pagina(browser, 390, 844)
     goto(pg, fixture_url)
     assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     box = pg.locator(f'.list .row[data-ch="{FIRST}"] .c-valor').bounding_box()
     assert box and box["x"] + box["width"] <= 390  # valor visível, não cortado à direita
     assert pg.locator(".bottom-nav").is_visible()
-    ctx.close()
+    fechar(pg)
 
 
 def test_mobile_detail_fits_screen(browser: Any, fixture_url: str) -> None:
-    pg = browser.new_page(viewport={"width": 390, "height": 844})
+    pg = nova_pagina(browser, 390, 844)
     goto(pg, fixture_url)
     ruins = pg.evaluate("""async () => { const out = []; for (const k of window.__monitor.data().compras.map(c => c.chave)) { window.__monitor.open(k);
       await new Promise(r => setTimeout(r, 80));  // o React desenha depois do clique
       const d = document.querySelector('.drawer-wrap .d-body'), v = document.querySelector('.verdict');
       if (!d || d.scrollWidth > d.clientWidth + 1 || !v || v.getBoundingClientRect().height < 40) out.push([k, !!d, d && d.scrollWidth, d && d.clientWidth, v && v.getBoundingClientRect().height]); } return out; }""")
     assert ruins == []
-    pg.close()
+    fechar(pg)
 
 
 # ---------------- atualização automática dos dados
@@ -608,9 +708,8 @@ class FakeGitHub:
 
 
 def aparelho(browser: Any, url: str, gh: FakeGitHub, token: str | None = "boa") -> Page:
-    ctx = browser.new_context(viewport={"width": 1440, "height": 900})
-    ctx.route("https://api.github.com/**", gh.handler)
-    page = ctx.new_page()
+    page = nova_pagina(browser, 1440, 900)
+    page.context.route("https://api.github.com/**", gh.handler)
     if token:
         page.add_init_script(f"localStorage.setItem('{SYNCK}', JSON.stringify({{token: '{token}'}}))")
     page.goto(url + "/index.html?repo=dono/repo#/oportunidades")
@@ -634,6 +733,8 @@ def test_sync_saves_to_github_and_second_device_sees_it(browser: Any, fixture_ur
     b.wait_for_function(f"document.querySelector('.list .row[data-ch=\"{FIRST}\"] .star.on')")
     go_tab(b, "propostas")
     assert b.locator(f'[data-ch="{FIRST}"]').count() >= 1
+    fechar(a)
+    fechar(b)
 
 
 def test_sync_unfavorite_is_not_resurrected_by_other_device(browser: Any, fixture_url: str) -> None:
@@ -650,6 +751,8 @@ def test_sync_unfavorite_is_not_resurrected_by_other_device(browser: Any, fixtur
     b.wait_for_function(f"!document.querySelector('.list .row[data-ch=\"{FIRST}\"] .star.on')")
     espera_salvo(b)
     assert gh.doc["meus_dados"][FIRST].get("fav") is None
+    fechar(a)
+    fechar(b)
 
 
 def test_sync_merges_when_someone_saved_in_between(browser: Any, fixture_url: str) -> None:
@@ -658,6 +761,7 @@ def test_sync_merges_when_someone_saved_in_between(browser: Any, fixture_url: st
     row(a, FIRST).locator('[data-act="fav"]').click()
     espera_salvo(a)
     assert gh.doc["meus_dados"][FIRST]["fav"] is True and gh.conflitos == 0  # o 409 aconteceu e foi resolvido
+    fechar(a)
 
 
 def test_sync_rejected_key_keeps_data_local(browser: Any, fixture_url: str) -> None:
@@ -667,6 +771,7 @@ def test_sync_rejected_key_keeps_data_local(browser: Any, fixture_url: str) -> N
     a.wait_for_function("window.__monitor.syncState().estado === 'erro'", timeout=8000)
     assert gh.doc is None and ls(a, WFK)[FIRST]["fav"] is True
     assert "recusada" in a.evaluate("window.__monitor.syncState().erro")
+    fechar(a, esperado="Gravação no GitHub falhou")  # o erro é o esperado neste teste
 
 
 def test_sync_anonymous_rate_limit_is_not_a_key_error(browser: Any, fixture_url: str) -> None:
@@ -689,6 +794,8 @@ def test_sync_anonymous_rate_limit_is_not_a_key_error(browser: Any, fixture_url:
     row(b, FIRST).locator('[data-act="fav"]').click()
     espera_salvo(b)
     assert gh.doc["meus_dados"][FIRST]["fav"] is True
+    fechar(a)
+    fechar(b)
 
 
 def test_sync_connect_with_key_in_settings(browser: Any, fixture_url: str) -> None:
@@ -703,6 +810,7 @@ def test_sync_connect_with_key_in_settings(browser: Any, fixture_url: str) -> No
     espera_salvo(a)
     assert gh.doc["meus_dados"][FIRST]["fav"] is True and ls(a, SYNCK) == {"token": "boa"}
     assert "Salvo no GitHub" in a.locator("#syncLbl").inner_text()
+    fechar(a)
 
 
 def test_margin_estimate_matches_collector_and_follows_my_costs(browser: Any, fixture_url: str) -> None:
@@ -728,3 +836,4 @@ def test_margin_estimate_matches_collector_and_follows_my_costs(browser: Any, fi
     assert gh.doc["custos"]["valores"]["torra"] == 15  # gravado com as anotações
     page.locator('[data-act="custos-padrao"]').click()
     page.wait_for_function(f"Math.abs(window.__monitor.state().prep.byk['{FIRST}']._mg.custo - {js['custo']}) < 0.01")
+    fechar(page)

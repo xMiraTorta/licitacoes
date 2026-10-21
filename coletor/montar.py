@@ -317,7 +317,7 @@ def marcar_duplicatas(compras: list[dict[str, Any]], visiveis_antes: set[str] = 
 
 # Campos que vieram da leitura de editais pelo painel original e que este coletor ainda não refaz.
 CAMPOS_EDITAL = ("ed_tags", "ed_pz", "edital_lido", "trecho_edital", "cat_do_edital", "edital_status", "edital_docs",
-                 "marcas", "edital_lido_em", "edital_ver")
+                 "marcas", "edital_lido_em", "edital_ver", "edital_tentativa")
 
 
 def herdar_do_anterior(novo: dict[str, Any], antigo: dict[str, Any]) -> None:

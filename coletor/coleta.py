@@ -134,14 +134,17 @@ def coletar(destino: Path, forcar: bool = False, usar_busca: bool = True, pncp: 
         logger.error("Compra {} não verificada nesta coleta (fica a versão anterior, se houver): {}", k, e)
 
     # 4. Montagem.
-    compras, sem_cafe = [], {}
+    compras, sem_cafe, vazias = [], {}, set()
     for k, its in itens.items():
         reg = montar_compra(lista[k], its)
         if reg:
             compras.append(reg)
         elif its:  # sem itens publicados ainda: verifica de novo na próxima coleta
             sem_cafe[k] = lista[k].get("dataAtualizacaoGlobal") or ""
-    finais, primeira_vez = publicar.juntar(compras, anterior, set(falhas), hoje, agora_min)
+        elif k in conhecidas:  # o PNCP devolveu lista vazia para uma compra que ontem tinha itens: oscilação, não cancelamento
+            vazias.add(k)  # fica a versão anterior (como numa falha), senão ela volta amanhã como "nova" e avisa de novo
+            logger.warning("Compra {} veio sem itens no PNCP nesta coleta: mantida a versão anterior", k)
+    finais, primeira_vez = publicar.juntar(compras, anterior, set(falhas) | vazias, hoje, agora_min)
     publicar.verificar_travas(finais, anterior, len(olhar) + len(sumidas), len(falhas), agora_min, forcar)
 
     # 4b. Edital/TR de cada compra (novas, alteradas no PNCP ou sem documentos ainda): especificação de cada

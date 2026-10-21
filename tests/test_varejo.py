@@ -21,7 +21,18 @@ PILAO = [_produto("Café Torrado e Moído a Vácuo Tradicional Pilão 500g", 22.
          _produto("Café Pilão Grãos Espresso 1kg", 100.0),
          _produto("Cápsula Café Pilão Espresso 10 unidades", 20.0),   # cápsula: fora
          _produto("Café Pilão Tradicional 3kg", 90.0),                 # fora da faixa 250 g a 1 kg
-         _produto("Café Pilão Tradicional 250g", 11.0, disponivel=0)]  # indisponível
+         _produto("Café Pilão Tradicional 250g", 11.0, disponivel=0),  # indisponível
+         _produto("Café Pilão Tradicional Vácuo 10x500g", 220.0),      # 10 pacotes: 5 kg, fora (seria R$ 440/kg)
+         _produto("Café Pilão Tradicional 500g Leve 3 Pague 2", 60.0),  # preço de 3 pacotes: fora
+         _produto("Café Pilão Tradicional Vácuo 2x500g", 44.0),        # 1 kg a R$ 44: R$ 44/kg, entra
+         _produto("Café Torrado E Moído Pilão Tradicional Fresh Pack 500g", 22.0)]  # "Fresh Pack" é embalagem, não pacote múltiplo
+
+
+@pytest.mark.parametrize("nome,peso", [("cafe pilao 10x500g", None), ("cafe pilao 2x500g", 1000), ("cafe pilao fresh pack 500g", 500),
+                                       ("cafe pilao 500g leve 3 pague 2", None), ("cafe pilao 500g c/ 2 unidades", 1000),
+                                       ("cafe pilao pack com 3 unidades 500g", None), ("cafe pilao 1kg", 1000), ("cafe pilao 250 g", 250)])
+def test_peso_do_pacote_e_pacotes_multiplos(nome: str, peso: int | None) -> None:
+    assert varejo._peso_g(nome) == peso
 
 
 def _base(tmp_path: Path) -> Path:
