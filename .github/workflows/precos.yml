@@ -58,13 +58,21 @@ jobs:
             echo "Nada mudou."
           else
             git commit -m "Atualiza preços de mercado (café verde e varejo), $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M')"
-            git pull --rebase origin main
-            git push origin HEAD:main
+            # Alguém pode enviar para a main entre o pull e o push (coleta, reserva): tenta até 3 vezes.
+            enviado=0
+            for tentativa in 1 2 3; do
+              if git pull --rebase origin main && git push origin HEAD:main; then enviado=1; break; fi
+              git rebase --abort 2>/dev/null || true
+              echo "Envio para a main falhou (tentativa $tentativa de 3); aguardando 20 s"
+              sleep 20
+            done
+            if [ "$enviado" != 1 ]; then echo "::error::Não consegui enviar os preços para a main depois de 3 tentativas"; exit 1; fi
             # Commits feitos com o GITHUB_TOKEN não disparam outros workflows: pede ao pages.yml que publique.
-            curl -sS -o /dev/null -w "Publicar site: HTTP %{http_code}\n" -X POST \
+            # Sem resposta 2xx o passo falha (e avisa): preços na main sem site novo passariam despercebidos.
+            curl -sS -f -o /dev/null -w "Publicar site: HTTP %{http_code}\n" -X POST \
               -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
               "${{ github.api_url }}/repos/${{ github.repository }}/actions/workflows/pages.yml/dispatches" \
-              -d '{"ref":"main"}'
+              -d '{"ref":"main"}' || { echo "::error::O pages.yml não foi disparado: o site ficou com a versão anterior"; exit 1; }
           fi
       - name: Falhou alguma parte?
         if: steps.mercado.outcome == 'failure' || steps.varejo.outcome == 'failure'
@@ -76,4 +84,4 @@ jobs:
         run: |
           curl -sS -f -o /dev/null -w "Telegram: HTTP %{http_code}\n" "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=Monitor de Licitações: a atualização dos preços de mercado falhou em parte (café verde: ${{ steps.mercado.outcome }}; varejo das marcas: ${{ steps.varejo.outcome }}). O que falhou segue com os valores anteriores e a data deles. Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --data-urlencode "text=Monitor de Licitações: a atualização dos preços de mercado falhou (café verde: ${{ steps.mercado.outcome == 'success' && 'ok' || steps.mercado.outcome == 'failure' && 'falhou' || 'não rodou' }}; varejo das marcas: ${{ steps.varejo.outcome == 'success' && 'ok' || steps.varejo.outcome == 'failure' && 'falhou' || 'não era hoje' }}). O que falhou segue com os valores anteriores e a data deles; se os dois deram certo, falhou o envio ou a publicação. Detalhes: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
