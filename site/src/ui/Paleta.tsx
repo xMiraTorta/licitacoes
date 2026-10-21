@@ -44,7 +44,7 @@ export function Paleta() {
                   <b>{c.mun} <span className="muted">{c.uf}</span> · {c._orgao}</b>
                   <span className="small muted">{c._niv || c.tipos[0]} · {c.dist != null ? c.dist + " km · " : ""}{c.kg ? Math.round(c.kg).toLocaleString("pt-BR") + " kg · " : ""}fecha {c.fim ? c.fim.slice(8, 10) + "/" + c.fim.slice(5, 7) : "sem prazo"}</span>
                 </span>
-                {c._mg && <span className={"mg " + mgCls(c._mg.mp)}>{Math.round(c._mg.mp * 100)}% · {BRLc(c._mg.lucro)}</span>}
+                {c._mg && <span className={"mg " + mgCls(c._mg.mp)}>{Math.round(c._mg.mp * 100)}% · {c._mg.lucro < 0 ? "−" : ""}{BRLc(Math.abs(c._mg.lucro))}</span>}
               </Command.Item>
             ))}
             {termos.length > 0 && <Command.Item value="filtrar" onSelect={() => vai(() => { setF({ q }); navegar("oportunidades"); })}>Ver todas em Oportunidades com “{q}” <kbd>↵</kbd></Command.Item>}

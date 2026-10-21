@@ -1,6 +1,6 @@
 /* Navegação por hash. Contrato: `#c=<chave>` abre a licitação (links do Telegram); abas em `#/hoje`, `#/oportunidades`...
    O site sempre abre em Hoje, exceto por link direto. */
-import { abrir, setTab, store } from "./store";
+import { abrir, setTab, store, toast } from "./store";
 import type { Tab } from "./types";
 
 export const TABS: Tab[] = ["hoje", "oportunidades", "propostas", "mercado", "guia", "ajustes"];
@@ -8,7 +8,14 @@ export const TAB_NOME: Record<Tab, string> = { hoje: "Hoje", oportunidades: "Opo
 
 export function parseHash(h = location.hash): { tab: Tab | null; chave: string | null } {
   const m = h.match(/^#c=(.+)$/);
-  if (m) return { tab: "oportunidades", chave: decodeURIComponent(m[1]) };
+  if (m) {
+    try {
+      return { tab: "oportunidades", chave: decodeURIComponent(m[1]) };
+    } catch (e) { // link colado pela metade ("%E0%A4%A"): sem chave, cai em Oportunidades em vez de travar a página
+      console.warn("Link com chave ilegível:", h, e);
+      return { tab: "oportunidades", chave: null };
+    }
+  }
   const t = h.match(/^#\/([a-z]+)/);
   return { tab: t && (TABS as string[]).includes(t[1]) ? (t[1] as Tab) : null, chave: null };
 }
@@ -54,6 +61,10 @@ export function aplicarHash(): void {
   if (chave && podeAbrir(chave)) {
     if (s.opened !== chave) abrir(chave); // abre por cima da aba atual (painel dividido em Oportunidades)
     return;
+  }
+  if (chave && s.prep) { // link (do Telegram, por exemplo) para uma licitação que já saiu dos dados
+    toast("Essa licitação não está mais no monitor (prazo encerrado, cancelada ou retirada do PNCP).", "info");
+    history.replaceState(null, "", "#/oportunidades");
   }
   if (s.opened) abrir(null);
   const t = tab || "hoje";

@@ -56,6 +56,7 @@ export function HoldButton({ onConfirm, children, className, dur = 700, testid }
   useEffect(() => () => window.clearTimeout(timer.current), []);
   return (
     <button type="button" className={"hold " + (className || "")} onPointerDown={comeca} onPointerUp={solta} onPointerLeave={solta} onPointerCancel={solta}
+      onContextMenu={(e) => e.preventDefault()} // celular: o toque longo abriria o menu de contexto e cancelaria o "segurar"
       onKeyDown={(e) => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); comeca(); } }} onKeyUp={solta} data-testid={testid} title="Segure para confirmar">
       <motion.span className="hold-fill" initial={false} animate={{ width: seg ? "100%" : "0%" }} transition={{ duration: seg ? dur / 1000 : 0.15, ease: "linear" }} />
       <span className="hold-t">{children}</span>

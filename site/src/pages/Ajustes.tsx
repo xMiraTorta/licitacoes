@@ -1,7 +1,7 @@
 /* Ajustes: meus custos, café verde por nível, pisos, sincronização com o GitHub, tema e atalhos. */
 import { useEffect, useState } from "react";
 import { abertas } from "../lib/dash";
-import { BRL, BRL0, fmtDate, n0, n2, parseNum, PP } from "../lib/format";
+import { BRL, BRL0, fmtDataHoraBR, fmtDate, n0, n2, parseNum, PP } from "../lib/format";
 import { CAMPOS_CUSTO, custoPadrao, grupoTipo, median, NIVEIS, TM } from "../lib/modelo";
 import { alternarTema, custosPadrao, setCusto, setPiso, setUI, temaAtual, toast, useStore } from "../store";
 import { conectar, desconectar, REPO, SYNC_BRANCH, SYNC_PATH, syncAgora } from "../sync/github";
@@ -35,6 +35,7 @@ function Campo({ id, rotulo, unidade, valor, padrao, ajuda, onSave, permiteZero 
   const salvar = () => {
     const v = parseNum(txt);
     if (Number.isNaN(v) || (v != null && (v < 0 || (!permiteZero && v === 0)))) { toast("Não salvo: digite um número válido (ex.: 5,00).", "erro"); setTxt(fmt(valor)); return; }
+    if (unidade === "%" && v != null && v >= 100) { toast("Não salvo: percentual tem de ser menor que 100 (ex.: 18).", "erro"); setTxt(fmt(valor)); return; } // 100% de perda dividiria por zero
     if (v === valor || (v == null && valor == null)) return;
     onSave(v);
   };
@@ -108,7 +109,7 @@ function Sincronizacao() {
   const hist = REPO ? `https://github.com/${REPO}/commits/${SYNC_BRANCH}/${SYNC_PATH}` : "";
   return (
     <section className="card pad" aria-label="Sincronização" id="sync">
-      <h2 className="row-flex"><span className={"sdot " + st} aria-hidden="true" />Sincronização <span className="small muted" id="syncLbl">· {lbl}{sync.quando ? " em " + fmtDate(sync.quando.slice(0, 16)) : ""}</span></h2>
+      <h2 className="row-flex"><span className={"sdot " + st} aria-hidden="true" />Sincronização <span className="small muted" id="syncLbl">· {lbl}{sync.quando ? " em " + fmtDataHoraBR(sync.quando) : ""}</span></h2>
       {!REPO ? <p className="small muted" style={{ marginTop: 8 }}>Gravação no GitHub disponível só no site publicado. Aqui as anotações ficam neste navegador.</p> : (
         <>
           <p className="small ink2" style={{ marginTop: 8 }}>Favoritos, status, preços, notas, checklist, pisos e meus custos são gravados sozinhos em <code>{SYNC_PATH}</code>, na branch <code>{SYNC_BRANCH}</code> do repositório (visível ao público; não apague essa branch). Cada gravação fica no <a href={hist} target="_blank" rel="noopener">histórico</a>, então dá para recuperar versões antigas.</p>

@@ -36,8 +36,17 @@ export const WDL = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta",
 export const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 export const MESES_L = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
-export const toMs = (iso: string | null | undefined): number | null =>
-  iso ? Date.parse(iso.length === 16 ? iso + ":00-03:00" : iso.slice(0, 19) + "-03:00") : null;
+export const toMs = (iso: string | null | undefined): number | null => {
+  if (!iso) return null;
+  const ms = Date.parse(iso.length === 16 ? iso + ":00-03:00" : iso.slice(0, 19) + "-03:00");
+  return Number.isNaN(ms) ? null : ms; // texto que não é data (ex.: só "2026-10-21") conta como "sem prazo", não como NaN
+};
+/** Data e hora de um instante ISO (qualquer fuso) no horário de Brasília: "21/10/2026 09:10". */
+const dhFmt = new Intl.DateTimeFormat("pt-BR", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+export const fmtDataHoraBR = (iso: string | null | undefined): string => {
+  const ms = iso ? Date.parse(iso) : NaN;
+  return Number.isNaN(ms) ? "—" : dhFmt.format(new Date(ms)).replace(",", "");
+};
 export const dayNum = (ymd: string): number => Date.UTC(+ymd.slice(0, 4), +ymd.slice(5, 7) - 1, +ymd.slice(8, 10)) / 864e5;
 const dFmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
 export const todayYMD = (): string => dFmt.format(new Date());
@@ -82,11 +91,14 @@ export function tcase(s: string | null | undefined): string {
   }).join("");
 }
 
-/** "55,5" · "1.234,56" · "R$ 60" → número; null para vazio; NaN para lixo. */
+/** "55,5" · "1.234,56" · "R$ 60" · "1.800" (ponto de milhar, como o site mostra) → número; null para vazio; NaN para lixo. */
 export function parseNum(raw: string): number | null {
   const t = raw.trim().replace(/[^\d,.]/g, "");
   if (!t) return raw.trim() ? NaN : null;
-  return parseFloat(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t);
+  if (t.includes(",")) return parseFloat(t.replace(/\./g, "").replace(",", "."));
+  // Sem vírgula: "1.800" ou "12.345.678" é milhar em português (grupos de 3 dígitos); "1.8" ou "0.500" é decimal.
+  if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(t)) return parseFloat(t.replace(/\./g, ""));
+  return parseFloat(t);
 }
 
 export const plural = (n: number, um: string, varios: string): string => (n === 1 ? um : varios);

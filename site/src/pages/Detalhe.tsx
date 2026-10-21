@@ -18,7 +18,7 @@ export function Detalhe({ chave, celular }: { chave: string; celular?: boolean }
   const w = useStore((s) => s.wf[chave]) || {};
   const data = useStore((s) => s.data)!;
   const fav = () => { const on = !w.fav; setW(chave, { fav: on }); toast(on ? "★ Adicionada aos favoritos" : "Removida dos favoritos"); };
-  const corpo = c ? <Corpo c={c} /> : <Sumida chave={chave} />;
+  const corpo = c ? <Corpo key={c.chave} c={c} /> : <Sumida key={chave} chave={chave} />; // key: cada licitação com estado próprio (campos, itens abertos, gravação pendente)
   const r = w.ref || {};
   return (
     <motion.aside className={"detalhe" + (celular ? " drawer" : "")} aria-label="Detalhes da licitação" data-ch={chave} initial={celular ? { x: 40, opacity: 0 } : { opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.2 }}>
@@ -98,7 +98,7 @@ function Strip({ r, v, piso, nivel, vj }: { r: { med: number; p25: number; p75: 
     <svg className="strip" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`R$/kg estimado das licitações nível ${nivel}`}>
       {ticks.map((t) => <g key={t}><line className="grid" x1={x(t)} x2={x(t)} y1={y0} y2={y1} /><text className="axl" x={x(t)} y={H - 2} textAnchor="middle">R$ {t}</text></g>)}
       <rect className="band" x={x(r.p25)} y={y0 + 3} width={Math.max(2, x(r.p75) - x(r.p25))} height={y1 - y0 - 6} rx="3"><title>Faixa comum (metade das licitações): {BRL(r.p25)} a {BRL(r.p75)}/kg</title></rect>
-      {r.pts.map((p) => <rect key={p.chave} className="dotp" x={x(p.v) - 1.5} y={y0 + 5} width="3" height={y1 - y0 - 10} rx="1.5" onClick={() => abrirDetalhe(p.chave)} />)}
+      {r.pts.map((p, i) => <rect key={p.chave + "|" + i} className="dotp" x={x(p.v) - 1.5} y={y0 + 5} width="3" height={y1 - y0 - 10} rx="1.5" onClick={() => abrirDetalhe(p.chave)} />)}
       <rect className="medr" x={x(r.med) - 1.5} y={y0} width="3" height={y1 - y0} rx="1.5"><title>Preço típico {nivel}: {BRL(r.med)}/kg</title></rect>
       <rect className="eu" x={x(v) - 2.5} y={y0 - 2} width="5" height={y1 - y0 + 4} rx="2"><title>Esta licitação: {BRL(v)}/kg</title></rect>
       {vj && <path className="vj" d={`M${x(vj)} ${y0 - 1}l5 6-5 6-5-6z`} transform={`translate(0 ${(y1 - y0) / 2 - 5})`}><title>Varejo {nivel} (ABIC): {BRL(vj)}/kg</title></path>}
@@ -182,7 +182,15 @@ export function MinhaProposta({ chave, c }: { chave: string; c: PCompra | null }
   const [preco, setPreco] = useState(w.preco != null ? w.preco.toFixed(2).replace(".", ",") : "");
   const [resp, setResp] = useState(w.resp || "");
   const [notas, setNotas] = useState(w.notas || "");
-  useEffect(() => { setPreco(w.preco != null ? w.preco.toFixed(2).replace(".", ",") : ""); setResp(w.resp || ""); setNotas(w.notas || ""); }, [chave]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Recarrega os campos quando a anotação muda por fora (outro aparelho, pela sincronização), mas nunca por cima
+  // do que está sendo digitado: o campo com foco fica como está.
+  useEffect(() => {
+    const foco = document.activeElement as HTMLElement | null;
+    const digitando = (w: string) => !!foco && foco.getAttribute("data-w") === w && foco.closest(`[data-testid="minha-proposta"]`) != null;
+    if (!digitando("preco")) setPreco(w.preco != null ? w.preco.toFixed(2).replace(".", ",") : "");
+    if (!digitando("resp")) setResp(w.resp || "");
+    if (!digitando("notas")) setNotas(w.notas || "");
+  }, [chave, w.upd]); // eslint-disable-line react-hooks/exhaustive-deps
   const salvar = useDebounce<[string, string]>(([k, v]) => {
     if (k === "preco") {
       const n = parseNum(v);
@@ -307,7 +315,9 @@ function DadosCompra({ c }: { c: PCompra }) {
 function Sumida({ chave }: { chave: string }) {
   const w = useStore((s) => s.wf[chave]) || {};
   const r = w.ref || {};
-  if (!temAnotacao(w)) { fecharDetalhe(); return null; }
+  const vazia = !temAnotacao(w);
+  useEffect(() => { if (vazia) fecharDetalhe(); }, [vazia]); // sem anotação não há o que mostrar: fecha (fora da renderização)
+  if (vazia) return null;
   return (
     <>
       <div className="note">Esta licitação saiu do monitor (prazo encerrado, revogada ou suspensa). Suas anotações continuam aqui: atualize o status quando souber o resultado.</div>

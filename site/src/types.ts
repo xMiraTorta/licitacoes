@@ -63,6 +63,7 @@ export interface Compra {
   edital_docs?: string[];
   edital_lido_em?: string;
   edital_ver?: string;
+  edital_tentativa?: string; // "AAAA-MM-DD: status" da última releitura que não substituiu a leitura boa (edital.py aplicar)
   marcas?: string[];
   embs: string;
   emb_f: string[];
@@ -164,6 +165,7 @@ export interface MarcasRef {
 
 export interface Painel {
   gerado_em: string;
+  publicado_em?: string; // toda gravação do data.json (coleta, preços de mercado, reclassificação); o site troca os dados por ela
   run_date: string;
   seed_date: string;
   novas_desde: string;

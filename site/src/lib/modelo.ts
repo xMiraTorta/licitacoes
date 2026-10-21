@@ -71,7 +71,7 @@ export function refPrecos(L: Compra[]): Refs {
   for (const [k, pts] of Object.entries(by)) {
     if (pts.length < REF_MIN) continue;
     const v = pts.map((p) => p.v).sort((a, b) => a - b);
-    out[k] = { med: median(v)!, p25: quant(v, 0.25), p75: quant(v, 0.75), n: v.length, pts };
+    out[k] = { med: Math.round(median(v)! * 100) / 100, p25: quant(v, 0.25), p75: quant(v, 0.75), n: v.length, pts }; // 2 casas, como referencia.py
   }
   return out;
 }
@@ -131,7 +131,7 @@ export class Calculadora {
   freteTotal(kg: number, km: number, preco: number, rp: boolean): number {
     const f = this.custos?.frete;
     if (!f) return 0;
-    const n = Math.max(1, Math.round(rp ? this.custo("entregas_rp") : this.custo("entregas")) || 1), e = kg / n;
+    const n = Math.max(1, Math.trunc(rp ? this.custo("entregas_rp") : this.custo("entregas")) || 1), e = kg / n; // trunc = int() do custos.py
     const frac = f.fixo_por_envio + e * (f.rs_kg + (f.rs_kg_100km * km) / 100) + f.ad_valorem * preco * e;
     return n * Math.min(frac, f.lotacao_fixo + f.lotacao_rs_km * km) * (1 + this.custo("folga_frete"));
   }
@@ -283,8 +283,10 @@ export type EdEstado = "lido" | "manual" | "sem" | "ilegivel" | "sem-trecho" | "
 export function edStatus(c: Compra): { estado: EdEstado; texto: string } {
   const st = c.edital_status || "", em = c.edital_lido_em ? " em " + c.edital_lido_em.split("-").reverse().join("/") : "";
   const docs = (c.edital_docs || []).map((d) => d.replace(/^\d+:/, "")).join(", ");
-  if (st.startsWith("lido (revis")) return { estado: "manual", texto: `Documentos escaneados (sem texto para o coletor), conferidos página a página${em}${docs ? ` (${docs})` : ""}. A transcrição do trecho de cada item está em “Itens de café”.` };
-  if (st === "lido" || (!st && c.edital_lido)) return { estado: "lido", texto: `Edital lido pelo coletor${em}${docs ? ` (${docs})` : ""}. A especificação de cada item está em “Itens de café”.` };
+  // a compra mudou no PNCP e a releitura não deu certo: a leitura boa continua valendo, mas vale saber
+  const tent = c.edital_tentativa ? ` A compra mudou no PNCP e a releitura de ${c.edital_tentativa.slice(0, 10).split("-").reverse().join("/")} não substituiu esta leitura (${c.edital_tentativa.slice(12)}).` : "";
+  if (st.startsWith("lido (revis")) return { estado: "manual", texto: `Documentos escaneados (sem texto para o coletor), conferidos página a página${em}${docs ? ` (${docs})` : ""}. A transcrição do trecho de cada item está em “Itens de café”.${tent}` };
+  if (st === "lido" || (!st && c.edital_lido)) return { estado: "lido", texto: `Edital lido pelo coletor${em}${docs ? ` (${docs})` : ""}. A especificação de cada item está em “Itens de café”.${tent}` };
   if (st.startsWith("sem documentos")) return { estado: "sem", texto: "O órgão ainda não publicou o edital no PNCP. O coletor confere de novo a cada coleta; até lá, valem só a descrição dos itens e o site da plataforma." };
   if (st.startsWith("documentos sem texto")) return { estado: "ilegivel", texto: `Os documentos estão no PNCP${docs ? ` (${docs})` : ""}, mas sem texto que o coletor consiga ler (PDF escaneado, arquivo .rar ou formato não suportado). Abra no PNCP para ler.` };
   if (st.startsWith("documentos lidos")) return { estado: "sem-trecho", texto: `Documentos lidos${em}${docs ? ` (${docs})` : ""}: nenhum traz a especificação do café; vale a descrição dos itens. Confira se há anexo no site da plataforma.` };
