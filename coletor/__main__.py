@@ -6,8 +6,8 @@
     python -m coletor distancias           # recalcula distâncias por estrada (só se a origem mudar)
     python -m coletor reclassificar        # recalcula nível/nota de qualidade no data.json atual (sem PNCP)
     python -m coletor editais [--todas] [--textos DIR]   # lê edital/TR das compras do data.json atual
-    python -m coletor mercado              # preço do café verde por nível (CEPEA e Carvalhaes; semanal)
-    python -m coletor varejo               # preço de varejo das marcas de referência (semanal, varejo.yml)
+    python -m coletor mercado              # preço do café verde por nível (CEPEA e Carvalhaes; 2x por dia útil, precos.yml)
+    python -m coletor varejo               # preço de varejo das marcas de referência (semanal, segunda, precos.yml)
     python -m coletor mapa                 # baixa o contorno dos estados (IBGE) e grava site/src/data/mapa-uf.json (raramente)
 
 Códigos de saída: 0 ok; 2 coleta/publicação bloqueada (dados publicados intactos); 3 falha no aviso.
@@ -112,6 +112,13 @@ def main(argv: list[str] | None = None) -> int:
         for c in data["compras"]:
             montar.reclassificar_nivel(c)
             c.update(montar.agregar(c["itens"]))
+            st = c.get("edital_status") or ""
+            if c.get("edital_lido") and any(i.get("ed_trecho") for i in c["itens"]) and not st.startswith(edital.STATUS_LIDO):
+                # leitura boa cujo status foi sobrescrito por uma releitura sem sucesso (coletas antes de 21/10/2026)
+                c["edital_tentativa"] = f"{c.get('edital_lido_em') or data['run_date']}: {st}" if st else c.get("edital_tentativa", "")
+                c["edital_status"] = edital.STATUS_LIDO
+                if not c["edital_tentativa"]:
+                    c.pop("edital_tentativa")
             n, _, ano = c["num"].rpartition("/")  # "114/2026/2026" (ano repetido em coletas antigas) -> "114/2026"
             c["num"] = montar.numero(n, ano) if n else c["num"]
             if c.get("lat") is None:  # publicadas antes do mapa com pontos: sede do município pelo nome

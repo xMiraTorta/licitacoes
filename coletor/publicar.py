@@ -10,14 +10,15 @@ Travas de segurança (uma coleta ruim nunca substitui dados bons em silêncio):
 from __future__ import annotations
 
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from loguru import logger
 
 from coletor import custos, marcas, mercado
+from coletor.arquivos import gravar_atomico
 
 LIMITE_FALHAS = 0.05
 LIMITE_QUEDA = 0.6
@@ -104,19 +105,16 @@ def validar(data: dict[str, Any]) -> None:
     Painel.model_validate(data)
 
 
-def _gravar_atomico(path: Path, texto: str) -> None:
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(texto, encoding="utf-8")
-    os.replace(tmp, path)
-
-
 def gravar(data: dict[str, Any], destino: Path, gerado_em: datetime) -> None:
     """Grava data.json validado. O site (site/, React) baixa esse arquivo ao abrir e a cada 15 min; o GitHub
     Pages republica o site a cada push na main que mude data.json (.github/workflows/pages.yml)."""
     data["marcas_ref"] = marcas.resumo()  # pesquisa de varejo das marcas citadas em editais (coletor/marcas_cafe.json)
     data["mercado"] = mercado.carregar()  # café verde por nível (coletor/mercado.json, 2x por dia útil)
     data["custos"] = custos.premissas()  # premissas padrão da margem (coletor/custos.json)
+    # Toda gravação (inclusive só de preços, com o mesmo gerado_em) ganha hora nova: é por ela que a página aberta
+    # percebe que há arquivo mais novo e troca os dados.
+    data["publicado_em"] = datetime.now(ZoneInfo("America/Sao_Paulo")).isoformat(timespec="seconds")
     validar(data)
-    texto = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    _gravar_atomico(destino / "data.json", texto)
+    texto = json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False)  # NaN/Infinity quebrariam o site
+    gravar_atomico(destino / "data.json", texto)
     logger.info("Gravado data.json ({} KB, {} compras, gerado em {:%d/%m/%Y %H:%M})", len(texto) // 1024, len(data["compras"]), gerado_em)

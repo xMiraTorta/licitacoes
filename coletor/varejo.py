@@ -20,6 +20,7 @@ import httpx
 from loguru import logger
 
 from coletor import cafe, marcas
+from coletor.arquivos import gravar_atomico
 
 LOJAS = ("www.mambo.com.br", "www.giassi.com.br", "www.covabra.com.br", "www.savegnago.com.br", "www.bistek.com.br",
          "www.supermuffato.com.br", "www.zonasul.com.br", "www.gbarbosa.com.br", "www.prezunic.com.br",
@@ -48,12 +49,26 @@ class Oferta:
         return round(self.preco / self.peso_g * 1000, 2)
 
 
+_N_X_PESO = re.compile(r"\b(\d{1,2})\s*x\s*(\d+(?:[.,]\d+)?)\s*(kg|g|gr|gramas)\b")  # "10x500g", "2x1kg"
+_N_PACOTES = re.compile(r"(?:\bcom|c/)\s*(\d{1,2})\s*(?:unidades|unid|und|un|pacotes|pcts?)\b|\b(?:pack|kit)\s*(?:com|c/)?\s*(\d{1,2})\s*(?:un|unid|unidades|pacotes?)\b")
+_LEVE_PAGUE = re.compile(r"\bleve\s*\d+\s*pague\s*\d+")  # preço de N pacotes, peso ambíguo: fora
+
+
 def _peso_g(nome: str) -> int | None:
-    m = _PESO.search(nome)
-    if not m:
+    """Peso do pacote em gramas, só entre 250 g e 1 kg. Pacote múltiplo ("10x500g", "500g c/ 2 unidades") conta o
+    total, e acima de 1 kg fica fora: o preço é dos N pacotes e inflaria o R$/kg."""
+    if _LEVE_PAGUE.search(nome):
         return None
-    v = float(m.group(1).replace(",", "."))
-    g = int(round(v * 1000)) if m.group(2) == "kg" else int(round(v))
+    if (mx := _N_X_PESO.search(nome)):
+        n, v, u = int(mx.group(1)), float(mx.group(2).replace(",", ".")), mx.group(3)
+    else:
+        m = _PESO.search(nome)
+        if not m:
+            return None
+        v, u = float(m.group(1).replace(",", ".")), m.group(2)
+        mp = _N_PACOTES.search(nome)
+        n = int(mp.group(1) or mp.group(2)) if mp else 1
+    g = n * (int(round(v * 1000)) if u == "kg" else int(round(v)))
     return g if 250 <= g <= 1000 else None
 
 
@@ -152,7 +167,7 @@ def atualizar(base_path: Path, hoje: str, cliente: httpx.Client | None = None) -
                                   "produto": o.produto} for o in fontes])
         novas += 1
     base["precos_em"] = hoje
-    base_path.write_text(json.dumps(base, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    gravar_atomico(base_path, json.dumps(base, ensure_ascii=False, indent=1) + "\n")  # nunca um JSON pela metade
     marcas.base.cache_clear()
     logger.info("Varejo: {} de {} linhas com preço desta semana ({} lojas responderam)", novas, len(base["linhas"]),
                 len(lojas_ok))

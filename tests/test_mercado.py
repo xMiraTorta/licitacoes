@@ -33,6 +33,16 @@ def test_le_paginas_e_calcula_niveis() -> None:
     assert n["Tradicional"]["kg_min"] < n["Superior"]["kg_min"] < n["Gourmet/especial"]["kg_min"]
 
 
+def test_carvalhaes_abaixo_de_mil_reais() -> None:
+    """Classe cotada abaixo de R$ 1.000,00 (sem ponto de milhar) tem de ser lida, não derrubar a atualização."""
+    baixa = CARVALHAES.replace("1.300,00/1.350,00</td></tr>\n<tr><td>Consumo interno: Riadas", "950,00/1.010,00</td></tr>\n<tr><td>Consumo interno: Riadas") \
+        .replace("<td>1.250,00/1.300,00</td>", "<td>900,00/950,00</td>")
+    carv = mercado.ler_carvalhaes(baixa)
+    assert carv["saca60"]["consumo_dura"] == [round(950 * 60 / 60.5, 2), round(1010 * 60 / 60.5, 2)]
+    assert carv["saca60"]["consumo_riada"] == [round(900 * 60 / 60.5, 2), round(950 * 60 / 60.5, 2)]
+    assert carv["saca60"]["cd_finos"] == [round(1900 * 60 / 60.5, 2), round(2000 * 60 / 60.5, 2)]  # com milhar segue igual
+
+
 def test_pagina_mudou_nao_grava(tmp_path: Path) -> None:
     destino = tmp_path / "mercado.json"
     destino.write_text('{"antigo": true}', encoding="utf-8")

@@ -12,7 +12,34 @@ import pytest
 
 from coletor import coleta, montar, publicar, telegram
 from coletor.pncp import PNCP, ColetaErro
-from tests.conftest import ROOT  # noqa: F401 (raiz do repositório)
+from tests.conftest import FIXTURES, ROOT  # noqa: F401 (raiz do repositório)
+
+
+def test_gravar_recusa_infinito_e_nan(tmp_path: Path) -> None:
+    """Infinity/NaN não existem em JSON (o navegador não leria o arquivo): a gravação falha antes de tocar o data.json."""
+    import math
+    from pydantic import ValidationError
+    data = json.loads((FIXTURES / "data_min.json").read_text(encoding="utf-8"))
+    data["compras"][0]["vcafe"] = math.inf
+    with pytest.raises(ValidationError):
+        publicar.gravar(data, tmp_path, datetime.fromisoformat(data["gerado_em"]))
+    data = json.loads((FIXTURES / "data_min.json").read_text(encoding="utf-8"))
+    data["origem"]["lat"] = math.nan  # campo livre (dict): passa pelo modelo, cai no json.dumps
+    with pytest.raises(ValueError):
+        publicar.gravar(data, tmp_path, datetime.fromisoformat(data["gerado_em"]))
+    assert not (tmp_path / "data.json").exists()
+
+
+def test_gravar_marca_a_hora_da_publicacao(tmp_path: Path) -> None:
+    """Toda gravação (coleta ou só preços, com o mesmo gerado_em) ganha publicado_em novo: é por ele que a página
+    aberta percebe que há arquivo mais novo."""
+    data = json.loads((FIXTURES / "data_min.json").read_text(encoding="utf-8"))
+    data.pop("publicado_em", None)
+    publicar.gravar(data, tmp_path, datetime.fromisoformat(data["gerado_em"]))
+    out = json.loads((tmp_path / "data.json").read_text(encoding="utf-8"))
+    assert out["gerado_em"] == data["gerado_em"]  # a hora da coleta não muda
+    assert out["publicado_em"].endswith("-03:00") and out["publicado_em"] > out["gerado_em"]
+    assert len(out["publicado_em"]) == 25  # AAAA-MM-DDTHH:MM:SS-03:00
 
 AGORA = datetime(2026, 10, 19, 9, 0, tzinfo=coleta.TZ)
 
@@ -110,7 +137,7 @@ def test_primeira_coleta_monta_registro_completo(destino: Path) -> None:
 def test_segunda_coleta_marca_novas_e_preserva_edital(destino: Path) -> None:
     rodar(destino, [CAFE])
     data = json.loads((destino / "data.json").read_text(encoding="utf-8"))
-    data["compras"][0].update(edital_lido=True, ed_tags=["Amostra"], ed_pz="5 dias úteis")
+    data["compras"][0].update(edital_lido=True, ed_tags=["Amostra"], ed_pz="5 dias úteis", edital_tentativa="2026-10-19: falha ao baixar os documentos")
     (destino / "data.json").write_text(json.dumps(data), encoding="utf-8")
     nova = compra_api("55555555000155", 5, "Aquisição de café")
     itens = {**ITENS, "55555555000155/compras/2026/5": [item_api(1, "Café torrado e moído 250g", 100, 18.0)]}
@@ -120,8 +147,34 @@ def test_segunda_coleta_marca_novas_e_preserva_edital(destino: Path) -> None:
     velha, nv = by[CAFE["numeroControlePNCP"]], by[nova["numeroControlePNCP"]]
     assert velha["nova"] is False and velha["first_seen"] == "2026-10-19"
     assert velha["edital_lido"] is True and velha["ed_tags"] == ["Amostra"] and velha["ed_pz"] == "5 dias úteis"
+    assert velha["edital_tentativa"] == "2026-10-19: falha ao baixar os documentos"  # herdado como os outros campos do edital
     assert nv["nova"] is True and nv["first_seen"] == "2026-10-20"
     assert data["novas_desde"] == "2026-10-19" and r.novas == [nova["numeroControlePNCP"]]
+
+
+def test_itens_vazios_de_compra_conhecida_mantem_registro_e_nao_reavisa(destino: Path) -> None:
+    """PNCP devolve a lista de itens vazia num dia (204 ou []): a compra conhecida fica como estava e, quando os
+    itens voltam, não é avisada de novo como nova (first_seen preservado)."""
+    lista = [compra_api(f"{i:014d}", i, "café") for i in range(1, 6)]
+    itens = {f"{i:014d}/compras/2026/{i}": [item_api(1, "Café torrado e moído 500g", 10, 30.0)] for i in range(1, 6)}
+    k = lista[0]["numeroControlePNCP"]
+    rodar(destino, lista, itens)
+    r2 = rodar(destino, lista, {**itens, "00000000000001/compras/2026/1": []}, agora=datetime(2026, 10, 20, 9, 0, tzinfo=coleta.TZ))
+    by = {c["chave"]: c for c in json.loads((destino / "data.json").read_text(encoding="utf-8"))["compras"]}
+    assert k in by and by[k]["first_seen"] == "2026-10-19" and r2.novas == [] and r2.falhas == []
+    r3 = rodar(destino, lista, itens, agora=datetime(2026, 10, 21, 9, 0, tzinfo=coleta.TZ))
+    by = {c["chave"]: c for c in json.loads((destino / "data.json").read_text(encoding="utf-8"))["compras"]}
+    assert by[k]["first_seen"] == "2026-10-19" and by[k]["nova"] is False and r3.novas == []
+
+
+def test_compra_nova_sem_itens_continua_fora(destino: Path) -> None:
+    """Compra ainda desconhecida e sem itens publicados: não entra e não vai para o cache."""
+    nova = compra_api("55555555000155", 5, "Aquisição de café")
+    itens = {"11111111000111/compras/2026/1": [item_api(1, "Café torrado e moído 500g", 10, 30.0)]}
+    r = rodar(destino, [CAFE, nova], itens)
+    chaves = {c["chave"] for c in json.loads((destino / "data.json").read_text(encoding="utf-8"))["compras"]}
+    assert nova["numeroControlePNCP"] not in chaves and r.falhas == []
+    assert nova["numeroControlePNCP"] not in json.loads(coleta.CACHE.read_text(encoding="utf-8"))["itens"]
 
 
 def test_falha_na_listagem_nao_altera_arquivos(destino: Path) -> None:
@@ -422,6 +475,18 @@ def test_telegram_espera_quando_limitado(monkeypatch: pytest.MonkeyPatch) -> Non
     assert esperas == [telegram.PAUSA, 7.0]  # pausa entre mensagens + o tempo que o Telegram pediu
 
 
+def test_telegram_429_sem_json_espera_o_padrao(monkeypatch: pytest.MonkeyPatch) -> None:
+    """429 com página HTML (Cloudflare) em vez do JSON do Telegram: espera o padrão e tenta de novo, sem estourar."""
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "x")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    esperas: list[float] = []
+    monkeypatch.setattr(telegram.time, "sleep", esperas.append)
+    respostas = iter([httpx.Response(429, text="<html>Too Many Requests</html>", headers={"content-type": "text/html"}),
+                      httpx.Response(200, json={"ok": True})])
+    telegram.enviar(["a"], httpx.Client(transport=httpx.MockTransport(lambda req: next(respostas))))
+    assert esperas == [5.0]
+
+
 def test_cartao_telegram_numero_e_apostrofo() -> None:
     c = montar.montar_compra(compra_api("11111111000111", 1, "café", mun="Santa Bárbara d'Oeste", uf="SP") | {"numeroCompra": "114/2026"},
                              [item_api(1, "Café torrado e moído 500g", 10, 15.0)])
@@ -445,7 +510,8 @@ def test_compra_de_cesta_basica_fica_fora() -> None:
 
 
 @pytest.mark.parametrize("desc", ["Café solúvel 200g", "Cápsula de café espresso", "Café pronto para consumo, garrafa 1 litro",
-                                  "Cesta básica com arroz, feijão, açúcar, óleo, macarrão e café", "Café cru em grãos, saca 60 kg"])
+                                  "Cesta básica com arroz, feijão, açúcar, óleo, macarrão e café", "Café cru em grãos, saca 60 kg",
+                                  "café arábica cru beneficiado", "Café verde arábica, saca de 60kg"])
 def test_so_cafe_torrado_entra(desc: str) -> None:
     assert montar.montar_item(item_api(1, desc, 10, 30.0)) is None
 

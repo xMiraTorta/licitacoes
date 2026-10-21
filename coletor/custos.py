@@ -44,7 +44,7 @@ def margem(compra: dict[str, Any], item: dict[str, Any], mercado: dict[str, Any]
     direto = grao + torra + p["embalagem_rs_kg"]
     frete = frete_total(kg, km, preco, compra.get("srp") == "Sim", p) / kg
     fixos = (p["por_licitacao"]["plataforma"] + p["por_licitacao"]["laudo"] + p["por_licitacao"]["amostra_kg"] * direto) / kg
-    pct = sum(p["pct_preco"].values())
+    pct = p["pct_preco"]["das"] + p["pct_preco"]["financeiro"] + p["pct_preco"]["perdas"]  # os mesmos 3 do site (modelo.ts)
     custo = direto + frete + fixos + preco * pct
     m = preco - custo
     return {"preco": round(preco, 2), "grao": round(grao, 2), "torra": round(torra, 2), "embalagem": p["embalagem_rs_kg"],

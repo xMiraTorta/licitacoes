@@ -78,16 +78,33 @@ class PNCP:
         if espera > 0:
             time.sleep(espera)
 
+    def _contar_chamada(self) -> None:
+        with self._lock:
+            if self.stats.chamadas >= self.limite_chamadas:
+                raise ColetaErro(f"limite de {self.limite_chamadas} chamadas atingido")
+            self.stats.chamadas += 1
+
+    def _resposta_boa(self) -> None:
+        with self._lock:  # recupera a velocidade aos poucos depois de um 429
+            self.intervalo_min = max(self.intervalo_base, self.intervalo_min * 0.97)
+
+    def _esperar_nova_tentativa(self, n: int, limitado: bool, descricao: str, ultimo: str) -> None:
+        espera = min(ESPERA_MAX, (self.espera_429 if limitado else self.espera_base) * 2 ** (n - 1))
+        with self._lock:
+            self.stats.novas_tentativas += 1
+            if limitado and self.intervalo_min < INTERVALO_MAX:
+                self.intervalo_min = min(INTERVALO_MAX, max(self.intervalo_min, 0.1) * 2)
+                logger.warning("PNCP limitou as chamadas: intervalo entre chamadas agora {:.1f}s", self.intervalo_min)
+        logger.warning("PNCP {} falhou ({}); tentativa {}/{} em {:.0f}s", descricao, ultimo, n + 1, self.tentativas, espera)
+        time.sleep(espera)
+
     def get_json(self, path: str, params: dict[str, Any] | None = None, aceitar_404: bool = False) -> Any:
         """GET com novas tentativas (2 s, 4 s, 8 s...) em erro de rede, 429 e 5xx. 204 vira lista vazia;
         com aceitar_404, 404 (não existe) vira None."""
         url = path if path.startswith("http") else BASE + path
         ultimo = ""
         for n in range(1, self.tentativas + 1):
-            with self._lock:
-                if self.stats.chamadas >= self.limite_chamadas:
-                    raise ColetaErro(f"limite de {self.limite_chamadas} chamadas atingido")
-                self.stats.chamadas += 1
+            self._contar_chamada()
             self._aguardar_vez()
             limitado = False
             try:
@@ -100,8 +117,7 @@ class PNCP:
                 if r.status_code == 404 and aceitar_404:
                     return None
                 if r.status_code == 200:
-                    with self._lock:  # recupera a velocidade aos poucos depois de um 429
-                        self.intervalo_min = max(self.intervalo_base, self.intervalo_min * 0.97)
+                    self._resposta_boa()
                     try:
                         return r.json()
                     except ValueError as e:
@@ -112,16 +128,38 @@ class PNCP:
                 else:
                     raise ColetaErro(f"{url} {params} -> HTTP {r.status_code}: {r.text[:300]}")
             if n < self.tentativas:
-                espera = min(ESPERA_MAX, (self.espera_429 if limitado else self.espera_base) * 2 ** (n - 1))
-                with self._lock:
-                    self.stats.novas_tentativas += 1
-                    if limitado and self.intervalo_min < INTERVALO_MAX:
-                        self.intervalo_min = min(INTERVALO_MAX, max(self.intervalo_min, 0.1) * 2)
-                        logger.warning("PNCP limitou as chamadas: intervalo entre chamadas agora {:.1f}s", self.intervalo_min)
-                logger.warning("PNCP {} {} falhou ({}); tentativa {}/{} em {:.0f}s", url, params, ultimo, n + 1,
-                               self.tentativas, espera)
-                time.sleep(espera)
+                self._esperar_nova_tentativa(n, limitado, f"{url} {params}", ultimo)
         raise ColetaErro(f"{url} {params} -> {ultimo}")
+
+    def baixar(self, url: str, max_bytes: int) -> bytes:
+        """Baixa um arquivo (documento da compra) com as mesmas novas tentativas e o mesmo ritmo de get_json:
+        erro de rede, 429 e 5xx tentam de novo (o 429 também desacelera o coletor). Arquivo maior que max_bytes
+        ou outro 4xx é definitivo: ColetaErro na hora."""
+        ultimo = ""
+        for n in range(1, self.tentativas + 1):
+            self._contar_chamada()
+            self._aguardar_vez()
+            limitado = False
+            try:
+                with self.client.stream("GET", url, follow_redirects=True, timeout=120) as r:
+                    if r.status_code == 200:
+                        dados = bytearray()
+                        for bloco in r.iter_bytes():
+                            dados.extend(bloco)
+                            if len(dados) > max_bytes:
+                                raise ColetaErro(f"{url}: arquivo maior que {max_bytes // 2**20} MB")
+                        self._resposta_boa()
+                        return bytes(dados)
+                    if r.status_code in RETRY_STATUS:
+                        limitado = r.status_code == 429
+                        ultimo = f"HTTP {r.status_code}"
+                    else:
+                        raise ColetaErro(f"{url} -> HTTP {r.status_code}")
+            except httpx.RequestError as e:  # rede, timeout, conexão cortada no meio do arquivo
+                ultimo = f"{type(e).__name__}: {e}"
+            if n < self.tentativas:
+                self._esperar_nova_tentativa(n, limitado, url, ultimo)
+        raise ColetaErro(f"{url} -> {ultimo}")
 
     def listar_abertas(self, modalidade: int, data_final: str, paralelo: int = 2) -> Iterator[dict[str, Any]]:
         """Todas as compras da modalidade com propostas abertas. Erro em qualquer página -> ColetaErro."""
@@ -147,6 +185,8 @@ class PNCP:
         return d if isinstance(d, dict) and d else None
 
     def itens(self, cnpj: str, ano: int, seq: int) -> list[dict[str, Any]]:
+        """Todos os itens da compra. Página cheia (1000) -> pede a seguinte. Se o PNCP um dia limitar a página
+        a menos que isso (100, 500), uma compra enorme viria truncada: o aviso no log é para perceber."""
         out: list[dict[str, Any]] = []
         pagina = 1
         while True:
@@ -154,6 +194,9 @@ class PNCP:
                                  {"pagina": pagina, "tamanhoPagina": 1000})
             out.extend(lote or [])
             if not lote or len(lote) < 1000:
+                if lote and len(lote) in (50, 100, 200, 500):
+                    logger.warning("Itens de {}/{}/{}: página com exatamente {} itens; se o PNCP limitou a página, "
+                                   "pode haver mais itens não lidos", cnpj, ano, seq, len(lote))
                 return out
             pagina += 1
 

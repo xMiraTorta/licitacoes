@@ -6,6 +6,7 @@ import zipfile
 from typing import Any
 
 import httpx
+import pytest
 
 from coletor import edital, montar
 from coletor.pncp import PNCP
@@ -55,6 +56,129 @@ def _compra() -> dict[str, Any]:
     c = {"chave": CHAVE, "itens": [dict(i) for i in ITENS], "edital_lido": False, "ed_pz": ""}
     c.update(montar.agregar(c["itens"]))
     return c
+
+
+def _zip_ruim(variante: str) -> bytes:
+    """ZIPs corrompidos de formas que o zipfile só percebe depois de abrir (casos reais de anexo danificado no PNCP)."""
+    import struct
+    base = _docx("Café torrado e moído superior")
+    if variante == "versao":  # versão de extração impossível no diretório central: NotImplementedError ao abrir
+        d = bytearray(base)
+        d[d.rfind(b"PK\x01\x02") + 6] = 99
+        return bytes(d)
+    if variante == "nome":  # nome com a marca UTF-8 ligada mas bytes cp1252 ("Referência" gravado como \xea): UnicodeDecodeError
+        b = io.BytesIO()
+        with zipfile.ZipFile(b, "w") as z:
+            z.writestr("Referência.docx", base)
+        return b.getvalue().replace(b"\xc3\xaa", b"\xea_")
+    if variante == "offset":  # diretório central apontando para fora do arquivo: ValueError (seek negativo) ao ler
+        d = bytearray(base)
+        eocd = d.rfind(b"PK\x05\x06")
+        struct.pack_into("<L", d, eocd + 16, struct.unpack_from("<L", d, eocd + 16)[0] + 1000)
+        return bytes(d)
+    if variante == "lzma":  # entrada LZMA com os dados corrompidos: lzma.LZMAError ao descompactar
+        b = io.BytesIO()
+        with zipfile.ZipFile(b, "w", compression=zipfile.ZIP_LZMA) as z:
+            z.writestr("word/document.xml", "<w:p><w:t>Café torrado</w:t></w:p>" * 50)
+        d = bytearray(b.getvalue())
+        ini = d.find(b"word/document.xml") + len("word/document.xml") + 2
+        for k in range(ini + 2, ini + 40):
+            d[k] ^= 0xFF
+        return bytes(d)
+    raise ValueError(variante)
+
+
+def _pncp_tr_instavel(falhas_tr: int, tentativas: int) -> tuple[PNCP, dict[str, int]]:
+    """Edital sem a especificação do café baixa sempre; o TR responde 429 nas primeiras `falhas_tr` chamadas."""
+    docs = [{"url": "https://pncp.gov.br/docs/1", "titulo": "Edital.docx", "tipoDocumentoId": 2, "sequencialDocumento": 1},
+            {"url": "https://pncp.gov.br/docs/2", "titulo": "TR.docx", "tipoDocumentoId": 4, "sequencialDocumento": 2}]
+    chamadas: dict[str, int] = {}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        chamadas[req.url.path] = chamadas.get(req.url.path, 0) + 1
+        if req.url.path.endswith("/arquivos"):
+            return httpx.Response(200, json=docs)
+        if req.url.path == "/docs/1":
+            return httpx.Response(200, content=_docx("EDITAL. Objeto: gêneros alimentícios, conforme TR anexo."))
+        if chamadas["/docs/2"] <= falhas_tr:
+            return httpx.Response(429, text="Limite de requisições excedido")
+        return httpx.Response(200, content=_docx(TR))
+    return PNCP(httpx.Client(transport=httpx.MockTransport(handler)), tentativas=tentativas, espera_base=0, espera_429=0,
+                intervalo_min=0), chamadas
+
+
+@pytest.mark.parametrize("variante", ["versao", "nome", "offset", "lzma"])
+def test_zip_corrompido_nao_derruba_a_leitura(variante: str) -> None:
+    assert edital.texto_de("Anexos.zip", _zip_ruim(variante)) == ""
+
+
+def test_anexo_corrompido_nao_bloqueia_a_coleta() -> None:
+    """Um ZIP danificado vira "sem texto legível" (como PDF escaneado); nenhuma exceção sobe até a coleta do dia."""
+    docs = [{"url": "https://pncp.gov.br/docs/1", "titulo": "Anexos.zip", "tipoDocumentoId": 5, "sequencialDocumento": 1}]
+    c = _compra()
+    assert edital.ler_varias(_pncp(docs, {"/docs/1": _zip_ruim("offset")}), [c], {CHAVE: "v1"}, "2026-10-21") == 1
+    assert c["edital_status"] == edital.STATUS_SEM_TEXTO and c["edital_ver"] == "v1"
+
+
+def test_excecao_inesperada_na_leitura_vira_falha_e_tenta_de_novo(monkeypatch: pytest.MonkeyPatch) -> None:
+    def quebra(*a: Any, **k: Any) -> edital.Leitura:
+        raise RuntimeError("formato que ninguém previu")
+    monkeypatch.setattr(edital, "ler", quebra)
+    c = _compra()
+    assert edital.ler_varias(_pncp([], {}), [c], {CHAVE: "v1"}, "2026-10-21") == 1
+    assert c["edital_status"] == edital.STATUS_FALHA and "edital_ver" not in c and edital.precisa_ler(c, "v1")
+
+
+def test_releitura_sem_sucesso_nao_muda_o_status_da_leitura_boa() -> None:
+    """A compra mudou no PNCP e a releitura não achou o café: a leitura boa continua valendo (status, trecho, nível),
+    a tentativa fica registrada; uma releitura boa depois substitui tudo e apaga a tentativa."""
+    c = _compra()
+    edital.aplicar(c, edital.analisar(TR, c["itens"]), "2026-10-18")
+    assert c["edital_status"] == edital.STATUS_LIDO and c["itens"][0]["nivel"] == "Superior"
+    edital.aplicar(c, edital.Leitura(edital.STATUS_SEM_CAFE, docs=["1:Edital.docx"]), "2026-10-21")
+    assert c["edital_status"] == edital.STATUS_LIDO and c["edital_tentativa"] == f"2026-10-21: {edital.STATUS_SEM_CAFE}"
+    assert c["itens"][0]["nivel"] == "Superior" and c["itens"][0]["ed_trecho"]
+    edital.aplicar(c, edital.analisar(TR, c["itens"]), "2026-10-22")
+    assert c["edital_status"] == edital.STATUS_LIDO and "edital_tentativa" not in c
+
+
+def test_revisao_manual_sobrevive_a_pdf_escaneado_novo() -> None:
+    docs = [{"url": "https://pncp.gov.br/docs/1", "titulo": "Edital.pdf", "tipoDocumentoId": 2, "sequencialDocumento": 1}]
+    c = _compra()
+    c.update(edital_status="lido (revisão manual: PDF escaneado)", edital_lido=True, edital_ver="v1")
+    c["itens"][0]["ed_trecho"] = "transcrição à mão: café superior"
+    edital.ler_varias(_pncp(docs, {"/docs/1": b"%PDF-1.4\n"}), [c], {CHAVE: "v2"}, "2026-10-21")  # PDF sem texto
+    assert c["edital_status"] == "lido (revisão manual: PDF escaneado)" and c["itens"][0]["ed_trecho"].startswith("transcrição")
+    assert c["edital_ver"] == "v2" and c["edital_tentativa"].startswith("2026-10-21: ") and not edital.precisa_ler(c, "v2")
+
+
+def test_status_vazio_herdado_do_painel_antigo_e_atualizado() -> None:
+    c = _compra()
+    c.update(edital_lido=True, edital_status="")
+    edital.ler_varias(_pncp([{"url": "https://pncp.gov.br/docs/1", "titulo": "Edital.docx", "tipoDocumentoId": 2, "sequencialDocumento": 1}],
+                            {"/docs/1": _docx("EDITAL. Objeto: gêneros alimentícios.")}), [c], {CHAVE: "v1"}, "2026-10-21")
+    assert c["edital_status"] == edital.STATUS_SEM_CAFE and not edital.precisa_ler(c, "v1")  # não fica relendo todo dia
+
+
+def test_documento_com_429_tenta_de_novo() -> None:
+    p, chamadas = _pncp_tr_instavel(falhas_tr=1, tentativas=3)
+    c = _compra()
+    edital.ler_varias(p, [c], {CHAVE: "v1"}, "2026-10-21")
+    assert chamadas["/docs/2"] == 2 and c["edital_status"] == edital.STATUS_LIDO and c["edital_ver"] == "v1"
+    assert [i["nivel"] for i in c["itens"]] == ["Superior", "Gourmet/especial"]
+    assert p.stats.novas_tentativas == 1 and p.intervalo_min > 0  # o 429 do documento também desacelera o coletor
+
+
+def test_leitura_parcial_nao_vale_como_versao_lida() -> None:
+    """TR fora do ar mesmo após as tentativas: fica o que o Edital diz, mas a compra é relida na próxima coleta."""
+    p, chamadas = _pncp_tr_instavel(falhas_tr=99, tentativas=2)
+    c = _compra()
+    edital.ler_varias(p, [c], {CHAVE: "v1"}, "2026-10-21")
+    assert chamadas["/docs/2"] == 2 and c["edital_status"] == edital.STATUS_SEM_CAFE and c["edital_docs"] == ["1:Edital.docx"]
+    assert "edital_ver" not in c and edital.precisa_ler(c, "v1")
+    p, chamadas = _pncp_tr_instavel(falhas_tr=0, tentativas=1)  # dia seguinte, PNCP normal
+    edital.ler_varias(p, [c], {CHAVE: "v1"}, "2026-10-22")
+    assert c["edital_status"] == edital.STATUS_LIDO and c["edital_ver"] == "v1" and not edital.precisa_ler(c, "v1")
 
 
 def test_cada_item_recebe_a_propria_especificacao() -> None:
