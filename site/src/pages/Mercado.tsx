@@ -26,23 +26,27 @@ export function Mercado() {
   const faixas = useMemo(() => faixasPorNivel(O), [O]);
   const cot = m.carvalhaes?.data || m.atualizado_em;
   const hist = (m.historico || []).slice(-60);
+  // "Sem categoria" tem o mesmo café verde do Tradicional: um cartão só, a não ser que o dono fixe preços diferentes em Ajustes
+  const sc = m.niveis?.["Sem categoria"], tr = m.niveis?.Tradicional;
+  const juntos = !!sc && !!tr && sc.saca60_min === tr.saca60_min && sc.saca60_max === tr.saca60_max && (custos["grao|Sem categoria"] ?? null) === (custos["grao|Tradicional"] ?? null);
   return (
     <div className="page mercado">
       <div className="page-h"><h1>Mercado</h1><span className="small muted">Café verde por nível de exigência, preços de varejo das marcas e o que os órgãos pagam.</span></div>
 
       <section className="niv-cards stag" aria-label="Café verde por nível">
-        {NIVEIS.filter((n) => m.niveis?.[n]).map((n) => {
+        {NIVEIS.filter((n) => m.niveis?.[n] && !(juntos && n === "Sem categoria")).map((n) => {
           const x = m.niveis![n];
           const meu = custos["grao|" + n];
           const torrado = (meu ? meu / 60 : x.kg_medio) / (1 - perda);
           return (
-            <article key={n} className="card pad fade">
+            <article key={n} className="card pad fade" data-nivel={n}>
               <div className="row-flex" style={{ justifyContent: "space-between" }}><Nivel n={n} /><span className="tiny muted">cotação {cot ? fmtDia(cot) : ""}</span></div>
               <div className="big-n mono">{BRL0(meu || x.saca60_min)}{!meu && <span className="v-sub"> a {BRL0(x.saca60_max)}</span>}</div>
               <div className="small muted">{meu ? "seu preço por saca (Ajustes)" : "R$ por saca de 60 kg, faixa estimada"}</div>
               <hr className="hr" style={{ margin: "10px 0" }} />
               <div className="small">≈ <b>{BRL(torrado)}</b>/kg torrado, só a matéria-prima ({Math.round(perda * 100)}% de perda na torra)</div>
               <p className="tiny muted" style={{ marginTop: 8 }}>{x.regra}</p>
+              {juntos && n === "Tradicional" && <p className="tiny muted" style={{ marginTop: 6 }}>Vale também para edital sem categoria (nível “Sem categoria”): o mínimo legal é o mesmo blend, ao mesmo preço.</p>}
             </article>
           );
         })}
@@ -55,7 +59,8 @@ export function Mercado() {
           <table className="tbl" style={{ marginTop: 10 }}><tbody>
             {m.cepea?.arabica && <tr><td><Dica texto="CEPEA/ESALQ: arábica tipo 6 bebida dura para melhor, posto São Paulo (CC BY-NC 4.0)"><span className="tt-term">CEPEA arábica</span></Dica></td><td className="mono r">{n2(m.cepea.arabica.saca60)}</td><td className="muted small">{fmtDia(m.cepea.arabica.data)}</td></tr>}
             {m.cepea?.robusta && <tr><td><Dica texto="CEPEA/ESALQ: robusta (conilon), entra na receita do Tradicional e do Superior"><span className="tt-term">CEPEA robusta</span></Dica></td><td className="mono r">{n2(m.cepea.robusta.saca60)}</td><td className="muted small">{fmtDia(m.cepea.robusta.data)}</td></tr>}
-            {m.carvalhaes && Object.entries(m.carvalhaes.saca60).map(([k, [a, b]]) => <tr key={k}><td>Carvalhaes · {CLASSES[k] || k}</td><td className="mono r">{n2(a)} a {n2(b)}</td><td className="muted small">{fmtDia(m.carvalhaes!.data)}</td></tr>)}
+            {m.carvalhaes && <tr className="tbl-g"><td colSpan={3}>Carvalhaes <span className="muted small">· corretora de café, por qualidade da bebida</span></td></tr>}
+            {m.carvalhaes && Object.entries(m.carvalhaes.saca60).map(([k, [a, b]]) => <tr key={k}><td>{CLASSES[k] || k}</td><td className="mono r">{n2(a)} a {n2(b)}</td><td className="muted small">{fmtDia(m.carvalhaes!.data)}</td></tr>)}
           </tbody></table>
           <p className="tiny muted" style={{ marginTop: 8 }}>Não existe cotação pública de “café para Superior”: o preço de cada nível é estimado pela receita de blend das Resoluções SAA-SP 28, 30 e 31/2007 (PQC/ABIC), com o meio da faixa no custo. Café da sua fazenda entra pelo preço que você receberia vendendo; fixe o seu R$/saca em <button type="button" className="linkbtn" onClick={() => navegar("ajustes")}>Ajustes</button>.</p>
         </section>

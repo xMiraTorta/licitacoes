@@ -130,7 +130,7 @@ export function Hoje() {
           </section>
           <section className="card pad" aria-label="Marcas citadas">
             <h2>Marcas citadas</h2><div className="sub small muted">como referência nos editais (“ou equivalente”)</div>
-            <Hbar rows={marcasCitadas(O).slice(0, 6).map((m) => ({ l: <>{m.m}{varejoTxt(data.marcas_ref, m.m) ? <span className="muted"> · {varejoTxt(data.marcas_ref, m.m).replace(/^[^:]*: /, "")} no varejo</span> : null}</>, v: m.n, onClick: () => irLista({ marcas: [m.m] }) }))} />
+            <Hbar rows={marcasCitadas(O).slice(0, 6).map((m) => ({ l: <>{m.m}{varejoTxt(data.marcas_ref, m.m) ? <span className="hb-sub">{varejoTxt(data.marcas_ref, m.m).replace(/^[^:]*: /, "")} no varejo</span> : null}</>, v: m.n, onClick: () => irLista({ marcas: [m.m] }) }))} />
             {data.marcas_ref?.pesquisa_em && <p className="tiny muted" style={{ marginTop: 8 }}>Preço de varejo: 11 lojas online, pesquisa semanal (segunda, 7:13). Última: {data.marcas_ref.pesquisa_em.split("-").reverse().join("/")}.</p>}
           </section>
         </div>

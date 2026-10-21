@@ -39,7 +39,7 @@ export function Propostas() {
           </div>
           <div id="board">
             {grupos.length ? grupos.map(([t, L]) => (
-              <section key={t} className="stage-g"><h3>{t} <i className="mono muted">{L.length}</i></h3><div className="props">{L.map((k) => <PropCard key={k} k={k} />)}</div></section>
+              <section key={t} className="stage-g"><h3>{t} <span className="cnt">{L.length}</span></h3><div className="props">{L.map((k) => <PropCard key={k} k={k} />)}</div></section>
             )) : <div className="card empty"><b>Nenhuma licitação nesta etapa.</b></div>}
           </div>
         </>
@@ -95,7 +95,7 @@ function Agenda() {
     <section className="agenda" id="agenda" aria-label="Agenda de prazos">
       <div className="card-h" style={{ padding: "8px 0" }}>
         <div><h2>Agenda de prazos</h2><div className="sub small muted">{all ? "Todas as abertas, por dia de encerramento" : "Só as que você acompanha"}</div></div>
-        <Segmentado rotulo="Quais" valor={all ? "1" : "0"} onChange={(v) => { setUI({ agendaAll: v === "1" }); setMaxDias(v === "1" ? 5 : 45); }} opcoes={anyMine ? [["0", "Só as que acompanho"], ["1", "Todas"]] : [["1", "Todas"]]} pequeno />
+        <Segmentado rotulo="Quais" valor={all ? "1" : "0"} onChange={(v) => { setUI({ agendaAll: v === "1" }); setMaxDias(v === "1" ? 5 : 45); }} opcoes={anyMine ? [["0", "Minhas"], ["1", "Todas"]] : [["1", "Todas"]]} pequeno />
       </div>
       {days.length ? days.map(([k, cs]) => {
         const d = dayNum(k) - t0, dt = new Date(dayNum(k) * 864e5);

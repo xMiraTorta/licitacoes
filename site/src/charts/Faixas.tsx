@@ -36,7 +36,7 @@ export function Faixas({ faixas, pisos, onNivel }: { faixas: FaixaNivel[]; pisos
           </div>
         );
       })}
-      <div className="faixa-axis mono muted"><span>R$ {BIN_LO}</span><span>{BIN_LO + 25}</span><span>{BIN_LO + 50}</span><span>{BIN_LO + 75}</span><span>{BIN_HI}+</span></div>
+      <span /><div className="faixa-axis mono muted"><span>R$ {BIN_LO}</span><span>{BIN_LO + 25}</span><span>{BIN_LO + 50}</span><span>{BIN_LO + 75}</span><span>{BIN_HI}+</span></div><span />
       <div className="legend">
         <span><i className="l-tipico" />preço típico</span><span><i className="l-custo" />seu custo típico</span><span><i className="l-varejo" />varejo (ABIC)</span>{Object.values(pisos).some((v) => v > 0) && <span><i className="l-piso" />seu piso</span>}
       </div>

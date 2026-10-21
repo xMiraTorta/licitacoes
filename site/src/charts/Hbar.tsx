@@ -9,8 +9,9 @@ export function Hbar({ rows, max }: { rows: HbarRow[]; max?: number }) {
       {rows.map((r, i) => {
         const inner = (
           <>
-            <span className="hb-l"><span className="hb-t">{r.l}</span><span className="hb-tr"><span className="hb-br wide" style={{ width: (r.v / mx) * 100 + "%" }} /></span></span>
+            <span className="hb-t">{r.l}</span>
             <span className="hb-v mono">{r.v}{r.extra ? <span className="hb-x">{r.extra}</span> : null}</span>
+            <span className="hb-tr"><span className="hb-br wide" style={{ width: (r.v / mx) * 100 + "%" }} /></span>
           </>
         );
         return r.onClick

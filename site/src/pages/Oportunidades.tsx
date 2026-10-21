@@ -117,12 +117,12 @@ function Toolbar({ s }: { s: State }) {
       {(ativos.length > 0 || F.q) && (
         <div className="active-f">
           {F.q ? null : null}
-          <input className="inp q" type="search" placeholder="Filtrar por texto nesta lista" value={F.q} onChange={(e) => setF({ q: e.target.value })} aria-label="Filtrar por texto" id="q" />
+          <input className="inp q" type="search" placeholder="Buscar nesta lista" value={F.q} onChange={(e) => setF({ q: e.target.value })} aria-label="Filtrar por texto" id="q" />
           {ativos.map(([k, l, fn]) => <button key={k} type="button" className="af" onClick={fn} data-rm={k}>{l}<IX size={12} /></button>)}
           {ativos.length > 1 && <button type="button" className="linkbtn" onClick={limparFiltros} data-rm="__all">Limpar tudo</button>}
         </div>
       )}
-      {ativos.length === 0 && !F.q && <div className="active-f"><input className="inp q" type="search" placeholder="Filtrar por texto nesta lista (município, órgão, especificação, nº)" value={F.q} onChange={(e) => setF({ q: e.target.value })} aria-label="Filtrar por texto" id="q" /></div>}
+      {ativos.length === 0 && !F.q && <div className="active-f"><input className="inp q" type="search" placeholder="Buscar nesta lista (município, órgão, nº)" value={F.q} onChange={(e) => setF({ q: e.target.value })} aria-label="Filtrar por texto" id="q" /></div>}
     </div>
   );
 }

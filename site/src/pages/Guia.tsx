@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { BRL, fmtDate, n0 } from "../lib/format";
 import { MERCADO_VAREJO, REF_MIN, rkV } from "../lib/modelo";
 import { setChecklist, useStore } from "../store";
-import { REPO, SYNC_BRANCH, SYNC_PATH } from "../sync/github";
+import { SYNC_BRANCH } from "../sync/github";
 import { HoldButton, SpringCheck } from "../ui/Controles";
 import { Segmentado } from "../ui/Segmentado";
 import { Termo } from "../ui/Tooltip";
@@ -101,7 +101,7 @@ function Sobre() {
         <li>{semEd} sem edital lido (ainda não publicado no PNCP, documento escaneado ou falha ao baixar): só a descrição do item está disponível.</li>
         <li>{dup} marcadas como possível duplicata ({dupH} ficam ocultas por padrão).</li>
       </ul></Card>
-      <Card t="Seus dados"><p>Favoritos, status, preços, responsável, notas, checklist, pisos e meus custos são gravados <b>sozinhos no GitHub</b>, no arquivo <code>{SYNC_PATH}</code> da branch <code>{SYNC_BRANCH}</code> {REPO ? "deste repositório" : "do repositório"} (público: qualquer pessoa pode ver), e sincronizam entre celular e computador. Cada gravação fica no histórico do GitHub, de onde dá para recuperar versões antigas. Para gravar, cada aparelho precisa da sua chave de acesso uma vez: em Ajustes › Sincronização.</p></Card>
+      <Card t="Seus dados"><p>Favoritos, status, preços, responsável, notas, checklist, pisos e meus custos ficam guardados <b>sozinhos no seu GitHub</b>, numa área separada do site chamada “{SYNC_BRANCH}” (qualquer pessoa pode ver), e sincronizam entre celular e computador. Cada gravação fica no histórico do GitHub, de onde dá para recuperar versões antigas. Para gravar, cada aparelho precisa da sua chave de acesso uma vez: em Ajustes › Sincronização.</p></Card>
     </div>
   );
 }

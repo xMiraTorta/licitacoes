@@ -10,7 +10,7 @@ export function Ticker() {
   if (!m || !m.niveis) return null;
   const data = m.carvalhaes?.data || m.atualizado_em;
   return (
-    <div className="ticker mono" aria-label="Café verde hoje, R$ por saca de 60 kg">
+    <div className="ticker-wrap"><div className="ticker mono" aria-label="Café verde hoje, R$ por saca de 60 kg">
       <span className="muted">CAFÉ VERDE {data ? fmtDia(data).slice(0, 5) : ""} · R$/SACA</span>
       {NIVEIS.filter((n) => n !== "Sem categoria").map((n) => {
         const x = m.niveis![n];
@@ -25,6 +25,6 @@ export function Ticker() {
       {m.cepea?.robusta && <span className="tk">ROBUSTA <b>{n0(m.cepea.robusta.saca60)}</b></span>}
       <span className="muted tk-upd">ATUALIZA 7:13 E 18:47</span>
       <button type="button" className="linkbtn tk-link" onClick={() => navegar("mercado")}>Mercado →</button>
-    </div>
+    </div></div>
   );
 }

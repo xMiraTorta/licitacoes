@@ -569,7 +569,7 @@ def test_reference_brands_show_retail_price(page: Page, fixture_url: str) -> Non
     d = open_detail(page, FIRST)
     t = d.inner_text()
     assert "Pilão · Tradicional (Tradicional): R$ 39,78 a R$ 91,96/kg" in t and "Toko" in t and "18/10/2026" in t
-    assert "custam R$ 39,78 a R$ 91,96/kg no varejo" in d.locator(".verdict").inner_text()
+    assert "R$ 39,78 a R$ 91,96/kg no varejo" in d.locator(".verdict").inner_text()
     go_tab(page, "hoje")
     card = page.locator('section[aria-label="Marcas citadas"]')
     assert "Pilão" in card.inner_text() and "no varejo" in card.inner_text()
@@ -927,3 +927,76 @@ def test_detail_axis_last_label_is_not_cut(page: Page, real_url: str) -> None:
     assert labels.last.get_attribute("text-anchor") == "end"
     svg, last = d.locator(".strip").bounding_box(), labels.last.bounding_box()
     assert svg and last and last["x"] + last["width"] <= svg["x"] + svg["width"] + 1
+
+
+# ---------------- revisão de UI/UX (21/10/2026): organização e alinhamento
+def test_verdict_is_a_labeled_list_with_badge_below_headline(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
+    v = d.locator(".verdict")
+    assert "nível Superior" in v.locator(".big").inner_text() and v.locator(".big .pc").count() == 0  # o selo de comparação não fica dentro da frase
+    rotulos = v.locator(".vd-list small").all_inner_texts()
+    assert rotulos[0] == "Preço típico do nível" and "Meu preço mínimo" in rotulos and any(r.startswith("Por que nível") for r in rotulos)
+    assert v.locator('[data-act="pisos"]').count() == 1
+
+
+def test_mobile_filter_bar_is_compact(browser: Any, fixture_url: str) -> None:
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, fixture_url)
+    b, s = pg.locator('[data-testid="btn-filtros"]').bounding_box(), pg.locator("#sort").bounding_box()
+    assert b and s and abs(b["y"] - s["y"]) < 4  # Filtros e ordenação na mesma linha
+    q = pg.locator(".opp-tools .quick")
+    assert pg.evaluate("el => getComputedStyle(el).flexWrap === 'nowrap' && el.scrollWidth > 0", q.element_handle())
+    assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    assert "Buscar nesta lista" in (pg.locator("#q").get_attribute("placeholder") or "")
+    fechar(pg)
+
+
+def test_level_labels_never_wrap_in_price_chart(browser: Any, fixture_url: str) -> None:
+    for w in (1440, 390):
+        pg = nova_pagina(browser, w, 900)
+        goto(pg, fixture_url, "hoje")
+        alturas = [b["height"] for b in [x.bounding_box() for x in pg.locator(".faixa-n").all()] if b]
+        assert alturas and max(alturas) < 30, (w, alturas)  # "Sem categoria" numa linha só
+        eixo, barras = pg.locator(".faixa-axis").bounding_box(), pg.locator(".faixa-c").first.bounding_box()
+        assert eixo and barras and abs(eixo["x"] - barras["x"]) < 2 and abs(eixo["width"] - barras["width"]) < 2  # eixo alinhado com as barras
+        fechar(pg)
+
+
+def test_brand_rows_keep_count_on_first_line(page: Page, real_url: str) -> None:
+    goto(page, real_url, "hoje")
+    linha = page.locator('[aria-label="Marcas citadas"] .hb-row').first
+    t, v, sub = linha.locator(".hb-t").bounding_box(), linha.locator(".hb-v").bounding_box(), linha.locator(".hb-sub").bounding_box()
+    assert t and v and sub and abs(t["y"] - v["y"]) < 6 and sub["y"] > t["y"]  # número ao lado do nome; preço de varejo embaixo
+
+
+def test_market_merges_uncategorized_into_traditional_card(page: Page, real_url: str) -> None:
+    goto(page, real_url, "mercado")
+    cards = page.locator(".niv-cards .card")
+    assert cards.count() == 3 and page.locator('.niv-cards .card[data-nivel="Sem categoria"]').count() == 0
+    assert "Vale também para edital sem categoria" in page.locator('.niv-cards .card[data-nivel="Tradicional"]').inner_text()
+    assert page.locator(".tbl-g").count() == 1 and "Carvalhaes · CD" not in page.locator(".page.mercado .tbl").first.inner_text()  # nome da corretora só no cabeçalho do grupo
+
+
+def test_proposal_card_footer_is_always_the_same(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    wf = {FIRST: {"fav": True, "upd": "x"}, MIXED: {"status": "Em preparação", "upd": "x"}, PARTIAL: {"status": "Enviada", "upd": "x"}}
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps(wf)])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "propostas")
+    for k in (FIRST, MIXED, PARTIAL):
+        card = page.locator(f'.prop[data-ch="{k}"]')
+        st, ab, pa = card.locator(".glide-btn").bounding_box(), card.locator("[data-open]").bounding_box(), card.locator(f'[data-testid="unfollow-{k}"]').bounding_box()
+        assert st and ab and pa and abs(st["y"] - ab["y"]) < 4 and pa["y"] > ab["y"] + ab["height"] - 1, k  # status e Abrir numa linha; Parar embaixo
+        assert abs(pa["x"] - st["x"]) < 2 and pa["height"] < 40  # Parar alinhado à esquerda, numa linha só
+    assert page.locator(".stage-g h3 .cnt").count() == 3 and page.locator(".stage-g h3 i").count() == 0
+    assert page.locator('.agenda .seg button:has-text("Minhas")').count() == 1
+
+
+def test_settings_sync_text_without_jargon(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "ajustes")
+    t = page.locator("#sync").inner_text()
+    for jargao in ("branch", "repositório", "meus-dados.json", "React"):
+        assert jargao not in t, jargao
+    assert "(React)" not in page.locator(".page.ajustes").inner_text()
