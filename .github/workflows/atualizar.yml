@@ -29,7 +29,7 @@ concurrency:
 jobs:
   atualizar:
     runs-on: ubuntu-latest
-    timeout-minutes: 180 # 17/10/2026: 59 min com cache (o PNCP limita forte os servidores do GitHub)
+    timeout-minutes: 90 # 17 a 21/10/2026: 43 a 59 min no GitHub (o PNCP limita forte os servidores de lá); 90 cobre com folga e limita o gasto de uma execução travada
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

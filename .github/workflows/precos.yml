@@ -4,6 +4,9 @@
 # - varejo das marcas citadas nos editais (lojas online, coletor/varejo.py): uma vez por semana (segunda cedo).
 # Cada parte que falhar mantém os valores anteriores; o que deu certo é publicado.
 # Grava só coletor/mercado.json e coletor/marcas_cafe.json; o pages.yml embute os preços no data.json ao publicar.
+# Só a rodada das 18h47 pede a publicação do site: a das 7h13 é seguida pela coleta das 8h07, que publica com esses
+# preços (decisão do dono em 21/10/2026, para poupar minutos do Actions). Se a coleta falhar, a reserva ou a rodada
+# das 18h47 publicam.
 name: Atualizar preços de mercado
 
 on:
@@ -68,12 +71,16 @@ jobs:
               sleep 20
             done
             if [ "$enviado" != 1 ]; then echo "::error::Não consegui enviar os preços para a main depois de 3 tentativas"; exit 1; fi
-            # Commits feitos com o GITHUB_TOKEN não disparam outros workflows: pede ao pages.yml que publique.
-            # Sem resposta 2xx o passo falha (e avisa): preços na main sem site novo passariam despercebidos.
-            curl -sS -f -o /dev/null -w "Publicar site: HTTP %{http_code}\n" -X POST \
-              -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
-              "${{ github.api_url }}/repos/${{ github.repository }}/actions/workflows/pages.yml/dispatches" \
-              -d '{"ref":"main"}' || { echo "::error::O pages.yml não foi disparado: o site ficou com a versão anterior"; exit 1; }
+            if [ "${{ github.event.schedule }}" = "13 10 * * 1-5" ]; then
+              echo "Rodada das 7h13: o site não é publicado agora; a coleta das 8h07 publica com estes preços embutidos."
+            else
+              # Commits feitos com o GITHUB_TOKEN não disparam outros workflows: pede ao pages.yml que publique.
+              # Sem resposta 2xx o passo falha (e avisa): preços na main sem site novo passariam despercebidos.
+              curl -sS -f -o /dev/null -w "Publicar site: HTTP %{http_code}\n" -X POST \
+                -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
+                "${{ github.api_url }}/repos/${{ github.repository }}/actions/workflows/pages.yml/dispatches" \
+                -d '{"ref":"main"}' || { echo "::error::O pages.yml não foi disparado: o site ficou com a versão anterior"; exit 1; }
+            fi
           fi
       - name: Falhou alguma parte?
         if: steps.mercado.outcome == 'failure' || steps.varejo.outcome == 'failure'
