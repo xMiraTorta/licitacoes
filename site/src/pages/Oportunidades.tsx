@@ -82,9 +82,10 @@ export function Oportunidades() {
 function Cab({ t, ordens, sort, r }: { t: string; ordens: Ordem[]; sort: Ordem; r?: boolean }) {
   const i = ordens.indexOf(sort), on = i >= 0;
   const prox = ordens[(i + 1) % ordens.length];
-  const rot = on ? ORDENS.find((o) => o[0] === sort)![1] : ORDENS.find((o) => o[0] === ordens[0])![1];
+  const nome = (o: Ordem) => { const s = ORDENS.find((x) => x[0] === o)![1]; return s.charAt(0).toLowerCase() + s.slice(1); }; // só a inicial: "R$/kg" fica "R$/kg"
+  const dica = !on ? `Ordenar por ${nome(ordens[0])}` : ordens.length > 1 ? `Ordenado por ${nome(sort)}. Clique para ${nome(prox)}` : `Ordenado por ${nome(sort)}`;
   return (
-    <button type="button" className={"lh-sort" + (r ? " r" : "")} data-on={on} data-sort={ordens[0]} aria-sort={on ? "descending" : "none"} title={on ? `Ordenado por: ${rot}. Clique para ${ORDENS.find((o) => o[0] === prox)![1].toLowerCase()}` : `Ordenar por ${rot.toLowerCase()}`} onClick={() => setSort(prox)}>
+    <button type="button" className={"lh-sort" + (r ? " r" : "")} data-on={on} data-sort={ordens[0]} aria-pressed={on} title={dica} onClick={() => setSort(prox)}>
       {t}{on && <span aria-hidden="true"> ▾</span>}
     </button>
   );
@@ -106,7 +107,7 @@ function Toolbar({ s }: { s: State }) {
   if (nov || F.novas) quick.splice(4, 0, ["novas", "Novas", nov, F.novas, () => setF({ novas: !F.novas })]);
   const ativos: [string, string, () => void][] = [];
   if (F.q) ativos.push(["q", `“${F.q}”`, () => setF({ q: "" })]);
-  FACETS.forEach((f) => F[f.k].forEach((v) => ativos.push([f.k + "|" + v, v, () => setF({ [f.k]: toggleArr(F[f.k], v) } as Partial<typeof F>)])));
+  FACETS.forEach((f) => F[f.k].forEach((v) => ativos.push([f.k + "|" + v, f.rotulo?.[v] || v, () => setF({ [f.k]: toggleArr(F[f.k], v) } as Partial<typeof F>)])));
   if (F.dist) ativos.push(["dist", `Até ${n0(F.dist)} km`, () => setF({ dist: 0 })]);
   if (F.distMin) ativos.push(["distMin", `Além de ${n0(F.distMin)} km`, () => setF({ distMin: 0 })]);
   if (F.valor) ativos.push(["valor", VALORES.find((x) => x[0] === F.valor)![1], () => setF({ valor: "" })]);
@@ -155,7 +156,7 @@ function Filtros({ s, celular }: { s: State; celular: boolean }) {
       <details key={f.k} className="fsec" data-sec={f.k} open={!!(f.open || sel.length)}>
         <summary>{f.t}{sel.length > 0 && <span className="cnt">{sel.length} selec.</span>}</summary>
         {f.ajuda && <p className="tiny muted" style={{ margin: "0 0 6px" }}>{f.ajuda}</p>}
-        <div className="opts">{vals.map((v) => <button key={v} type="button" className={"opt" + (cnt[v] ? "" : " zero")} aria-pressed={sel.includes(v)} onClick={() => setF({ [f.k]: toggleArr(sel, v) } as Partial<typeof F>)} data-f={f.k} data-v={v}>{v}<i>{cnt[v] || 0}</i></button>)}</div>
+        <div className="opts">{vals.map((v) => <button key={v} type="button" className={"opt" + (cnt[v] ? "" : " zero")} aria-pressed={sel.includes(v)} onClick={() => setF({ [f.k]: toggleArr(sel, v) } as Partial<typeof F>)} data-f={f.k} data-v={v}>{f.rotulo?.[v] || v}<i>{cnt[v] || 0}</i></button>)}</div>
       </details>
     );
   });
@@ -213,7 +214,7 @@ function Linha({ c, sel, foco, compacto }: { c: PCompra; sel: boolean; foco: boo
         <div className="small muted">{c._niv ? <Nivel n={c._niv} /> : c.mod + " " + c.num}</div>
         <Selos c={c} />
       </div>
-      <div className="c-valor r"><div className="v num">{c.kg == null ? <span className="na">—</span> : (c._parcial ? "≥ " : "") + KG(c.kg)}</div><div className="small muted num">{val}</div></div>
+      <div className="c-valor r">{c.kg == null ? <div className="small na">sem peso</div> : <div className="v num">{(c._parcial ? "≥ " : "") + KG(c.kg)}</div>}<div className="small muted num">{val}</div></div>
       <div className="c-rkg r">{r == null ? <div className="small na">sem preço</div> : <div className="v num">{BRL(r)}</div>}<div className="small muted"><PrecoCmp c={c} />{!c._cmp && rkLbl(c)}</div><PisoChip c={c} /></div>
       <div className="c-mg r">{c._mg ? <><Margem c={c} curto /><div className="small muted num">{c._mg.lucro >= 0 ? "+" : "−"}{BRLc(Math.abs(c._mg.lucro))}</div></> : null}</div>
       <div className="c-status">{w.status ? <span className={"st " + stCls(w.status)}>{w.status}</span> : null}{w.preco ? <div className="small muted num">meu: {BRL(w.preco)}/kg</div> : null}</div>

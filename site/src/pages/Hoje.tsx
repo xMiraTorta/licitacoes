@@ -5,8 +5,8 @@ import { Donut } from "../charts/Donut";
 import { Faixas } from "../charts/Faixas";
 import { Hbar, Sparkline, Stacked } from "../charts/Hbar";
 import { Mapa, type Ponto } from "../charts/Mapa";
-import { abertas, embalagem, exigencias, faixasPorNivel, funil, insights, kpis, marcasCitadas, porUF, prazosPorDia, prazosPorSemana, simulador } from "../lib/dash";
-import { DEF, follows, MEX } from "../lib/filtros";
+import { abertas, embalagem, etapasMinhas, exigencias, faixasPorNivel, funil, insights, kpis, marcasCitadas, porUF, prazosPorDia, prazosPorSemana, simulador } from "../lib/dash";
+import { DEF, MEX } from "../lib/filtros";
 import { BRL, BRLc, dayNum, fmtPrazo, KGc, licit, MESES_L, n0, n2, PCTi, todayYMD, WDL } from "../lib/format";
 import { mgCls, NIVEIS, NIVEL_CURTO, urg, varejoTxt, type PCompra } from "../lib/modelo";
 import { abrirDetalhe, navegar } from "../router";
@@ -26,7 +26,7 @@ export function Hoje() {
   const pisos = useStore((s) => s.pisos);
   const now = useStore((s) => s.now);
   const O = useMemo(() => abertas(prep, now), [prep, now]);
-  const k = useMemo(() => kpis(O, wf, prep.compras, now), [O, wf, prep, now]);
+  const k = useMemo(() => kpis(O, prep.compras, now), [O, prep, now]);
   const uf = useMemo(() => porUF(O), [O]);
   const hoje = todayYMD(), d = new Date(dayNum(hoje) * 864e5);
   const irLista = (f: Partial<ReturnType<typeof DEF>>, sort?: Parameters<typeof setSort>[0]) => { setF({ ...DEF(), ...f }); if (sort) setSort(sort); navegar("oportunidades"); };
@@ -139,14 +139,6 @@ export function Hoje() {
   );
 }
 
-/* Quantas licitações acompanhadas há em cada etapa (as que saíram dos dados continuam contando, como no quadro). */
-const COR_ETAPA: Record<string, string> = { "": "sem", "A analisar": "muted", "Em preparação": "ap", Enviada: "acc", Ganha: "bom", Perdida: "preju", Desistiu: "preju" };
-export function etapasMinhas(wf: Record<string, { fav?: boolean; status?: string }>, opcoes: string[]): { total: number; partes: { t: string; n: number; cls: string }[] } {
-  const L = Object.values(wf).filter((w) => follows(w));
-  const partes = ["", ...opcoes].map((e) => ({ t: e || "Sem status", n: L.filter((w) => (w.status || "") === e).length, cls: COR_ETAPA[e] || "acc" }));
-  return { total: L.length, partes };
-}
-
 /* ---------------- melhores para você */
 type ChipMelhor = "todas" | "perto" | "semana" | "m30";
 type OrdMelhor = "lucro" | "margem" | "prazo";
@@ -212,7 +204,8 @@ function OndeEstao({ O, uf }: { O: PCompra[]; uf: ReturnType<typeof porUF> }) {
       <div className="card-b">
         <Mapa porUF={uf} sel={sel} onSel={(u) => setSel(sel === u ? null : u)} origem={origem} pontos={pontos} onPonto={abrirDetalhe}
           onHover={(u, t, pos) => { setHover(u); setTip(t && pos ? { t, x: pos.x, y: pos.y } : null); }} />
-        {tip && <div className="map-tip" role="tooltip" style={{ left: tip.x, top: tip.y }}>{tip.t}</div>}
+        {tip && <div className="map-tip" role="tooltip" data-h={tip.x > window.innerWidth - 320 ? "esq" : "dir"} data-v={tip.y > window.innerHeight - 70 ? "cima" : "baixo"}
+          style={{ ...(tip.x > window.innerWidth - 320 ? { right: window.innerWidth - tip.x } : { left: tip.x }), ...(tip.y > window.innerHeight - 70 ? { bottom: window.innerHeight - tip.y } : { top: tip.y }) }}>{tip.t}</div>}
         <div className="map-legend tiny muted"><span>1</span><span className="grad" /><span>{Math.max(...Object.values(uf).map((v) => v.n), 1)} abertas</span>{pontos.length > 0 && <span className="lg"><i className="pt" />as melhores</span>}<span className="lg"><i className="or" />{origem?.nome || "origem"}</span></div>
         <div className="chips-row" style={{ padding: "8px 0 0" }}>
           {top.map(([u, v]) => <button key={u} type="button" className="chip mono" aria-pressed={sel === u} onClick={() => setSel(sel === u ? null : u)}>{u} {v.n}</button>)}

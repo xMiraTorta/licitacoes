@@ -61,7 +61,7 @@ export function Mapa({ porUF, sel, onSel, origem, aneis = [300, 600, 1000], pont
         const [x, y] = projetar(p.lat, p.lon);
         return (
           <circle key={p.chave} cx={x} cy={y} r={4 + 9 * Math.sqrt(p.peso / maxPeso)} className="ponto" onClick={() => onPonto?.(p.chave)} tabIndex={onPonto ? 0 : -1} role={onPonto ? "button" : undefined} aria-label={p.rotulo}
-            onPointerEnter={(e) => onHover?.(null, p.rotulo + " · toque para abrir", mouse(e))} onPointerMove={(e) => onHover?.(null, p.rotulo + " · toque para abrir", mouse(e))} onPointerLeave={() => onHover?.(null, null)}>
+            onPointerEnter={(e) => onHover?.(null, p.rotulo + " · clique para abrir", mouse(e))} onPointerMove={(e) => onHover?.(null, p.rotulo + " · clique para abrir", mouse(e))} onPointerLeave={() => onHover?.(null, null)}>
             {!onHover && <title>{p.rotulo}</title>}
           </circle>
         );

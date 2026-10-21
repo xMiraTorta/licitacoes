@@ -966,16 +966,21 @@ def test_level_labels_never_wrap_in_price_chart(browser: Any, fixture_url: str) 
 
 def test_brand_rows_keep_count_on_first_line(page: Page, real_url: str) -> None:
     goto(page, real_url, "hoje")
-    linha = page.locator('[aria-label="Marcas citadas"] .hb-row').first
+    linha = page.locator('[aria-label="Marcas citadas"] .hb-row:has(.hb-sub)').first  # a primeira marca com preço de varejo pesquisado
+    assert linha.count() == 1, "nenhuma marca citada com preço de varejo nos dados do dia"
     t, v, sub = linha.locator(".hb-t").bounding_box(), linha.locator(".hb-v").bounding_box(), linha.locator(".hb-sub").bounding_box()
     assert t and v and sub and abs(t["y"] - v["y"]) < 6 and sub["y"] > t["y"]  # número ao lado do nome; preço de varejo embaixo
 
 
 def test_market_merges_uncategorized_into_traditional_card(page: Page, real_url: str) -> None:
     goto(page, real_url, "mercado")
+    iguais = page.evaluate("() => { const n = window.__monitor.data().mercado.niveis; return n['Sem categoria'].saca60_min === n.Tradicional.saca60_min && n['Sem categoria'].saca60_max === n.Tradicional.saca60_max; }")
     cards = page.locator(".niv-cards .card")
-    assert cards.count() == 3 and page.locator('.niv-cards .card[data-nivel="Sem categoria"]').count() == 0
-    assert "Vale também para edital sem categoria" in page.locator('.niv-cards .card[data-nivel="Tradicional"]').inner_text()
+    if iguais:  # o normal: mesma receita, mesmo preço, um cartão só
+        assert cards.count() == 3 and page.locator('.niv-cards .card[data-nivel="Sem categoria"]').count() == 0
+        assert "Vale também para edital sem categoria" in page.locator('.niv-cards .card[data-nivel="Tradicional"]').inner_text()
+    else:
+        assert cards.count() == 4
     assert page.locator(".tbl-g").count() == 1 and "Carvalhaes · CD" not in page.locator(".page.mercado .tbl").first.inner_text()  # nome da corretora só no cabeçalho do grupo
 
 
@@ -1048,7 +1053,8 @@ def test_map_hover_shows_state_tip(page: Page, fixture_url: str) -> None:
 def test_market_chart_labels_each_line(page: Page, real_url: str) -> None:
     goto(page, real_url, "mercado")
     labels = page.evaluate("[...document.querySelectorAll('.linechart .endl-t')].map(t => t.textContent)")  # SVG não tem innerText
-    assert len(labels) == 3 and any(t.startswith("Tradicional") for t in labels) and any(t.startswith("Gourmet") for t in labels)
+    niveis = page.evaluate("() => { const h = window.__monitor.data().mercado.historico || []; return [...new Set(h.flatMap(x => Object.keys(x.niveis)))].filter(n => n !== 'Sem categoria'); }")
+    assert len(niveis) >= 2 and len(labels) == len(niveis), (labels, niveis)  # um rótulo por nível presente no histórico do dia
     boxes = [b.bounding_box() for b in page.locator(".linechart .endl-t").all()]
     svg = page.locator(".linechart").bounding_box()
     assert svg and all(b and b["x"] + b["width"] <= svg["x"] + svg["width"] + 1 for b in boxes)  # dentro do gráfico
@@ -1084,3 +1090,103 @@ def test_board_on_phone_stacks_only_filled_stages(browser: Any, fixture_url: str
     assert pg.locator("#board .stage-g").count() == 2 and pg.locator(".prop[draggable]").count() == 0
     assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     fechar(pg)
+
+
+# ---------------- revisão de UI/UX (21/10/2026): achados da revisão por agentes
+LONG_ORG = "96291141000180-1-006590/2026"  # São José do Rio Preto, órgão com nome longo
+
+
+def test_board_card_never_wider_than_the_column(browser: Any, fixture_url: str) -> None:
+    for w in (360, 1280):
+        pg = nova_pagina(browser, w, 800)
+        goto(pg, fixture_url)
+        pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({LONG_ORG: {"fav": True, "upd": "x"}})])
+        pg.reload()
+        wait_ready(pg)
+        go_tab(pg, "propostas")
+        card, col = pg.locator(f'.prop[data-ch="{LONG_ORG}"]').bounding_box(), pg.locator('.stage-g[data-col=""]').bounding_box()
+        assert card and col and card["x"] + card["width"] <= col["x"] + col["width"] + 1, (w, card, col)
+        assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+        fechar(pg)
+
+
+def test_hold_button_survives_mouse_jitter_on_draggable_card(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({FIRST: {"fav": True, "notas": "texto das minhas notas", "upd": "x"}})])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "propostas")
+    assert page.evaluate("getComputedStyle(document.querySelector('.prop .pn')).userSelect") == "text"  # dá para copiar as notas
+    b = page.locator(f'[data-testid="unfollow-{FIRST}"]').bounding_box()
+    assert b
+    page.mouse.move(b["x"] + 20, b["y"] + b["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(b["x"] + 28, b["y"] + b["height"] / 2 + 2, steps=4)  # tremor do mouse dentro do botão: não vira arrasto do cartão
+    page.wait_for_timeout(1100)
+    page.mouse.up()
+    page.wait_for_selector(f'.prop[data-ch="{FIRST}"]', state="detached")  # confirmou: saiu do quadro
+
+
+def test_requirement_counts_match_the_filtered_list(page: Page, real_url: str) -> None:
+    goto(page, real_url, "hoje")
+    linhas = page.locator('[aria-label="Exigências mais comuns"] button.hb-row')
+    n = linhas.count()
+    assert n >= 3
+    for i in range(n):
+        go_tab(page, "hoje")
+        linha = page.locator('[aria-label="Exigências mais comuns"] button.hb-row').nth(i)
+        rotulo, mostrado = linha.locator(".hb-t").inner_text(), int(re.match(r"\d+", linha.locator(".hb-v").inner_text()).group())  # type: ignore[union-attr]
+        linha.click()
+        page.wait_for_selector(".page.opp")
+        assert page.evaluate("window.__monitor.count()") == mostrado, rotulo
+        chip = page.locator(".active-f .af").first.inner_text()
+        assert chip.startswith(rotulo), (chip, rotulo)  # o chip repete o nome simples, não a etiqueta interna
+    abrir_filtros(page)
+    assert page.locator('.fsec[data-sec="selos"] .opt').count() <= 12 and "Validade" not in page.locator('.fsec[data-sec="selos"]').inner_text()
+
+
+def test_sort_header_hints_and_state(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    rkg = page.locator('.lhead .lh-sort[data-sort="rkg_desc"]')
+    assert "R$/kg" in (rkg.get_attribute("title") or "") and "r$/kg" not in (rkg.get_attribute("title") or "")
+    prazo = page.locator('.lhead .lh-sort[data-sort="prazo"]')
+    assert prazo.get_attribute("aria-pressed") == "true" and "Clique" not in (prazo.get_attribute("title") or "")  # uma ordem só: sem convite a clicar
+    assert "sem peso" in row(page, NO_WEIGHT).locator(".c-valor").inner_text()
+
+
+def test_narrow_list_keeps_two_tags(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    open_detail(page, FIRST)
+    vis = page.evaluate(f"""() => [...document.querySelectorAll('.list .row[data-ch="{MIXED}"] .sel-tags span')].filter(s => s.offsetParent !== null).length""")
+    assert 1 <= vis <= 2
+
+
+def test_map_tip_stays_inside_the_window(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "hoje")
+    page.locator('.mapa path[aria-label^="PE:"]').hover()  # estado do leste (sem ponto laranja por cima): a dica tem de virar para a esquerda
+    tip = page.locator(".map-tip")
+    tip.wait_for()
+    page.wait_for_timeout(150)
+    b = tip.bounding_box()
+    assert b and b["x"] >= 0 and b["x"] + b["width"] <= page.viewport_size["width"] and tip.get_attribute("data-h") == "esq"
+
+
+def test_market_chart_values_in_legend_on_phone(browser: Any, real_url: str) -> None:
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, real_url, "mercado")
+    assert pg.locator(".linechart .endl").first.is_hidden() and pg.locator(".legend-v").first.is_visible()
+    assert re.search(r"\d\.\d{3}", pg.locator(".legend-v").first.inner_text())
+    assert pg.locator(".page.mercado .marcas-t").inner_text().count("—") == 0
+    fechar(pg)
+
+
+def test_unknown_status_still_counts_and_shows(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({FIRST: {"status": "Aguardando resultado", "upd": "x"}, MIXED: {"fav": True, "upd": "x"}})])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "hoje")
+    assert "1 outro status" in page.locator('[data-testid="kpi-etapas"]').inner_text()
+    page.wait_for_function("document.querySelector('.kpi[data-k=\"mine\"] .v').textContent.trim() === '2'")
+    go_tab(page, "propostas")
+    assert page.locator(f'.stage-g[data-col="Aguardando resultado"] .prop[data-ch="{FIRST}"]').count() == 1

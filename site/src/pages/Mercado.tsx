@@ -84,7 +84,7 @@ export function Mercado() {
             <tbody>
               {Object.entries(data.marcas_ref?.marcas || {}).filter(([, v]) => v.basica).sort((a, b) => a[0].localeCompare(b[0])).map(([mk, v]) => {
                 const b = v.basica!, n = O.filter((c) => (c.marcas || []).includes(mk)).length;
-                return <tr key={mk}><td><b>{mk}</b></td><td>{b.linha}</td><td>{b.cat}</td><td className="mono r">{n0(b.min) === n0(b.max) ? n0(b.min) : `${n0(b.min)} a ${n0(b.max)}`}</td><td className="r">{n ? <button type="button" className="linkbtn" onClick={() => { setF({ ...DEF(), marcas: [mk] }); navegar("oportunidades"); }}>{n} edita{n === 1 ? "l" : "is"}</button> : <span className="muted">—</span>}</td></tr>;
+                return <tr key={mk}><td><b>{mk}</b></td><td>{b.linha}</td><td>{b.cat}</td><td className="mono r">{n0(b.min) === n0(b.max) ? n0(b.min) : `${n0(b.min)} a ${n0(b.max)}`}</td><td className="r">{n ? <button type="button" className="linkbtn" onClick={() => { setF({ ...DEF(), marcas: [mk] }); navegar("oportunidades"); }}>{n} edita{n === 1 ? "l" : "is"}</button> : null}</td></tr>;
               })}
             </tbody>
           </table>
@@ -113,7 +113,7 @@ function Historico({ hist }: { hist: HistoricoMercado[] }) {
         {hist.map((h, i) => (i === 0 || i === hist.length - 1 || i % Math.ceil(hist.length / 6) === 0) && <text key={h.data} className="axl" x={x(i)} y={H - 6} textAnchor="middle">{fmtDia(h.data).slice(0, 5)}</text>)}
         {fins.map((f) => <g key={f.n} className="endl"><rect x={W - pr + 6} y={f.y - 3} width="6" height="6" rx="1" fill={cores[f.n]} /><text className="axl endl-t" x={W - pr + 16} y={f.y + 4}>{NIVEL_CURTO[f.n]} {n0(f.v)}</text></g>)}
       </svg>
-      <div className="legend">{niveis.map((n) => <span key={n}><i style={{ background: cores[n] }} />{NIVEL_CURTO[n]}</span>)}</div>
+      <div className="legend">{niveis.map((n) => <span key={n}><i style={{ background: cores[n] }} />{NIVEL_CURTO[n]}<b className="legend-v mono">{n0(fins.find((f) => f.n === n)?.v ?? 0)}</b></span>)}</div>
     </div>
   );
 }

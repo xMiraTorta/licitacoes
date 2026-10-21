@@ -1,5 +1,5 @@
 /* Minhas propostas: quadro por etapa (colunas no computador, com arrastar e soltar; empilhado no celular) + agenda de prazos. */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { follows, getW } from "../lib/filtros";
 import { BRL, BRLc, dayNum, fmtDate, fmtPrazo, licit, PCT, todayYMD, WDL } from "../lib/format";
 import { isOpen, rkV, urg, type PCompra } from "../lib/modelo";
@@ -22,7 +22,8 @@ export function Propostas() {
   const abertas = useMemo(() => prep.compras.filter((c) => follows(getW(wf, c.chave))).sort((a, b) => (a._ms ?? 1e15) - (b._ms ?? 1e15)).map((c) => c.chave), [prep, wf]);
   const sumidas = useMemo(() => Object.keys(wf).filter((k) => !prep.byk[k] && follows(wf[k])).sort((a, b) => ((wf[a].ref || {}).fim || "").localeCompare((wf[b].ref || {}).fim || "")), [prep, wf]);
   const todas = abertas.concat(sumidas), st = (k: string) => wf[k]?.status || "";
-  const etapas: [string, string][] = [["", "Favoritas sem status"], ...data.status_opcoes.map((x) => [x, x] as [string, string])];
+  const extras = [...new Set(todas.map(st).filter((x) => x && !data.status_opcoes.includes(x)))]; // status que saiu da lista do data.json: continua visível
+  const etapas: [string, string][] = [["", "Favoritas sem status"], ...data.status_opcoes.map((x) => [x, x] as [string, string]), ...extras.map((x) => [x, x] as [string, string])];
   const val = abertas.reduce((a, k) => a + (prep.byk[k].vcafe || 0), 0), prox = abertas.find((k) => isOpen(prep.byk[k], s.now));
   // computador: todas as etapas viram colunas (as vazias recebem cartões arrastados); celular: só as que têm algo
   const grupos = etapas.filter(([e]) => etapa == null || etapa === e).map(([e, t]) => [e, t, todas.filter((k) => st(k) === e)] as [string, string, string[]]).filter(([, , L]) => L.length || (!celular && etapa == null));
@@ -78,9 +79,13 @@ function PropCard({ k, arrastavel, arrastando, onDragStart, onDragEnd }: { k: st
   const r = w.ref || {};
   const mun = c ? c.mun : r.mun, uf = c ? c.uf : r.uf, org = c ? c._orgao : r.orgao, val = c ? c.vcafe : r.vcafe;
   const x = c && c._cmp, m = c && w.preco && rkV(c) ? (rkV(c)! - w.preco) / rkV(c)! : null;
+  // O arrasto começa em qualquer ponto do cartão, menos em botões, menus e textos (segurar "Parar de acompanhar" e selecionar
+  // as notas continuam funcionando). O dragstart chega com o cartão como alvo, por isso o ponto é guardado no pointerdown.
+  const naoArrasta = useRef(false);
   return (
     <article className={"prop card" + (arrastando ? " dragging" : "")} data-ch={k} draggable={arrastavel || undefined}
-      onDragStart={(ev) => { ev.dataTransfer.setData("text/plain", k); ev.dataTransfer.effectAllowed = "move"; onDragStart?.(); }} onDragEnd={onDragEnd}>
+      onPointerDown={(ev) => { naoArrasta.current = !!(ev.target as HTMLElement).closest("button, a, input, textarea, select, .glide, .pn, .pt"); }}
+      onDragStart={(ev) => { if (naoArrasta.current) { ev.preventDefault(); return; } ev.dataTransfer.setData("text/plain", k); ev.dataTransfer.effectAllowed = "move"; onDragStart?.(); }} onDragEnd={onDragEnd}>
       <header>
         <button type="button" className={"star" + (w.fav ? " on" : "")} data-act="fav" aria-label={w.fav ? "Remover dos favoritos" : "Marcar como favorito"} onClick={() => { const on = !w.fav; setW(k, { fav: on }); toast(on ? "★ Adicionada aos favoritos" : "Removida dos favoritos"); }}><IStar size={16} filled={!!w.fav} /></button>
         <div className="pt"><b>{mun ? `${mun} · ${uf}` : k}</b><span className="small muted ell">{org || ""}</span></div>
