@@ -9,5 +9,9 @@ from pathlib import Path
 
 def gravar_atomico(path: Path, texto: str) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(texto, encoding="utf-8")
-    os.replace(tmp, path)
+    try:
+        tmp.write_text(texto, encoding="utf-8")
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)  # não deixa o temporário pela metade; o arquivo final continua o anterior
+        raise
