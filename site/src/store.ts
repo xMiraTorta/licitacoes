@@ -9,7 +9,7 @@ import type { Anotacao, Checklist, Filtros, MeusCustos, MeusDados, Ordem, Painel
 export interface SyncMeta { checklist_upd: string; pisos_upd: string; custos_upd: string; pendente: boolean }
 export type SyncEstado = "local" | "salvando" | "ok" | "erro";
 export interface SyncState { token: string; estado: SyncEstado; quando: string; erro: string; mudancas: number }
-export interface Toast { id: number; msg: string; tipo?: "ok" | "erro" | "info"; acao?: { rotulo: string; fn: () => void } }
+export interface Toast { id: number; msg: string; tipo?: "ok" | "erro" | "info"; acao?: { rotulo: string; fn: () => void }; n?: number }
 
 export interface State {
   data: Painel | null;
@@ -79,10 +79,22 @@ export function useStore<T>(sel: (s: State) => T): T {
 
 /* ---------------- avisos (toasts) */
 let toastId = 0;
+const toastTimers = new Map<number, number>();
+const armarToast = (id: number, ms: number): void => {
+  window.clearTimeout(toastTimers.get(id));
+  toastTimers.set(id, window.setTimeout(() => { toastTimers.delete(id); store.set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })); }, ms));
+};
+/* Aviso igual ao último ainda na tela (favoritar 3 seguidas) vira "×3" no mesmo aviso; no máximo 2 avisos de uma vez. */
 export function toast(msg: string, tipo: Toast["tipo"] = "info", acao?: Toast["acao"]): void {
+  const ultimo = state.toasts[state.toasts.length - 1];
+  if (ultimo && !acao && !ultimo.acao && ultimo.msg === msg && ultimo.tipo === tipo) {
+    store.set((s) => ({ toasts: s.toasts.map((t) => (t.id === ultimo.id ? { ...t, n: (t.n || 1) + 1 } : t)) }));
+    armarToast(ultimo.id, 3200);
+    return;
+  }
   const id = ++toastId;
-  store.set((s) => ({ toasts: [...s.toasts.slice(-3), { id, msg, tipo, acao }] }));
-  window.setTimeout(() => store.set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), acao ? 7000 : 3200);
+  store.set((s) => ({ toasts: [...s.toasts.slice(-1), { id, msg, tipo, acao }] }));
+  armarToast(id, acao ? 7000 : 3200);
 }
 export const fecharToast = (id: number): void => store.set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
 aoFalharGravacao((m) => toast(m, "erro"));

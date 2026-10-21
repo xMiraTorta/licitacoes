@@ -6,7 +6,7 @@ import { Faixas } from "../charts/Faixas";
 import { Hbar, Sparkline, Stacked } from "../charts/Hbar";
 import { Mapa, type Ponto } from "../charts/Mapa";
 import { abertas, embalagem, exigencias, faixasPorNivel, funil, insights, kpis, marcasCitadas, porUF, prazosPorDia, prazosPorSemana, simulador } from "../lib/dash";
-import { DEF, MEX } from "../lib/filtros";
+import { DEF, follows, MEX } from "../lib/filtros";
 import { BRL, BRLc, dayNum, fmtPrazo, KGc, licit, MESES_L, n0, n2, PCTi, todayYMD, WDL } from "../lib/format";
 import { mgCls, NIVEIS, NIVEL_CURTO, urg, varejoTxt, type PCompra } from "../lib/modelo";
 import { abrirDetalhe, navegar } from "../router";
@@ -30,6 +30,7 @@ export function Hoje() {
   const uf = useMemo(() => porUF(O), [O]);
   const hoje = todayYMD(), d = new Date(dayNum(hoje) * 864e5);
   const irLista = (f: Partial<ReturnType<typeof DEF>>, sort?: Parameters<typeof setSort>[0]) => { setF({ ...DEF(), ...f }); if (sort) setSort(sort); navegar("oportunidades"); };
+  const etapas = useMemo(() => etapasMinhas(wf, data.status_opcoes), [wf, data.status_opcoes]);
   return (
     <div className="page hoje">
       <div className="page-h">
@@ -68,10 +69,10 @@ export function Hoje() {
         </button>
         <button type="button" className="kpi card fade" data-k="mine" onClick={() => navegar("propostas")}>
           <span className="lbl">Minhas propostas</span>
-          <span className="v"><Contador valor={k.minhas} fmt={(x) => n0(Math.round(x))} /></span>
-          <span className="s">{k.minhas ? "em acompanhamento" : "nenhuma em andamento"}</span>
-          <span className="stacked ghost" aria-hidden="true"><span /><span /><span /></span>
-          <span className="tiny muted">{k.minhas ? "abra o quadro para ver por etapa" : "marque uma estrela na lista para começar"}</span>
+          <span className="v"><Contador valor={etapas.total} fmt={(x) => n0(Math.round(x))} /></span>
+          <span className="s">{etapas.total ? "em acompanhamento" : "nenhuma em andamento"}</span>
+          {etapas.total ? <Stacked partes={etapas.partes.map((e) => ({ v: e.n, cls: e.cls, t: e.t.toLowerCase() }))} /> : <span className="stacked ghost" aria-hidden="true"><span /><span /><span /></span>}
+          <span className="tiny muted" data-testid="kpi-etapas">{etapas.total ? etapas.partes.filter((e) => e.n).map((e) => `${e.n} ${e.t.toLowerCase()}`).join(" · ") : "marque uma estrela na lista para começar"}</span>
         </button>
       </section>
 
@@ -138,6 +139,14 @@ export function Hoje() {
   );
 }
 
+/* Quantas licitações acompanhadas há em cada etapa (as que saíram dos dados continuam contando, como no quadro). */
+const COR_ETAPA: Record<string, string> = { "": "sem", "A analisar": "muted", "Em preparação": "ap", Enviada: "acc", Ganha: "bom", Perdida: "preju", Desistiu: "preju" };
+export function etapasMinhas(wf: Record<string, { fav?: boolean; status?: string }>, opcoes: string[]): { total: number; partes: { t: string; n: number; cls: string }[] } {
+  const L = Object.values(wf).filter((w) => follows(w));
+  const partes = ["", ...opcoes].map((e) => ({ t: e || "Sem status", n: L.filter((w) => (w.status || "") === e).length, cls: COR_ETAPA[e] || "acc" }));
+  return { total: L.length, partes };
+}
+
 /* ---------------- melhores para você */
 type ChipMelhor = "todas" | "perto" | "semana" | "m30";
 type OrdMelhor = "lucro" | "margem" | "prazo";
@@ -161,17 +170,17 @@ function Melhores({ O }: { O: PCompra[] }) {
       </div>
       <div className="scroll-x">
         <div className="mlist">
-          <div className="mhead lbl"><span>Licitação</span><span className="r">kg</span><span className="r">R$/kg</span><span className="r">Margem</span><span className="r">Lucro</span><span className="r">Prazo</span></div>
+          <div className="mhead lbl"><span>Licitação</span><span className="r m-kg">kg</span><span className="r m-rkg">R$/kg</span><span className="r m-mg">Margem</span><span className="r m-lucro">Lucro</span><span className="r m-prazo">Prazo</span></div>
           {rows.map((c) => {
             const u = urg(c.fim, c._ms, now);
             return (
               <button key={c.chave} type="button" className="mrow" onClick={() => abrirDetalhe(c.chave)} data-ch={c.chave}>
                 <span className="mloc"><b>{c.mun} <span className="muted">{c.uf}</span></b><span className="small muted ell">{c._orgao} · {c._niv ? NIVEL_CURTO[c._niv] : c.tipos[0]}{c.dist != null ? ` · ${n0(c.dist)} km` : ""}{c.marcas?.length ? ` · ${c.marcas[0]} como referência` : ""}</span></span>
-                <span className="r mono">{n0(c.kg!)}</span>
-                <span className="r mono ink2">{n2(c._mg!.preco)}</span>
-                <span className={"r mg " + mgCls(c._mg!.mp)}>{PCTi(c._mg!.mp)}</span>
-                <span className="r mono" style={{ fontWeight: 600 }}>{BRLc(c._mg!.lucro).replace("R$ ", "")}</span>
-                <span className={"r mono small" + (u.d != null && u.d <= 3 ? " serious" : " ink2")}>{fmtPrazo(c.fim)}</span>
+                <span className="r mono m-kg">{n0(c.kg!)}</span>
+                <span className="r mono ink2 m-rkg">{n2(c._mg!.preco)}</span>
+                <span className={"r mg m-mg " + mgCls(c._mg!.mp)}>{PCTi(c._mg!.mp)}</span>
+                <span className="r mono m-lucro" style={{ fontWeight: 600 }}>{BRLc(c._mg!.lucro).replace("R$ ", "")}<small className={"m-mg-cel mg " + mgCls(c._mg!.mp)}>{PCTi(c._mg!.mp)}</small></span>
+                <span className={"r mono small m-prazo" + (u.d != null && u.d <= 3 ? " serious" : " ink2")}>{fmtPrazo(c.fim)}</span>
               </button>
             );
           })}

@@ -64,6 +64,7 @@
 .stacked { display: flex; gap: 2px; height: 10px; margin-top: 6px; border-radius: 3px; overflow: hidden; }
 .stacked span { display: block; height: 100%; }
 .stacked.ghost span { flex: 1; border: 1px dashed var(--line-3); border-radius: 3px; }
+.stacked .muted { background: var(--muted); }
 .bom, .seg-bom, .legend i.bom { background: var(--good); }
 .ap, .seg-ap, .legend i.ap { background: var(--warn); }
 .preju, .seg-preju, .legend i.preju { background: var(--crit); }
@@ -100,6 +101,13 @@
 .melhores { display: flex; flex-direction: column; min-width: 0; }
 .mlist { min-width: 640px; display: flex; flex-direction: column; }
 .mhead, .mrow { display: grid; grid-template-columns: minmax(200px, 2fr) 84px 84px 80px 96px 118px; gap: 12px; align-items: center; padding: 8px 18px; }
+.m-mg-cel { display: none; }
+@media (max-width: 900px) { /* celular: só lucro (margem embaixo) e prazo, sem rolagem lateral escondida */
+  .mlist { min-width: 0; }
+  .mhead, .mrow { grid-template-columns: minmax(0, 1fr) 72px 96px; gap: 8px; padding: 8px 14px; }
+  .m-kg, .m-rkg, .m-mg { display: none; }
+  .m-mg-cel { display: block; font-size: 11px; font-weight: 600; }
+}
 .mhead { border-top: 1px solid var(--line); }
 .mrow { border: 0; background: transparent; color: var(--ink); text-align: left; border-top: 1px solid var(--line); min-height: 58px; cursor: pointer; font: inherit; }
 .mrow:hover { background: var(--surface-2); }
@@ -279,6 +287,7 @@ button.hb-row:hover .hb-t { color: var(--accent-ink); }
 .strip { width: 100%; height: 40px; display: block; margin: 4px 0; }
 .strip .grid { stroke: var(--line-2); stroke-width: 1; }
 .strip .axl { font-size: 10px; fill: var(--muted); font-family: var(--mono); }
+@media (max-width: 700px) { .strip .axl.alt { display: none; } } /* celular: metade dos rótulos, senão se sobrepõem */
 .strip .band { fill: var(--accent); opacity: 0.22; }
 .strip .dotp { fill: var(--ink-2); opacity: 0.6; cursor: pointer; }
 .strip .medr { fill: var(--ink); }
@@ -319,8 +328,13 @@ button.hb-row:hover .hb-t { color: var(--accent-ink); }
 .drawer-wrap.desk .d-body { overflow: auto; }
 @media (max-width: 900px) {
   .lhead { display: none; }
-  .row { grid-template-columns: 30px 1fr auto; grid-template-areas: "star loc valor" "star cafe rkg" "star status status"; gap: 4px 8px; }
-  .row .c-star { grid-area: star; } .row .c-prazo { grid-area: prazo; display: none; } .row .c-loc { grid-area: loc; } .row .c-cafe { grid-area: cafe; } .row .c-valor { grid-area: valor; } .row .c-rkg { grid-area: rkg; } .row .c-mg { display: none; } .row .c-status { grid-area: status; display: flex; gap: 8px; align-items: center; }
+  /* minmax(0, 1fr): sem isso a coluna do texto não encolhe (nome de órgão longo) e empurra kg, valor e R$/kg para fora da tela */
+  .row { grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-areas: "star loc valor" "star cafe rkg" "star cafe mg" "star prazo status"; gap: 4px 8px; }
+  .row .c-star { grid-area: star; } .row .c-loc { grid-area: loc; min-width: 0; } .row .c-cafe { grid-area: cafe; min-width: 0; } .row .c-valor { grid-area: valor; } .row .c-rkg { grid-area: rkg; }
+  .row .c-mg { grid-area: mg; text-align: right; align-self: start; }
+  .row .c-prazo { grid-area: prazo; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+  .row .c-prazo .small { margin-top: 0 !important; }
+  .row .c-status { grid-area: status; justify-self: end; text-align: right; }
   .row .c-loc .l1::before { content: ""; }
   .mine-grid { grid-template-columns: 1fr; }
   .opp-body { display: block; }
@@ -434,6 +448,7 @@ button.hb-row:hover .hb-t { color: var(--accent-ink); }
 .toast-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); margin-top: 6px; flex-shrink: 0; }
 .toast.ok .toast-dot { background: var(--good); } .toast.erro .toast-dot { background: var(--crit); }
 .toast-msg { flex-grow: 1; }
+.toast-n { margin-left: 8px; font-size: 11px; color: var(--muted); }
 .toast-x { border: 0; background: transparent; color: var(--muted); width: 24px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .toast-x:hover { background: var(--surface-2); }
 @media (max-width: 900px) { .toasts { bottom: 84px; right: 12px; } }

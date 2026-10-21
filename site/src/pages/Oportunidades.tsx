@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { activeCount, FACETS, follows, getW, MEX, ORDENS, passes, sortList, toggleArr, VALORES } from "../lib/filtros";
 import { BRL, BRLc, fmtMin, fmtPrazo, KG, n0 } from "../lib/format";
-import { isOpen, rkLbl, rkV, urg, type PCompra } from "../lib/modelo";
+import { isOpen, rkLbl, rkV, tiposTexto, urg, type PCompra } from "../lib/modelo";
 import { abrirDetalhe, fecharDetalhe } from "../router";
 import { limparFiltros, setF, setFiltrosAbertos, setSort, setUI, setW, toast, useStore, type State } from "../store";
 import { IFilter, IStar, IX } from "../ui/icons";
@@ -196,14 +196,14 @@ function Linha({ c, sel, foco, compacto }: { c: PCompra; sel: boolean; foco: boo
         <div className="small muted ell">{c.dist != null ? `${n0(c.dist)} km${c.dist_min != null ? " · " + fmtMin(c.dist_min) : ""} · ` : ""}{c._orgao}</div>
       </div>
       <div className="c-cafe">
-        <div className="l1" style={{ fontWeight: 550 }}>{c.tipos.join(", ")} <MeBadge c={c} /></div>
+        <div className="l1" style={{ fontWeight: 550 }}>{tiposTexto(c.tipos)} <MeBadge c={c} /></div>
         <div className="small muted">{c._niv ? <Nivel n={c._niv} /> : c.mod + " " + c.num}</div>
         <Selos c={c} />
       </div>
       <div className="c-valor r"><div className="v num">{c.kg == null ? <span className="na">—</span> : (c._parcial ? "≥ " : "") + KG(c.kg)}</div><div className="small muted num">{val}</div></div>
-      <div className="c-rkg r"><div className={"v num" + (r == null ? " na" : "")}>{r == null ? "—" : BRL(r)}</div><div className="small muted"><PrecoCmp c={c} />{!c._cmp && (rkLbl(c) || (r == null ? "" : "por kg"))}</div><PisoChip c={c} /></div>
-      <div className="c-mg r">{c._mg ? <><Margem c={c} curto /><div className="small muted num">{c._mg.lucro >= 0 ? "+" : "−"}{BRLc(Math.abs(c._mg.lucro))}</div></> : <span className="na">—</span>}</div>
-      <div className="c-status">{w.status ? <span className={"st " + stCls(w.status)}>{w.status}</span> : <span className="small muted">—</span>}{w.preco ? <div className="small muted num">meu: {BRL(w.preco)}/kg</div> : null}</div>
+      <div className="c-rkg r">{r == null ? <div className="small na">sem preço</div> : <div className="v num">{BRL(r)}</div>}<div className="small muted"><PrecoCmp c={c} />{!c._cmp && rkLbl(c)}</div><PisoChip c={c} /></div>
+      <div className="c-mg r">{c._mg ? <><Margem c={c} curto /><div className="small muted num">{c._mg.lucro >= 0 ? "+" : "−"}{BRLc(Math.abs(c._mg.lucro))}</div></> : null}</div>
+      <div className="c-status">{w.status ? <span className={"st " + stCls(w.status)}>{w.status}</span> : null}{w.preco ? <div className="small muted num">meu: {BRL(w.preco)}/kg</div> : null}</div>
     </motion.div>
   );
 }

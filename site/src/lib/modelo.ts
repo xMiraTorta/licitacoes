@@ -19,6 +19,12 @@ export const MERCADO_VAREJO: { valores: Record<string, number>; data: string } =
 };
 
 export const grupoTipo = (t: string): string => (t === "Torrado e moído (descafeinado)" ? TM : t);
+/* "Torrado e moído, Torrado e moído (descafeinado)" vira "Torrado e moído (+ descafeinado)". */
+export function tiposTexto(tipos: string[]): string {
+  const L = [...new Set(tipos)], desc = "Torrado e moído (descafeinado)";
+  if (L.includes(TM) && L.includes(desc)) return [TM + " (+ descafeinado)", ...L.filter((t) => t !== TM && t !== desc)].join(", ");
+  return L.join(", ");
+}
 
 export interface RkInfo { main: { t: string; v: number; kg: number }; outros: { t: string; v: number; kg: number }[] }
 /* R$/kg por tipo de café: misturar solúvel com torrado e moído distorce a comparação. O principal é o

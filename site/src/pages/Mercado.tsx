@@ -79,7 +79,7 @@ export function Mercado() {
             <tbody>
               {Object.entries(data.marcas_ref?.marcas || {}).filter(([, v]) => v.basica).sort((a, b) => a[0].localeCompare(b[0])).map(([mk, v]) => {
                 const b = v.basica!, n = O.filter((c) => (c.marcas || []).includes(mk)).length;
-                return <tr key={mk}><td><b>{mk}</b></td><td>{b.linha}</td><td>{b.cat}</td><td className="mono r">{b.min === b.max ? n0(b.min) : `${n0(b.min)} a ${n0(b.max)}`}</td><td className="r">{n ? <button type="button" className="linkbtn" onClick={() => { setF({ ...DEF(), marcas: [mk] }); navegar("oportunidades"); }}>{n} edita{n === 1 ? "l" : "is"}</button> : <span className="muted">—</span>}</td></tr>;
+                return <tr key={mk}><td><b>{mk}</b></td><td>{b.linha}</td><td>{b.cat}</td><td className="mono r">{n0(b.min) === n0(b.max) ? n0(b.min) : `${n0(b.min)} a ${n0(b.max)}`}</td><td className="r">{n ? <button type="button" className="linkbtn" onClick={() => { setF({ ...DEF(), marcas: [mk] }); navegar("oportunidades"); }}>{n} edita{n === 1 ? "l" : "is"}</button> : <span className="muted">—</span>}</td></tr>;
               })}
             </tbody>
           </table>
@@ -93,14 +93,14 @@ function Historico({ hist }: { hist: HistoricoMercado[] }) {
   const niveis = NIVEIS.filter((n) => n !== "Sem categoria" && hist.some((h) => h.niveis[n]));
   const vals = hist.flatMap((h) => niveis.map((n) => h.niveis[n]).filter((v): v is number => !!v));
   const lo = Math.min(...vals) * 0.97, hi = Math.max(...vals) * 1.03;
-  const W = 640, H = 200, pl = 48, pb = 24, pt = 10;
-  const x = (i: number) => pl + (i / Math.max(1, hist.length - 1)) * (W - pl - 10);
+  const W = 640, H = 200, pl = 48, pr = 30, pb = 24, pt = 10; // pr: o último rótulo do eixo ("20/10") precisa de espaço à direita
+  const x = (i: number) => pl + (i / Math.max(1, hist.length - 1)) * (W - pl - pr);
   const y = (v: number) => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
   const cores: Record<string, string> = { Tradicional: "var(--seq-3)", Superior: "var(--accent)", "Gourmet/especial": "var(--violet)" };
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} className="linechart" role="img" aria-label="Preço do café verde por nível ao longo dos dias">
-        {[0, 0.5, 1].map((f) => { const v = lo + (hi - lo) * f; return <g key={f}><line className="grid" x1={pl} x2={W - 10} y1={y(v)} y2={y(v)} /><text className="axl" x={pl - 6} y={y(v) + 4} textAnchor="end">{n0(v)}</text></g>; })}
+        {[0, 0.5, 1].map((f) => { const v = lo + (hi - lo) * f; return <g key={f}><line className="grid" x1={pl} x2={W - pr} y1={y(v)} y2={y(v)} /><text className="axl" x={pl - 6} y={y(v) + 4} textAnchor="end">{n0(v)}</text></g>; })}
         {niveis.map((n) => <polyline key={n} fill="none" stroke={cores[n]} strokeWidth="2" strokeLinejoin="round" points={hist.map((h, i) => (h.niveis[n] ? `${x(i)},${y(h.niveis[n])}` : "")).filter(Boolean).join(" ")} />)}
         {hist.map((h, i) => (i === 0 || i === hist.length - 1 || i % Math.ceil(hist.length / 6) === 0) && <text key={h.data} className="axl" x={x(i)} y={H - 6} textAnchor="middle">{fmtDia(h.data).slice(0, 5)}</text>)}
       </svg>

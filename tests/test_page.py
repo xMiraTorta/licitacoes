@@ -333,7 +333,7 @@ def test_corrupted_storage_is_backed_up_not_erased(page: Page, fixture_url: str)
 def test_only_roasted_coffee_is_shown(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url)
     assert "R$ 46,94" in row(page, MIXED).locator(".c-rkg").inner_text()
-    assert "—" in row(page, NO_WEIGHT).locator(".c-rkg").inner_text()
+    assert "sem preço" in row(page, NO_WEIGHT).locator(".c-rkg").inner_text()  # sem R$/kg: um aviso só, não três travessões
     d = open_detail(page, MIXED)
     assert "solúvel" not in d.inner_text().lower() and "Copiar resumo" not in d.inner_text()
     abrir_filtros(page)
@@ -853,3 +853,77 @@ def test_margin_estimate_matches_collector_and_follows_my_costs(browser: Any, fi
     page.locator('[data-act="custos-padrao"]').click()
     page.wait_for_function(f"Math.abs(window.__monitor.state().prep.byk['{FIRST}']._mg.custo - {js['custo']}) < 0.01")
     fechar(page)
+
+
+# ---------------- revisão de UI/UX (21/10/2026): erros confirmados nas fotos do site
+def test_mobile_rows_keep_numbers_on_screen(browser: Any, fixture_url: str) -> None:
+    """Nome de órgão longo não pode empurrar kg, valor, R$/kg e margem para fora da tela do celular."""
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, fixture_url)
+    ruins = pg.evaluate("""() => [...document.querySelectorAll('.list .row')].filter(r => r.scrollWidth > r.clientWidth + 1
+      || [...r.querySelectorAll('.c-valor,.c-rkg,.c-mg')].some(c => c.getBoundingClientRect().right > window.innerWidth)).map(r => r.dataset.ch)""")
+    assert ruins == []
+    assert row(pg, FIRST).locator(".c-prazo .pill").is_visible()  # prazo e margem aparecem no cartão do celular
+    assert row(pg, FIRST).locator(".c-mg .mg").is_visible()
+    assert "—" not in row(pg, FIRST).locator(".c-status").inner_text()  # sem travessão solto no fim do cartão
+    fechar(pg)
+
+
+def test_mobile_best_table_shows_profit_without_hidden_scroll(browser: Any, fixture_url: str) -> None:
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, fixture_url, "hoje")
+    assert pg.locator(".melhores .mrow").count() > 0
+    assert pg.evaluate("() => { const el = document.querySelector('.melhores .scroll-x'); return el.scrollWidth <= el.clientWidth + 1; }")
+    r = pg.locator(".melhores .mrow").first
+    assert r.locator(".m-lucro").is_visible() and r.locator(".m-mg-cel").is_visible() and r.locator(".m-prazo").is_visible()
+    assert not r.locator(".m-kg").is_visible() and not r.locator(".m-rkg").is_visible()
+    fechar(pg)
+
+
+def test_palette_box_is_opaque(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.keyboard.press("Control+k")
+    page.wait_for_selector("[cmdk-dialog] [cmdk-root]")
+    bg = page.evaluate("getComputedStyle(document.querySelector('[cmdk-dialog] [cmdk-root]')).backgroundColor")
+    assert bg not in ("rgba(0, 0, 0, 0)", "transparent"), bg  # antes, o texto da página aparecia atrás da lista
+    page.keyboard.press("Escape")
+
+
+def test_repeated_notices_collapse_into_one(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    for k in (FIRST, MIXED, PARTIAL):
+        row(page, k).locator('[data-act="fav"]').click()
+    toasts = page.locator(".toast")
+    assert toasts.count() == 1 and "×3" in toasts.first.inner_text()
+    row(page, FIRST).locator('[data-act="fav"]').click()  # mensagem diferente: segundo aviso
+    assert toasts.count() == 2
+    row(page, MIXED).locator('[data-act="fav"]').click()  # igual ao último: junta nele
+    assert toasts.count() == 2 and "×2" in toasts.last.inner_text()
+    row(page, FIRST).locator('[data-act="fav"]').click()  # terceira mensagem diferente: nunca mais que 2 na tela
+    page.wait_for_function("document.querySelectorAll('.toast').length === 2")  # o mais antigo sai com animação
+    assert len(page.evaluate("window.__monitor.state().toasts")) == 2
+
+
+def test_today_kpi_shows_my_proposals_by_stage(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    wf = {FIRST: {"fav": True, "upd": "x"}, MIXED: {"status": "Enviada", "upd": "x"}, GONE: {"status": "Em preparação", "upd": "x"}}
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps(wf)])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "hoje")
+    t = page.locator('[data-testid="kpi-etapas"]').inner_text()
+    assert "1 sem status" in t and "1 enviada" in t and "1 em preparação" in t
+    page.wait_for_function("document.querySelector('.kpi[data-k=\"mine\"] .v').textContent.trim() === '3'")  # as que saíram dos dados contam, como no quadro
+    assert page.locator('.kpi[data-k="mine"] .stacked.ghost').count() == 0
+
+
+def test_detail_axis_last_label_is_not_cut(page: Page, real_url: str) -> None:
+    goto(page, real_url)  # dados reais: a faixa só aparece com licitações suficientes do mesmo nível (REF_MIN), e os de teste não chegam lá
+    chave = page.evaluate("""async () => { for (const k of window.__monitor.lista()) { window.__monitor.open(k); await new Promise(r => setTimeout(r, 80));
+      if (document.querySelector('.detalhe .strip')) return k; } return null; }""")
+    assert chave, "nenhuma licitação de teste mostra a faixa de preços"
+    d = page.locator(f'.detalhe[data-ch="{chave}"]')
+    labels = d.locator(".strip .axl")
+    assert labels.last.get_attribute("text-anchor") == "end"
+    svg, last = d.locator(".strip").bounding_box(), labels.last.bounding_box()
+    assert svg and last and last["x"] + last["width"] <= svg["x"] + svg["width"] + 1
