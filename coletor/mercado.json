@@ -12,7 +12,7 @@
   }
  },
  "carvalhaes": {
-  "data": "2026-10-19",
+  "data": "2026-10-20",
   "saca60": {
    "cd_finos": [
     1884.3,
@@ -123,6 +123,17 @@
   },
   {
    "data": "2026-10-19",
+   "arabica": 1601.25,
+   "robusta": 963.28,
+   "niveis": {
+    "Tradicional": 1263.73,
+    "Superior": 1618.11,
+    "Gourmet/especial": 1884.3,
+    "Sem categoria": 1263.73
+   }
+  },
+  {
+   "data": "2026-10-20",
    "arabica": 1601.25,
    "robusta": 963.28,
    "niveis": {
