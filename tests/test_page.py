@@ -798,6 +798,22 @@ def test_sync_anonymous_rate_limit_is_not_a_key_error(browser: Any, fixture_url:
     fechar(b)
 
 
+def test_sync_keeps_old_removal_marks_forever(browser: Any, fixture_url: str) -> None:
+    """Marca de removido antiga (anos) continua existindo e vai para o GitHub: um aparelho que ficou meses sem abrir
+    não traz o favorito de volta."""
+    gh = FakeGitHub()
+    a = nova_pagina(browser, 1440, 900)
+    a.context.route("https://api.github.com/**", gh.handler)
+    marca = {GONE: {"upd": "2023-01-01T00:00:00.000Z"}}
+    a.add_init_script(f"localStorage.setItem('{SYNCK}', JSON.stringify({{token: 'boa'}})); localStorage.setItem('{WFK}', {json.dumps(json.dumps(marca))})")
+    a.goto(fixture_url + "/index.html?repo=dono/repo#/oportunidades")
+    wait_ready(a)
+    row(a, FIRST).locator('[data-act="fav"]').click()
+    espera_salvo(a)
+    assert gh.doc["meus_dados"][GONE] == {"upd": "2023-01-01T00:00:00.000Z"} and ls(a, WFK)[GONE] == {"upd": "2023-01-01T00:00:00.000Z"}
+    fechar(a)
+
+
 def test_sync_connect_with_key_in_settings(browser: Any, fixture_url: str) -> None:
     gh = FakeGitHub()
     a = aparelho(browser, fixture_url, gh, token=None)

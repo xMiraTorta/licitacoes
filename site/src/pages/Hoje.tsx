@@ -96,7 +96,7 @@ export function Hoje() {
             <h3>{x.titulo}</h3>
             <p className="small ink2">{x.texto}</p>
             <button type="button" className="linkbtn" onClick={() => {
-              if (x.filtro === "longe") irLista({}, "lucro");
+              if (x.filtro === "longe") irLista({ distMin: 1000 }, "lucro");
               else if (x.filtro === "perto") irLista({ dist: 300 }, "lucro");
               else if (x.filtro === "me") irLista({ me: MEX });
               else if (x.filtro === "guia") navegar("guia");

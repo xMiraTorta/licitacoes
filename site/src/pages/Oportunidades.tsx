@@ -95,6 +95,7 @@ function Toolbar({ s }: { s: State }) {
   if (F.q) ativos.push(["q", `“${F.q}”`, () => setF({ q: "" })]);
   FACETS.forEach((f) => F[f.k].forEach((v) => ativos.push([f.k + "|" + v, v, () => setF({ [f.k]: toggleArr(F[f.k], v) } as Partial<typeof F>)])));
   if (F.dist) ativos.push(["dist", `Até ${n0(F.dist)} km`, () => setF({ dist: 0 })]);
+  if (F.distMin) ativos.push(["distMin", `Além de ${n0(F.distMin)} km`, () => setF({ distMin: 0 })]);
   if (F.valor) ativos.push(["valor", VALORES.find((x) => x[0] === F.valor)![1], () => setF({ valor: "" })]);
   if (F.fav) ativos.push(["fav", "★ Favoritos", () => setF({ fav: false })]);
   if (F.novas) ativos.push(["novas", "Novas", () => setF({ novas: false })]);

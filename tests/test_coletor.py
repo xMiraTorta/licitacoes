@@ -10,9 +10,22 @@ from typing import Any
 import httpx
 import pytest
 
-from coletor import coleta, montar, publicar, telegram
+from coletor import coleta, custos, mercado, montar, publicar, telegram
 from coletor.pncp import PNCP, ColetaErro
 from tests.conftest import FIXTURES, ROOT  # noqa: F401 (raiz do repositório)
+
+
+def test_embutir_grava_data_json_com_precos_atuais(destino: Path, tmp_path: Path) -> None:
+    """O pages.yml roda `embutir` ao publicar: o data.json da coleta ganha os preços de mercado, as marcas e os
+    custos atuais e a hora de publicação, sem a coleta e os preços escreverem o mesmo arquivo."""
+    from coletor.__main__ import main
+    rodar(destino, [CAFE])
+    saida = tmp_path / "dist"
+    assert main(["embutir", "--destino", str(destino), "--saida", str(saida)]) == 0
+    out = json.loads((saida / "data.json").read_text(encoding="utf-8"))
+    assert [c["chave"] for c in out["compras"]] == [CAFE["numeroControlePNCP"]]
+    assert out["mercado"] == mercado.carregar() and out["custos"] == custos.premissas() and out["publicado_em"].endswith("-03:00")
+    assert main(["embutir", "--destino", str(tmp_path / "vazio")]) == 2  # sem data.json: erro, nada gravado
 
 
 def test_gravar_recusa_infinito_e_nan(tmp_path: Path) -> None:

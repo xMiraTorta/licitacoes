@@ -23,7 +23,7 @@ permissions:
   actions: write # pedir ao pages.yml que publique o site depois do commit
 
 concurrency:
-  group: atualizar-licitacoes
+  group: atualizar-licitacoes # só a coleta grava data.json e o cache; os preços (precos.yml) têm fila própria
   cancel-in-progress: false
 
 jobs:

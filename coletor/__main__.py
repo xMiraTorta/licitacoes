@@ -8,6 +8,7 @@
     python -m coletor editais [--todas] [--textos DIR]   # lê edital/TR das compras do data.json atual
     python -m coletor mercado              # preço do café verde por nível (CEPEA e Carvalhaes; 2x por dia útil, precos.yml)
     python -m coletor varejo               # preço de varejo das marcas de referência (semanal, segunda, precos.yml)
+    python -m coletor embutir [--saida DIR]   # grava data.json com preços, marcas e custos atuais embutidos (o pages.yml usa ao publicar)
     python -m coletor mapa                 # baixa o contorno dos estados (IBGE) e grava site/src/data/mapa-uf.json (raramente)
 
 Códigos de saída: 0 ok; 2 coleta/publicação bloqueada (dados publicados intactos); 3 falha no aviso.
@@ -55,10 +56,13 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--destino", type=Path, default=Path("."))
     e.add_argument("--todas", action="store_true", help="relê todas (não só as nunca lidas, alteradas ou com falha)")
     e.add_argument("--textos", type=Path, help="grava aqui o texto extraído de cada compra (revisão manual)")
-    mc = sub.add_parser("mercado", help="atualiza o preço do café verde por nível (CEPEA, Carvalhaes) e republica")
+    mc = sub.add_parser("mercado", help="atualiza o preço do café verde por nível (CEPEA, Carvalhaes) em coletor/mercado.json")
     mc.add_argument("--destino", type=Path, default=Path("."))
-    v = sub.add_parser("varejo", help="atualiza o preço de varejo das marcas (lojas online) e republica os dados")
+    v = sub.add_parser("varejo", help="atualiza o preço de varejo das marcas (lojas online) em coletor/marcas_cafe.json")
     v.add_argument("--destino", type=Path, default=Path("."))
+    emb = sub.add_parser("embutir", help="grava data.json com os preços de mercado, marcas e custos atuais embutidos (o pages.yml usa ao publicar)")
+    emb.add_argument("--destino", type=Path, default=Path("."), help="onde está o data.json da coleta")
+    emb.add_argument("--saida", type=Path, help="pasta onde gravar o data.json embutido (padrão: a mesma)")
     args = ap.parse_args(argv)
 
     logger.remove()
@@ -159,36 +163,34 @@ def main(argv: list[str] | None = None) -> int:
             logger.error("Leitura dos editais não gravada (dados publicados intactos): {}", erro)
             return 2
         return 0
+    # mercado e varejo só gravam os próprios JSONs (coletor/mercado.json, coletor/marcas_cafe.json): o data.json
+    # recebe os preços atuais na publicação (`embutir`, chamado pelo pages.yml). Assim a coleta e os preços nunca
+    # escrevem o mesmo arquivo e os workflows não precisam esperar um pelo outro.
     if args.cmd == "mercado":
-        data = publicar.carregar(args.destino / "data.json")
-        if not data:
-            logger.error("Sem {}: nada para republicar", args.destino / "data.json")
-            return 2
         try:
             mercado.atualizar(datetime.now(coleta.TZ).strftime("%Y-%m-%d"))
         except (httpx.HTTPError, ValueError) as erro:
             logger.error("Preço do café verde NÃO atualizado (anterior mantido): {}", erro)
             return 2
-        try:
-            publicar.gravar(data, args.destino, datetime.fromisoformat(data["gerado_em"]))
-        except ValidationError as erro:
-            logger.error("Dados não regravados (publicados intactos): {}", erro)
-            return 2
         return 0
     if args.cmd == "varejo":
-        data = publicar.carregar(args.destino / "data.json")
-        if not data:
-            logger.error("Sem {}: nada para republicar", args.destino / "data.json")
-            return 2
         try:
             varejo.atualizar(marcas.BASE, datetime.now(coleta.TZ).strftime("%Y-%m-%d"))
         except RuntimeError as erro:
             logger.error("Preços de varejo NÃO atualizados (anteriores mantidos): {}", erro)
             return 2
+        return 0
+    if args.cmd == "embutir":
+        data = publicar.carregar(args.destino / "data.json")
+        if not data:
+            logger.error("Sem {}: nada para embutir", args.destino / "data.json")
+            return 2
+        saida = args.saida or args.destino
+        saida.mkdir(parents=True, exist_ok=True)
         try:
-            publicar.gravar(data, args.destino, datetime.fromisoformat(data["gerado_em"]))
+            publicar.gravar(data, saida, datetime.fromisoformat(data["gerado_em"]))
         except ValidationError as erro:
-            logger.error("Dados não regravados (publicados intactos): {}", erro)
+            logger.error("Dados não gravados: {}", erro)
             return 2
         return 0
     if args.cmd == "mapa":
