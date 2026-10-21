@@ -847,7 +847,7 @@
   {
    "etapa": "1. Cadastro",
    "item": "Cadastro na plataforma de disputa (Compras.gov.br/SICAF, BLL, Licitanet, Portal de Compras Públicas, BNC, Licitar Digital etc.)",
-   "dica": "Veja a coluna \"Onde enviar proposta\". Compras.gov.br exige conta gov.br (prata/ouro) do representante e SICAF ativo. Outras plataformas cobram ou não taxa ao fornecedor – verifique.",
+   "dica": "Veja a coluna \"Onde enviar proposta\". Compras.gov.br exige conta gov.br (prata/ouro) do representante e SICAF ativo. Outras plataformas cobram ou não taxa ao fornecedor: verifique.",
    "freq": 0.975
   },
   {
@@ -877,12 +877,12 @@
   {
    "etapa": "3. Regularidade fiscal",
    "item": "CRF do FGTS",
-   "dica": "Validade 30 dias – renove perto da sessão.",
+   "dica": "Validade 30 dias; renove perto da sessão.",
    "freq": 0.94
   },
   {
    "etapa": "3. Regularidade fiscal",
-   "item": "CNDT – Certidão negativa de débitos trabalhistas",
+   "item": "CNDT (Certidão negativa de débitos trabalhistas)",
    "dica": "Emitida no site do TST.",
    "freq": 0.73
   },
@@ -924,14 +924,14 @@
   },
   {
    "etapa": "6. Qualidade do café",
-   "item": "Certificado PQC (Programa de Qualidade do Café – ABIC) da categoria pedida",
+   "item": "Certificado PQC (Programa de Qualidade do Café, da ABIC) da categoria pedida",
    "dica": "Tradicional / Extraforte / Superior / Gourmet.",
    "freq": 0.07
   },
   {
    "etapa": "6. Qualidade do café",
-   "item": "Laudo de análise sensorial com Nota de Qualidade Global (NQG) – Portaria SDA/MAPA nº 570/2022",
-   "dica": "Ex.: Tradicional 4,5–5,9; Superior 6,0–7,2; Gourmet ≥ 7,3 (conforme edital). Laboratório credenciado; laudo recente.",
+   "item": "Laudo de análise sensorial com Nota de Qualidade Global (NQG), Portaria SDA/MAPA nº 570/2022",
+   "dica": "Ex.: Tradicional 4,5 a 5,9; Superior 6,0 a 7,2; Gourmet ≥ 7,3 (conforme edital). Laboratório credenciado; laudo recente.",
    "freq": 0.2
   },
   {
@@ -955,7 +955,7 @@
   {
    "etapa": "7. Proposta",
    "item": "Amostra do produto (prazo e local de entrega)",
-   "dica": "Geralmente 2–5 dias úteis após convocação; embalagem original e lacrada.",
+   "dica": "Geralmente 2 a 5 dias úteis após convocação; embalagem original e lacrada.",
    "freq": 0.72
   },
   {
@@ -991,7 +991,7 @@
   {
    "etapa": "8. Declarações",
    "item": "Agricultura familiar / economia solidária (DAP/CAF), quando o item exige",
-   "dica": "Alguns itens pedem café de agricultura familiar – verifique se a Fazenda Mumbuca se enquadra (CAF).",
+   "dica": "Alguns itens pedem café de agricultura familiar: verifique se a Fazenda Mumbuca se enquadra (CAF).",
    "freq": 0.21
   },
   {

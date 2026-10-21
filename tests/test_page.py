@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 from typing import Any
 
 from playwright.sync_api import Locator, Page
@@ -333,7 +334,7 @@ def test_corrupted_storage_is_backed_up_not_erased(page: Page, fixture_url: str)
 def test_only_roasted_coffee_is_shown(page: Page, fixture_url: str) -> None:
     goto(page, fixture_url)
     assert "R$ 46,94" in row(page, MIXED).locator(".c-rkg").inner_text()
-    assert "—" in row(page, NO_WEIGHT).locator(".c-rkg").inner_text()
+    assert "sem preço" in row(page, NO_WEIGHT).locator(".c-rkg").inner_text()  # sem R$/kg: um aviso só, não três travessões
     d = open_detail(page, MIXED)
     assert "solúvel" not in d.inner_text().lower() and "Copiar resumo" not in d.inner_text()
     abrir_filtros(page)
@@ -569,7 +570,7 @@ def test_reference_brands_show_retail_price(page: Page, fixture_url: str) -> Non
     d = open_detail(page, FIRST)
     t = d.inner_text()
     assert "Pilão · Tradicional (Tradicional): R$ 39,78 a R$ 91,96/kg" in t and "Toko" in t and "18/10/2026" in t
-    assert "custam R$ 39,78 a R$ 91,96/kg no varejo" in d.locator(".verdict").inner_text()
+    assert "R$ 39,78 a R$ 91,96/kg no varejo" in d.locator(".verdict").inner_text()
     go_tab(page, "hoje")
     card = page.locator('section[aria-label="Marcas citadas"]')
     assert "Pilão" in card.inner_text() and "no varejo" in card.inner_text()
@@ -853,3 +854,339 @@ def test_margin_estimate_matches_collector_and_follows_my_costs(browser: Any, fi
     page.locator('[data-act="custos-padrao"]').click()
     page.wait_for_function(f"Math.abs(window.__monitor.state().prep.byk['{FIRST}']._mg.custo - {js['custo']}) < 0.01")
     fechar(page)
+
+
+# ---------------- revisão de UI/UX (21/10/2026): erros confirmados nas fotos do site
+def test_mobile_rows_keep_numbers_on_screen(browser: Any, fixture_url: str) -> None:
+    """Nome de órgão longo não pode empurrar kg, valor, R$/kg e margem para fora da tela do celular."""
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, fixture_url)
+    ruins = pg.evaluate("""() => [...document.querySelectorAll('.list .row')].filter(r => r.scrollWidth > r.clientWidth + 1
+      || [...r.querySelectorAll('.c-valor,.c-rkg,.c-mg')].some(c => c.getBoundingClientRect().right > window.innerWidth)).map(r => r.dataset.ch)""")
+    assert ruins == []
+    assert row(pg, FIRST).locator(".c-prazo .pill").is_visible()  # prazo e margem aparecem no cartão do celular
+    assert row(pg, FIRST).locator(".c-mg .mg").is_visible()
+    assert "—" not in row(pg, FIRST).locator(".c-status").inner_text()  # sem travessão solto no fim do cartão
+    fechar(pg)
+
+
+def test_mobile_best_table_shows_profit_without_hidden_scroll(browser: Any, fixture_url: str) -> None:
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, fixture_url, "hoje")
+    assert pg.locator(".melhores .mrow").count() > 0
+    assert pg.evaluate("() => { const el = document.querySelector('.melhores .scroll-x'); return el.scrollWidth <= el.clientWidth + 1; }")
+    r = pg.locator(".melhores .mrow").first
+    assert r.locator(".m-lucro").is_visible() and r.locator(".m-mg-cel").is_visible() and r.locator(".m-prazo").is_visible()
+    assert not r.locator(".m-kg").is_visible() and not r.locator(".m-rkg").is_visible()
+    fechar(pg)
+
+
+def test_palette_box_is_opaque(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.keyboard.press("Control+k")
+    page.wait_for_selector("[cmdk-dialog] [cmdk-root]")
+    bg = page.evaluate("getComputedStyle(document.querySelector('[cmdk-dialog] [cmdk-root]')).backgroundColor")
+    assert bg not in ("rgba(0, 0, 0, 0)", "transparent"), bg  # antes, o texto da página aparecia atrás da lista
+    page.keyboard.press("Escape")
+
+
+def test_repeated_notices_collapse_into_one(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    for k in (FIRST, MIXED, PARTIAL):
+        row(page, k).locator('[data-act="fav"]').click()
+    toasts = page.locator(".toast")
+    assert toasts.count() == 1 and "×3" in toasts.first.inner_text()
+    row(page, FIRST).locator('[data-act="fav"]').click()  # mensagem diferente: segundo aviso
+    assert toasts.count() == 2
+    row(page, MIXED).locator('[data-act="fav"]').click()  # igual ao último: junta nele
+    assert toasts.count() == 2 and "×2" in toasts.last.inner_text()
+    row(page, FIRST).locator('[data-act="fav"]').click()  # terceira mensagem diferente: nunca mais que 2 na tela
+    page.wait_for_function("document.querySelectorAll('.toast').length === 2")  # o mais antigo sai com animação
+    assert len(page.evaluate("window.__monitor.state().toasts")) == 2
+
+
+def test_today_kpi_shows_my_proposals_by_stage(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    wf = {FIRST: {"fav": True, "upd": "x"}, MIXED: {"status": "Enviada", "upd": "x"}, GONE: {"status": "Em preparação", "upd": "x"}}
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps(wf)])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "hoje")
+    t = page.locator('[data-testid="kpi-etapas"]').inner_text()
+    assert "1 sem status" in t and "1 enviada" in t and "1 em preparação" in t
+    page.wait_for_function("document.querySelector('.kpi[data-k=\"mine\"] .v').textContent.trim() === '3'")  # as que saíram dos dados contam, como no quadro
+    assert page.locator('.kpi[data-k="mine"] .stacked.ghost').count() == 0
+
+
+def test_detail_axis_last_label_is_not_cut(page: Page, real_url: str) -> None:
+    goto(page, real_url)  # dados reais: a faixa só aparece com licitações suficientes do mesmo nível (REF_MIN), e os de teste não chegam lá
+    chave = page.evaluate("""async () => { for (const k of window.__monitor.lista()) { window.__monitor.open(k); await new Promise(r => setTimeout(r, 80));
+      if (document.querySelector('.detalhe .strip')) return k; } return null; }""")
+    assert chave, "nenhuma licitação de teste mostra a faixa de preços"
+    d = page.locator(f'.detalhe[data-ch="{chave}"]')
+    labels = d.locator(".strip .axl")
+    assert labels.last.get_attribute("text-anchor") == "end"
+    svg, last = d.locator(".strip").bounding_box(), labels.last.bounding_box()
+    assert svg and last and last["x"] + last["width"] <= svg["x"] + svg["width"] + 1
+
+
+# ---------------- revisão de UI/UX (21/10/2026): organização e alinhamento
+def test_verdict_is_a_labeled_list_with_badge_below_headline(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    d = open_detail(page, FIRST)
+    v = d.locator(".verdict")
+    assert "nível Superior" in v.locator(".big").inner_text() and v.locator(".big .pc").count() == 0  # o selo de comparação não fica dentro da frase
+    rotulos = v.locator(".vd-list small").all_inner_texts()
+    assert rotulos[0] == "Preço típico do nível" and "Meu preço mínimo" in rotulos and any(r.startswith("Por que nível") for r in rotulos)
+    assert v.locator('[data-act="pisos"]').count() == 1
+
+
+def test_mobile_filter_bar_is_compact(browser: Any, fixture_url: str) -> None:
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, fixture_url)
+    b, s = pg.locator('[data-testid="btn-filtros"]').bounding_box(), pg.locator("#sort").bounding_box()
+    assert b and s and abs(b["y"] - s["y"]) < 4  # Filtros e ordenação na mesma linha
+    q = pg.locator(".opp-tools .quick")
+    assert pg.evaluate("el => getComputedStyle(el).flexWrap === 'nowrap' && el.scrollWidth > 0", q.element_handle())
+    assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    assert "Buscar nesta lista" in (pg.locator("#q").get_attribute("placeholder") or "")
+    fechar(pg)
+
+
+def test_level_labels_never_wrap_in_price_chart(browser: Any, fixture_url: str) -> None:
+    for w in (1440, 390):
+        pg = nova_pagina(browser, w, 900)
+        goto(pg, fixture_url, "hoje")
+        alturas = [b["height"] for b in [x.bounding_box() for x in pg.locator(".faixa-n").all()] if b]
+        assert alturas and max(alturas) < 30, (w, alturas)  # "Sem categoria" numa linha só
+        eixo, barras = pg.locator(".faixa-axis").bounding_box(), pg.locator(".faixa-c").first.bounding_box()
+        assert eixo and barras and abs(eixo["x"] - barras["x"]) < 2 and abs(eixo["width"] - barras["width"]) < 2  # eixo alinhado com as barras
+        fechar(pg)
+
+
+def test_brand_rows_keep_count_on_first_line(page: Page, real_url: str) -> None:
+    goto(page, real_url, "hoje")
+    linha = page.locator('[aria-label="Marcas citadas"] .hb-row:has(.hb-sub)').first  # a primeira marca com preço de varejo pesquisado
+    assert linha.count() == 1, "nenhuma marca citada com preço de varejo nos dados do dia"
+    t, v, sub = linha.locator(".hb-t").bounding_box(), linha.locator(".hb-v").bounding_box(), linha.locator(".hb-sub").bounding_box()
+    assert t and v and sub and abs(t["y"] - v["y"]) < 6 and sub["y"] > t["y"]  # número ao lado do nome; preço de varejo embaixo
+
+
+def test_market_merges_uncategorized_into_traditional_card(page: Page, real_url: str) -> None:
+    goto(page, real_url, "mercado")
+    iguais = page.evaluate("() => { const n = window.__monitor.data().mercado.niveis; return n['Sem categoria'].saca60_min === n.Tradicional.saca60_min && n['Sem categoria'].saca60_max === n.Tradicional.saca60_max; }")
+    cards = page.locator(".niv-cards .card")
+    if iguais:  # o normal: mesma receita, mesmo preço, um cartão só
+        assert cards.count() == 3 and page.locator('.niv-cards .card[data-nivel="Sem categoria"]').count() == 0
+        assert "Vale também para edital sem categoria" in page.locator('.niv-cards .card[data-nivel="Tradicional"]').inner_text()
+    else:
+        assert cards.count() == 4
+    assert page.locator(".tbl-g").count() == 1 and "Carvalhaes · CD" not in page.locator(".page.mercado .tbl").first.inner_text()  # nome da corretora só no cabeçalho do grupo
+
+
+def test_proposal_card_footer_is_always_the_same(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    wf = {FIRST: {"fav": True, "upd": "x"}, MIXED: {"status": "Em preparação", "upd": "x"}, PARTIAL: {"status": "Enviada", "upd": "x"}}
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps(wf)])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "propostas")
+    for k in (FIRST, MIXED, PARTIAL):
+        card = page.locator(f'.prop[data-ch="{k}"]')
+        st, ab, pa = card.locator(".glide-btn").bounding_box(), card.locator("[data-open]").bounding_box(), card.locator(f'[data-testid="unfollow-{k}"]').bounding_box()
+        assert st and ab and pa and abs(st["y"] - ab["y"]) < 4 and pa["y"] > ab["y"] + ab["height"] - 1, k  # status e Abrir numa linha; Parar embaixo
+        assert abs(pa["x"] - st["x"]) < 2 and pa["height"] < 40  # Parar alinhado à esquerda, numa linha só
+    assert page.locator(".stage-g h3 .cnt").count() == 7 and page.locator(".stage-g h3 i").count() == 0  # 7 colunas no computador (uma por etapa)
+    assert page.locator('.agenda .seg button:has-text("Minhas")').count() == 1
+
+
+def test_settings_sync_text_without_jargon(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "ajustes")
+    t = page.locator("#sync").inner_text()
+    for jargao in ("branch", "repositório", "meus-dados.json", "React"):
+        assert jargao not in t, jargao
+    assert "(React)" not in page.locator(".page.ajustes").inner_text()
+
+
+# ---------------- revisão de UI/UX (21/10/2026): interatividade
+def test_requirement_and_packaging_blocks_open_filtered_list(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "hoje")
+    linha = page.locator('[aria-label="Exigências mais comuns"] button.hb-row').first
+    n = int(re.match(r"\d+", linha.locator(".hb-v").inner_text()).group())  # type: ignore[union-attr]
+    linha.click()
+    page.wait_for_selector(".page.opp")
+    assert len(page.evaluate("window.__monitor.F().selos")) == 1 and page.evaluate("window.__monitor.count()") == n
+    assert page.locator('.fsec[data-sec="selos"]').count() == 1  # o filtro novo aparece no painel
+    go_tab(page, "hoje")
+    page.locator('[aria-label="Embalagem e tipo de compra"] button.donut-item').first.click()
+    page.wait_for_selector(".page.opp")
+    assert page.evaluate("window.__monitor.F().embs") == ["Vácuo"] and page.evaluate("window.__monitor.F().selos") == []
+
+
+def test_list_headers_sort_on_click(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    sort = lambda: page.evaluate("window.__monitor.state().ui.sort")  # noqa: E731
+    page.click('.lhead .lh-sort[data-sort="rkg_desc"]')
+    assert sort() == "rkg_desc"
+    L = page.evaluate("window.__monitor.lista()")
+    assert L.index(FIRST) < L.index(MIXED)  # 66,03 antes de 46,94
+    page.click('.lhead .lh-sort[data-sort="rkg_desc"]')  # de novo: inverte
+    assert sort() == "rkg_asc"
+    page.click('.lhead .lh-sort[data-sort="lucro"]')
+    assert sort() == "lucro"
+    page.click('.lhead .lh-sort[data-sort="prazo"]')
+    assert sort() == "prazo" and page.locator('.lhead .lh-sort[data-on="true"]').inner_text().lower().startswith("prazo")
+
+
+def test_map_hover_shows_state_tip(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "hoje")
+    page.locator('.mapa path[aria-label^="MG:"]').hover()
+    tip = page.locator(".map-tip")
+    tip.wait_for()
+    assert tip.inner_text().startswith("MG:") and "licitaç" in tip.inner_text()
+    assert page.locator('[data-testid="onde-sub"]').inner_text().startswith("MG:")
+    page.mouse.move(2, 2)
+    page.wait_for_selector(".map-tip", state="detached")
+    assert not page.locator('[data-testid="onde-sub"]').inner_text().startswith("MG:")
+
+
+def test_market_chart_labels_each_line(page: Page, real_url: str) -> None:
+    goto(page, real_url, "mercado")
+    labels = page.evaluate("[...document.querySelectorAll('.linechart .endl-t')].map(t => t.textContent)")  # SVG não tem innerText
+    niveis = page.evaluate("() => { const h = window.__monitor.data().mercado.historico || []; return [...new Set(h.flatMap(x => Object.keys(x.niveis)))].filter(n => n !== 'Sem categoria'); }")
+    assert len(niveis) >= 2 and len(labels) == len(niveis), (labels, niveis)  # um rótulo por nível presente no histórico do dia
+    boxes = [b.bounding_box() for b in page.locator(".linechart .endl-t").all()]
+    svg = page.locator(".linechart").bounding_box()
+    assert svg and all(b and b["x"] + b["width"] <= svg["x"] + svg["width"] + 1 for b in boxes)  # dentro do gráfico
+    ys = sorted(b["y"] for b in boxes if b)
+    assert all(ys[i + 1] - ys[i] >= 9 for i in range(len(ys) - 1))  # sem sobreposição
+
+
+def test_board_columns_and_drag_between_stages(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({FIRST: {"fav": True, "upd": "x"}})])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "propostas")
+    assert page.locator("#board .stage-g").count() == 7  # no computador toda etapa vira coluna, mesmo vazia
+    assert page.locator('#board .stage-g[data-col="Enviada"] .drop-vazio').count() == 1
+    page.drag_and_drop(f'.prop[data-ch="{FIRST}"]', '#board .stage-g[data-col="Enviada"]')
+    page.wait_for_selector(f'#board .stage-g[data-col="Enviada"] .prop[data-ch="{FIRST}"]')
+    assert ls(page, WFK)[FIRST]["status"] == "Enviada"
+    page.drag_and_drop(f'.prop[data-ch="{FIRST}"]', '#board .stage-g[data-col=""]')  # de volta: sem status, continua favorita
+    page.wait_for_selector(f'#board .stage-g[data-col=""] .prop[data-ch="{FIRST}"]')
+    w = ls(page, WFK)[FIRST]
+    assert w.get("status", "") == "" and w["fav"] is True
+    assert page.locator("#board .stage-g.over").count() == 0
+
+
+def test_board_on_phone_stacks_only_filled_stages(browser: Any, fixture_url: str) -> None:
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, fixture_url)
+    pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({FIRST: {"fav": True, "upd": "x"}, MIXED: {"status": "Enviada", "upd": "x"}})])
+    pg.reload()
+    wait_ready(pg)
+    go_tab(pg, "propostas")
+    assert pg.locator("#board .stage-g").count() == 2 and pg.locator(".prop[draggable]").count() == 0
+    assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    fechar(pg)
+
+
+# ---------------- revisão de UI/UX (21/10/2026): achados da revisão por agentes
+LONG_ORG = "96291141000180-1-006590/2026"  # São José do Rio Preto, órgão com nome longo
+
+
+def test_board_card_never_wider_than_the_column(browser: Any, fixture_url: str) -> None:
+    for w in (360, 1280):
+        pg = nova_pagina(browser, w, 800)
+        goto(pg, fixture_url)
+        pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({LONG_ORG: {"fav": True, "upd": "x"}})])
+        pg.reload()
+        wait_ready(pg)
+        go_tab(pg, "propostas")
+        card, col = pg.locator(f'.prop[data-ch="{LONG_ORG}"]').bounding_box(), pg.locator('.stage-g[data-col=""]').bounding_box()
+        assert card and col and card["x"] + card["width"] <= col["x"] + col["width"] + 1, (w, card, col)
+        assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+        fechar(pg)
+
+
+def test_hold_button_survives_mouse_jitter_on_draggable_card(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({FIRST: {"fav": True, "notas": "texto das minhas notas", "upd": "x"}})])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "propostas")
+    assert page.evaluate("getComputedStyle(document.querySelector('.prop .pn')).userSelect") == "text"  # dá para copiar as notas
+    b = page.locator(f'[data-testid="unfollow-{FIRST}"]').bounding_box()
+    assert b
+    page.mouse.move(b["x"] + 20, b["y"] + b["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(b["x"] + 28, b["y"] + b["height"] / 2 + 2, steps=4)  # tremor do mouse dentro do botão: não vira arrasto do cartão
+    page.wait_for_timeout(1100)
+    page.mouse.up()
+    page.wait_for_selector(f'.prop[data-ch="{FIRST}"]', state="detached")  # confirmou: saiu do quadro
+
+
+def test_requirement_counts_match_the_filtered_list(page: Page, real_url: str) -> None:
+    goto(page, real_url, "hoje")
+    linhas = page.locator('[aria-label="Exigências mais comuns"] button.hb-row')
+    n = linhas.count()
+    assert n >= 3
+    for i in range(n):
+        go_tab(page, "hoje")
+        linha = page.locator('[aria-label="Exigências mais comuns"] button.hb-row').nth(i)
+        rotulo, mostrado = linha.locator(".hb-t").inner_text(), int(re.match(r"\d+", linha.locator(".hb-v").inner_text()).group())  # type: ignore[union-attr]
+        linha.click()
+        page.wait_for_selector(".page.opp")
+        assert page.evaluate("window.__monitor.count()") == mostrado, rotulo
+        chip = page.locator(".active-f .af").first.inner_text()
+        assert chip.startswith(rotulo), (chip, rotulo)  # o chip repete o nome simples, não a etiqueta interna
+    abrir_filtros(page)
+    assert page.locator('.fsec[data-sec="selos"] .opt').count() <= 12 and "Validade" not in page.locator('.fsec[data-sec="selos"]').inner_text()
+
+
+def test_sort_header_hints_and_state(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    rkg = page.locator('.lhead .lh-sort[data-sort="rkg_desc"]')
+    assert "R$/kg" in (rkg.get_attribute("title") or "") and "r$/kg" not in (rkg.get_attribute("title") or "")
+    prazo = page.locator('.lhead .lh-sort[data-sort="prazo"]')
+    assert prazo.get_attribute("aria-pressed") == "true" and "Clique" not in (prazo.get_attribute("title") or "")  # uma ordem só: sem convite a clicar
+    assert "sem peso" in row(page, NO_WEIGHT).locator(".c-valor").inner_text()
+
+
+def test_narrow_list_keeps_two_tags(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    open_detail(page, FIRST)
+    vis = page.evaluate(f"""() => [...document.querySelectorAll('.list .row[data-ch="{MIXED}"] .sel-tags span')].filter(s => s.offsetParent !== null).length""")
+    assert 1 <= vis <= 2
+
+
+def test_map_tip_stays_inside_the_window(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "hoje")
+    page.locator('.mapa path[aria-label^="PE:"]').hover()  # estado do leste (sem ponto laranja por cima): a dica tem de virar para a esquerda
+    tip = page.locator(".map-tip")
+    tip.wait_for()
+    page.wait_for_timeout(150)
+    b = tip.bounding_box()
+    assert b and b["x"] >= 0 and b["x"] + b["width"] <= page.viewport_size["width"] and tip.get_attribute("data-h") == "esq"
+
+
+def test_market_chart_values_in_legend_on_phone(browser: Any, real_url: str) -> None:
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, real_url, "mercado")
+    assert pg.locator(".linechart .endl").first.is_hidden() and pg.locator(".legend-v").first.is_visible()
+    assert re.search(r"\d\.\d{3}", pg.locator(".legend-v").first.inner_text())
+    assert pg.locator(".page.mercado .marcas-t").inner_text().count("—") == 0
+    fechar(pg)
+
+
+def test_unknown_status_still_counts_and_shows(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({FIRST: {"status": "Aguardando resultado", "upd": "x"}, MIXED: {"fav": True, "upd": "x"}})])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "hoje")
+    assert "1 outro status" in page.locator('[data-testid="kpi-etapas"]').inner_text()
+    page.wait_for_function("document.querySelector('.kpi[data-k=\"mine\"] .v').textContent.trim() === '2'")
+    go_tab(page, "propostas")
+    assert page.locator(f'.stage-g[data-col="Aguardando resultado"] .prop[data-ch="{FIRST}"]').count() == 1

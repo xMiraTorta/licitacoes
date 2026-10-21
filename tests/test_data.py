@@ -84,3 +84,11 @@ def test_duplicates_point_to_existing_compras() -> None:
     for c in COMPRAS:
         if c["dup_of"]:
             assert c["dup_of"] in chaves, c["chave"]
+
+
+def test_checklist_texts_have_no_long_dash() -> None:
+    """O dono pediu sem travessão nos textos; o guia (checklist em data.json) é carregado de coleta em coleta."""
+    for p in (ROOT / "data.json", ROOT / "tests" / "fixtures" / "data_min.json"):
+        d = json.loads(p.read_text(encoding="utf-8"))
+        ruins = [x["item"] for x in d["checklist"] if "–" in x.get("item", "") + x.get("dica", "") or "—" in x.get("item", "") + x.get("dica", "")]
+        assert ruins == [], f"{p.name}: {ruins}"

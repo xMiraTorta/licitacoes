@@ -19,6 +19,12 @@ export const MERCADO_VAREJO: { valores: Record<string, number>; data: string } =
 };
 
 export const grupoTipo = (t: string): string => (t === "Torrado e moído (descafeinado)" ? TM : t);
+/* "Torrado e moído, Torrado e moído (descafeinado)" vira "Torrado e moído (+ descafeinado)". */
+export function tiposTexto(tipos: string[]): string {
+  const L = [...new Set(tipos)], desc = "Torrado e moído (descafeinado)";
+  if (L.includes(TM) && L.includes(desc)) return [TM + " (+ descafeinado)", ...L.filter((t) => t !== TM && t !== desc)].join(", ");
+  return L.join(", ");
+}
 
 export interface RkInfo { main: { t: string; v: number; kg: number }; outros: { t: string; v: number; kg: number }[] }
 /* R$/kg por tipo de café: misturar solúvel com torrado e moído distorce a comparação. O principal é o
@@ -164,6 +170,8 @@ export function urg(fim: string | null, ms: number | null, now = Date.now()): Ur
 
 /* ---------------- exigências que pesam no preço, em ordem de leitura */
 export const SELOS = ["100% arábica", "PQC", "ABIC/pureza", "Nota QG/sensorial", "Sem PVA (grãos selecionados)", "Grãos selecionados", "Premium/1ª qualidade (termo comercial)", "Laudo", "Amostra", "Marca ref.", "Aceita conilon/blend", "Agric. familiar"];
+/* Nome simples de cada exigência (cartão Exigências da tela Hoje e filtro "Exigências do item"). */
+export const SELO_ROTULO: Record<string, string> = { "ABIC/pureza": "Selo ABIC / pureza", "Premium/1ª qualidade (termo comercial)": "“Premium” / 1ª qualidade", "Nota QG/sensorial": "Nota mínima de bebida", Laudo: "Laudo de laboratório", "Marca ref.": "Marca de referência", "Aceita conilon/blend": "Aceita conilon ou blend", "Sem PVA (grãos selecionados)": "Grãos sem defeitos (PVA)", "Agric. familiar": "Agricultura familiar" };
 export const SELO_CURTO: Record<string, string> = { "Premium/1ª qualidade (termo comercial)": "premium/1ª qualidade", "Sem PVA (grãos selecionados)": "sem PVA", "Aceita conilon/blend": "aceita conilon", "ABIC/pureza": "selo ABIC", "Nota QG/sensorial": "nota mínima", "Marca ref.": "marca de referência", "Agric. familiar": "agricultura familiar" };
 export function selosDe(c: PCompra, max = 4): string[] {
   const i = c._main || c.itens[0], t = (i && i.tags) || [];

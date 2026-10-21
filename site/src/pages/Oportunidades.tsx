@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { activeCount, FACETS, follows, getW, MEX, ORDENS, passes, sortList, toggleArr, VALORES } from "../lib/filtros";
 import { BRL, BRLc, fmtMin, fmtPrazo, KG, n0 } from "../lib/format";
-import { isOpen, rkLbl, rkV, urg, type PCompra } from "../lib/modelo";
+import { isOpen, rkLbl, rkV, tiposTexto, urg, type PCompra } from "../lib/modelo";
 import { abrirDetalhe, fecharDetalhe } from "../router";
 import { limparFiltros, setF, setFiltrosAbertos, setSort, setUI, setW, toast, useStore, type State } from "../store";
+import type { Ordem } from "../types";
 import { IFilter, IStar, IX } from "../ui/icons";
 import { useCelular } from "../ui/hooks";
 import { Margem, MeBadge, Nivel, PisoChip, PrecoCmp, Prazo, Selos, UFBadge } from "../ui/Pecas";
@@ -49,7 +50,7 @@ export function Oportunidades() {
         <div className="card empty"><b>Nenhuma licitação com esses filtros.</b><button type="button" className="btn" onClick={limparFiltros}>Limpar filtros</button></div>
       ) : (
         <div className="list" role="list">
-          <div className="lhead lbl"><span /><span>Prazo</span><span>Local e órgão</span><span>O que pedem</span><span className="r">Volume · valor</span><span className="r">R$/kg órgão</span><span className="r">Margem · lucro</span><span>Minha proposta</span></div>
+          <div className="lhead lbl"><span /><Cab t="Prazo" ordens={["prazo"]} sort={s.ui.sort} /><span>Local e órgão</span><span>O que pedem</span><Cab t="Volume · valor" ordens={["valor", "kg"]} sort={s.ui.sort} r /><Cab t="R$/kg órgão" ordens={["rkg_desc", "rkg_asc"]} sort={s.ui.sort} r /><Cab t="Margem · lucro" ordens={["lucro", "margem"]} sort={s.ui.sort} r /><span>Minha proposta</span></div>
           <LayoutGroup>
             <AnimatePresence initial={false}>
               {L.slice(0, limite).map((c, i) => <Linha key={c.chave} c={c} sel={s.opened === c.chave} foco={cursor === i} compacto={!!s.opened && !celular} />)}
@@ -77,6 +78,19 @@ export function Oportunidades() {
   );
 }
 
+/* Cabeçalho de coluna que ordena ao clicar: 1º clique a ordem principal, 2º a alternativa (valor/kg, maior/menor R$/kg, lucro/margem). */
+function Cab({ t, ordens, sort, r }: { t: string; ordens: Ordem[]; sort: Ordem; r?: boolean }) {
+  const i = ordens.indexOf(sort), on = i >= 0;
+  const prox = ordens[(i + 1) % ordens.length];
+  const nome = (o: Ordem) => { const s = ORDENS.find((x) => x[0] === o)![1]; return s.charAt(0).toLowerCase() + s.slice(1); }; // só a inicial: "R$/kg" fica "R$/kg"
+  const dica = !on ? `Ordenar por ${nome(ordens[0])}` : ordens.length > 1 ? `Ordenado por ${nome(sort)}. Clique para ${nome(prox)}` : `Ordenado por ${nome(sort)}`;
+  return (
+    <button type="button" className={"lh-sort" + (r ? " r" : "")} data-on={on} data-sort={ordens[0]} aria-pressed={on} title={dica} onClick={() => setSort(prox)}>
+      {t}{on && <span aria-hidden="true"> ▾</span>}
+    </button>
+  );
+}
+
 function Toolbar({ s }: { s: State }) {
   const prep = s.prep!, F = s.F;
   const n = (fn: (c: PCompra) => boolean) => prep.compras.filter((c) => isOpen(c, s.now) && !c.dup_of && fn(c)).length;
@@ -93,7 +107,7 @@ function Toolbar({ s }: { s: State }) {
   if (nov || F.novas) quick.splice(4, 0, ["novas", "Novas", nov, F.novas, () => setF({ novas: !F.novas })]);
   const ativos: [string, string, () => void][] = [];
   if (F.q) ativos.push(["q", `“${F.q}”`, () => setF({ q: "" })]);
-  FACETS.forEach((f) => F[f.k].forEach((v) => ativos.push([f.k + "|" + v, v, () => setF({ [f.k]: toggleArr(F[f.k], v) } as Partial<typeof F>)])));
+  FACETS.forEach((f) => F[f.k].forEach((v) => ativos.push([f.k + "|" + v, f.rotulo?.[v] || v, () => setF({ [f.k]: toggleArr(F[f.k], v) } as Partial<typeof F>)])));
   if (F.dist) ativos.push(["dist", `Até ${n0(F.dist)} km`, () => setF({ dist: 0 })]);
   if (F.distMin) ativos.push(["distMin", `Além de ${n0(F.distMin)} km`, () => setF({ distMin: 0 })]);
   if (F.valor) ativos.push(["valor", VALORES.find((x) => x[0] === F.valor)![1], () => setF({ valor: "" })]);
@@ -117,12 +131,12 @@ function Toolbar({ s }: { s: State }) {
       {(ativos.length > 0 || F.q) && (
         <div className="active-f">
           {F.q ? null : null}
-          <input className="inp q" type="search" placeholder="Filtrar por texto nesta lista" value={F.q} onChange={(e) => setF({ q: e.target.value })} aria-label="Filtrar por texto" id="q" />
+          <input className="inp q" type="search" placeholder="Buscar nesta lista" value={F.q} onChange={(e) => setF({ q: e.target.value })} aria-label="Filtrar por texto" id="q" />
           {ativos.map(([k, l, fn]) => <button key={k} type="button" className="af" onClick={fn} data-rm={k}>{l}<IX size={12} /></button>)}
           {ativos.length > 1 && <button type="button" className="linkbtn" onClick={limparFiltros} data-rm="__all">Limpar tudo</button>}
         </div>
       )}
-      {ativos.length === 0 && !F.q && <div className="active-f"><input className="inp q" type="search" placeholder="Filtrar por texto nesta lista (município, órgão, especificação, nº)" value={F.q} onChange={(e) => setF({ q: e.target.value })} aria-label="Filtrar por texto" id="q" /></div>}
+      {ativos.length === 0 && !F.q && <div className="active-f"><input className="inp q" type="search" placeholder="Buscar nesta lista (município, órgão, nº)" value={F.q} onChange={(e) => setF({ q: e.target.value })} aria-label="Filtrar por texto" id="q" /></div>}
     </div>
   );
 }
@@ -142,7 +156,7 @@ function Filtros({ s, celular }: { s: State; celular: boolean }) {
       <details key={f.k} className="fsec" data-sec={f.k} open={!!(f.open || sel.length)}>
         <summary>{f.t}{sel.length > 0 && <span className="cnt">{sel.length} selec.</span>}</summary>
         {f.ajuda && <p className="tiny muted" style={{ margin: "0 0 6px" }}>{f.ajuda}</p>}
-        <div className="opts">{vals.map((v) => <button key={v} type="button" className={"opt" + (cnt[v] ? "" : " zero")} aria-pressed={sel.includes(v)} onClick={() => setF({ [f.k]: toggleArr(sel, v) } as Partial<typeof F>)} data-f={f.k} data-v={v}>{v}<i>{cnt[v] || 0}</i></button>)}</div>
+        <div className="opts">{vals.map((v) => <button key={v} type="button" className={"opt" + (cnt[v] ? "" : " zero")} aria-pressed={sel.includes(v)} onClick={() => setF({ [f.k]: toggleArr(sel, v) } as Partial<typeof F>)} data-f={f.k} data-v={v}>{f.rotulo?.[v] || v}<i>{cnt[v] || 0}</i></button>)}</div>
       </details>
     );
   });
@@ -160,7 +174,7 @@ function Filtros({ s, celular }: { s: State; celular: boolean }) {
         </details>
         {secoes[4]}{secoes[5]}{secoes[6]}
         <details className="fsec" data-sec="valor" open><summary>Valor estimado (café)</summary><div className="opts">{VALORES.map(([k, l]) => <button key={k} type="button" className="opt" aria-pressed={F.valor === k} onClick={() => setF({ valor: F.valor === k ? "" : k })} data-valor={k}>{l}</button>)}</div></details>
-        {secoes[7]}{secoes[8]}{secoes[9]}
+        {secoes[7]}{secoes[8]}{secoes[9]}{secoes[10]}
         <details className="fsec" data-sec="meu" open><summary>Meu acompanhamento</summary>
           <label className="toggle">Só meus favoritos ★<input type="checkbox" checked={F.fav} onChange={(e) => setF({ fav: e.target.checked })} data-t="fav" /></label>
           <select className="inp" value={F.status} onChange={(e) => setF({ status: e.target.value })} aria-label="Status da proposta" id="stsel" style={{ marginTop: 6 }}><option value="">Qualquer status</option><option value="__none">Sem status</option>{data.status_opcoes.map((o) => <option key={o} value={o}>{o}</option>)}</select>
@@ -196,14 +210,14 @@ function Linha({ c, sel, foco, compacto }: { c: PCompra; sel: boolean; foco: boo
         <div className="small muted ell">{c.dist != null ? `${n0(c.dist)} km${c.dist_min != null ? " · " + fmtMin(c.dist_min) : ""} · ` : ""}{c._orgao}</div>
       </div>
       <div className="c-cafe">
-        <div className="l1" style={{ fontWeight: 550 }}>{c.tipos.join(", ")} <MeBadge c={c} /></div>
+        <div className="l1" style={{ fontWeight: 550 }}>{tiposTexto(c.tipos)} <MeBadge c={c} /></div>
         <div className="small muted">{c._niv ? <Nivel n={c._niv} /> : c.mod + " " + c.num}</div>
         <Selos c={c} />
       </div>
-      <div className="c-valor r"><div className="v num">{c.kg == null ? <span className="na">—</span> : (c._parcial ? "≥ " : "") + KG(c.kg)}</div><div className="small muted num">{val}</div></div>
-      <div className="c-rkg r"><div className={"v num" + (r == null ? " na" : "")}>{r == null ? "—" : BRL(r)}</div><div className="small muted"><PrecoCmp c={c} />{!c._cmp && (rkLbl(c) || (r == null ? "" : "por kg"))}</div><PisoChip c={c} /></div>
-      <div className="c-mg r">{c._mg ? <><Margem c={c} curto /><div className="small muted num">{c._mg.lucro >= 0 ? "+" : "−"}{BRLc(Math.abs(c._mg.lucro))}</div></> : <span className="na">—</span>}</div>
-      <div className="c-status">{w.status ? <span className={"st " + stCls(w.status)}>{w.status}</span> : <span className="small muted">—</span>}{w.preco ? <div className="small muted num">meu: {BRL(w.preco)}/kg</div> : null}</div>
+      <div className="c-valor r">{c.kg == null ? <div className="small na">sem peso</div> : <div className="v num">{(c._parcial ? "≥ " : "") + KG(c.kg)}</div>}<div className="small muted num">{val}</div></div>
+      <div className="c-rkg r">{r == null ? <div className="small na">sem preço</div> : <div className="v num">{BRL(r)}</div>}<div className="small muted"><PrecoCmp c={c} />{!c._cmp && rkLbl(c)}</div><PisoChip c={c} /></div>
+      <div className="c-mg r">{c._mg ? <><Margem c={c} curto /><div className="small muted num">{c._mg.lucro >= 0 ? "+" : "−"}{BRLc(Math.abs(c._mg.lucro))}</div></> : null}</div>
+      <div className="c-status">{w.status ? <span className={"st " + stCls(w.status)}>{w.status}</span> : null}{w.preco ? <div className="small muted num">meu: {BRL(w.preco)}/kg</div> : null}</div>
     </motion.div>
   );
 }

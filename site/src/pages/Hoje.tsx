@@ -5,7 +5,7 @@ import { Donut } from "../charts/Donut";
 import { Faixas } from "../charts/Faixas";
 import { Hbar, Sparkline, Stacked } from "../charts/Hbar";
 import { Mapa, type Ponto } from "../charts/Mapa";
-import { abertas, embalagem, exigencias, faixasPorNivel, funil, insights, kpis, marcasCitadas, porUF, prazosPorDia, prazosPorSemana, simulador } from "../lib/dash";
+import { abertas, embalagem, etapasMinhas, exigencias, faixasPorNivel, funil, insights, kpis, marcasCitadas, porUF, prazosPorDia, prazosPorSemana, simulador } from "../lib/dash";
 import { DEF, MEX } from "../lib/filtros";
 import { BRL, BRLc, dayNum, fmtPrazo, KGc, licit, MESES_L, n0, n2, PCTi, todayYMD, WDL } from "../lib/format";
 import { mgCls, NIVEIS, NIVEL_CURTO, urg, varejoTxt, type PCompra } from "../lib/modelo";
@@ -26,10 +26,11 @@ export function Hoje() {
   const pisos = useStore((s) => s.pisos);
   const now = useStore((s) => s.now);
   const O = useMemo(() => abertas(prep, now), [prep, now]);
-  const k = useMemo(() => kpis(O, wf, prep.compras, now), [O, wf, prep, now]);
+  const k = useMemo(() => kpis(O, prep.compras, now), [O, prep, now]);
   const uf = useMemo(() => porUF(O), [O]);
   const hoje = todayYMD(), d = new Date(dayNum(hoje) * 864e5);
   const irLista = (f: Partial<ReturnType<typeof DEF>>, sort?: Parameters<typeof setSort>[0]) => { setF({ ...DEF(), ...f }); if (sort) setSort(sort); navegar("oportunidades"); };
+  const etapas = useMemo(() => etapasMinhas(wf, data.status_opcoes), [wf, data.status_opcoes]);
   return (
     <div className="page hoje">
       <div className="page-h">
@@ -68,10 +69,10 @@ export function Hoje() {
         </button>
         <button type="button" className="kpi card fade" data-k="mine" onClick={() => navegar("propostas")}>
           <span className="lbl">Minhas propostas</span>
-          <span className="v"><Contador valor={k.minhas} fmt={(x) => n0(Math.round(x))} /></span>
-          <span className="s">{k.minhas ? "em acompanhamento" : "nenhuma em andamento"}</span>
-          <span className="stacked ghost" aria-hidden="true"><span /><span /><span /></span>
-          <span className="tiny muted">{k.minhas ? "abra o quadro para ver por etapa" : "marque uma estrela na lista para começar"}</span>
+          <span className="v"><Contador valor={etapas.total} fmt={(x) => n0(Math.round(x))} /></span>
+          <span className="s">{etapas.total ? "em acompanhamento" : "nenhuma em andamento"}</span>
+          {etapas.total ? <Stacked partes={etapas.partes.map((e) => ({ v: e.n, cls: e.cls, t: e.t.toLowerCase() }))} /> : <span className="stacked ghost" aria-hidden="true"><span /><span /><span /></span>}
+          <span className="tiny muted" data-testid="kpi-etapas">{etapas.total ? etapas.partes.filter((e) => e.n).map((e) => `${e.n} ${e.t.toLowerCase()}`).join(" · ") : "marque uma estrela na lista para começar"}</span>
         </button>
       </section>
 
@@ -119,17 +120,17 @@ export function Hoje() {
         <div className="trio">
           <section className="card pad" aria-label="Exigências mais comuns">
             <h2>Exigências</h2><div className="sub small muted">em quantas compras aparece · preço típico de quem pede</div>
-            <Hbar rows={exigencias(O).slice(0, 7).map((e) => ({ l: e.l, v: e.n, extra: e.med ? BRL(e.med).replace(",00", "") + "/kg" : undefined }))} />
+            <Hbar rows={exigencias(O).slice(0, 7).map((e) => ({ l: e.l, v: e.n, extra: e.med ? BRL(e.med).replace(",00", "") + "/kg" : undefined, chave: e.tag, onClick: () => irLista({ selos: [e.tag] }) }))} />
           </section>
           <section className="card pad" aria-label="Embalagem e tipo de compra">
             <h2>Embalagem</h2>
-            <div className="donuts">{embalagem(O).map((e) => <Donut key={e.l} frac={e.n / Math.max(1, O.length)} rotulo={Math.round((e.n / Math.max(1, O.length)) * 100) + "%"} sub={e.l} />)}</div>
+            <div className="donuts">{embalagem(O).map((e) => <Donut key={e.l} frac={e.n / Math.max(1, O.length)} rotulo={Math.round((e.n / Math.max(1, O.length)) * 100) + "%"} sub={e.l} onClick={() => irLista({ embs: [e.f] })} />)}</div>
             <h2 style={{ marginTop: 12 }}>Tipo de compra</h2>
             <TipoCompra O={O} />
           </section>
           <section className="card pad" aria-label="Marcas citadas">
             <h2>Marcas citadas</h2><div className="sub small muted">como referência nos editais (“ou equivalente”)</div>
-            <Hbar rows={marcasCitadas(O).slice(0, 6).map((m) => ({ l: <>{m.m}{varejoTxt(data.marcas_ref, m.m) ? <span className="muted"> · {varejoTxt(data.marcas_ref, m.m).replace(/^[^:]*: /, "")} no varejo</span> : null}</>, v: m.n, onClick: () => irLista({ marcas: [m.m] }) }))} />
+            <Hbar rows={marcasCitadas(O).slice(0, 6).map((m) => ({ l: <>{m.m}{varejoTxt(data.marcas_ref, m.m) ? <span className="hb-sub">{varejoTxt(data.marcas_ref, m.m).replace(/^[^:]*: /, "")} no varejo</span> : null}</>, v: m.n, onClick: () => irLista({ marcas: [m.m] }) }))} />
             {data.marcas_ref?.pesquisa_em && <p className="tiny muted" style={{ marginTop: 8 }}>Preço de varejo: 11 lojas online, pesquisa semanal (segunda, 7:13). Última: {data.marcas_ref.pesquisa_em.split("-").reverse().join("/")}.</p>}
           </section>
         </div>
@@ -161,17 +162,17 @@ function Melhores({ O }: { O: PCompra[] }) {
       </div>
       <div className="scroll-x">
         <div className="mlist">
-          <div className="mhead lbl"><span>Licitação</span><span className="r">kg</span><span className="r">R$/kg</span><span className="r">Margem</span><span className="r">Lucro</span><span className="r">Prazo</span></div>
+          <div className="mhead lbl"><span>Licitação</span><span className="r m-kg">kg</span><span className="r m-rkg">R$/kg</span><span className="r m-mg">Margem</span><span className="r m-lucro">Lucro</span><span className="r m-prazo">Prazo</span></div>
           {rows.map((c) => {
             const u = urg(c.fim, c._ms, now);
             return (
               <button key={c.chave} type="button" className="mrow" onClick={() => abrirDetalhe(c.chave)} data-ch={c.chave}>
                 <span className="mloc"><b>{c.mun} <span className="muted">{c.uf}</span></b><span className="small muted ell">{c._orgao} · {c._niv ? NIVEL_CURTO[c._niv] : c.tipos[0]}{c.dist != null ? ` · ${n0(c.dist)} km` : ""}{c.marcas?.length ? ` · ${c.marcas[0]} como referência` : ""}</span></span>
-                <span className="r mono">{n0(c.kg!)}</span>
-                <span className="r mono ink2">{n2(c._mg!.preco)}</span>
-                <span className={"r mg " + mgCls(c._mg!.mp)}>{PCTi(c._mg!.mp)}</span>
-                <span className="r mono" style={{ fontWeight: 600 }}>{BRLc(c._mg!.lucro).replace("R$ ", "")}</span>
-                <span className={"r mono small" + (u.d != null && u.d <= 3 ? " serious" : " ink2")}>{fmtPrazo(c.fim)}</span>
+                <span className="r mono m-kg">{n0(c.kg!)}</span>
+                <span className="r mono ink2 m-rkg">{n2(c._mg!.preco)}</span>
+                <span className={"r mg m-mg " + mgCls(c._mg!.mp)}>{PCTi(c._mg!.mp)}</span>
+                <span className="r mono m-lucro" style={{ fontWeight: 600 }}>{BRLc(c._mg!.lucro).replace("R$ ", "")}<small className={"m-mg-cel mg " + mgCls(c._mg!.mp)}>{PCTi(c._mg!.mp)}</small></span>
+                <span className={"r mono small m-prazo" + (u.d != null && u.d <= 3 ? " serious" : " ink2")}>{fmtPrazo(c.fim)}</span>
               </button>
             );
           })}
@@ -186,20 +187,25 @@ function Melhores({ O }: { O: PCompra[] }) {
 /* ---------------- onde estão */
 function OndeEstao({ O, uf }: { O: PCompra[]; uf: ReturnType<typeof porUF> }) {
   const [sel, setSel] = useState<string | null>(null);
+  const [tip, setTip] = useState<{ t: string; x: number; y: number } | null>(null); // dica que segue o mouse (no toque, o estado tocado fica selecionado e aparece no subtítulo)
+  const [hover, setHover] = useState<string | null>(null);
   const origem = useStore((s) => s.data?.origem);
   const top = Object.entries(uf).sort((a, b) => b[1].n - a[1].n).slice(0, 6);
   const pontos: Ponto[] = O.filter((c) => c._mg && c._mg.lucro > 0 && (c as PCompra & { lat?: number; lon?: number }).lat != null)
     .sort((a, b) => b._mg!.lucro - a._mg!.lucro).slice(0, 6)
     .map((c) => { const x = c as PCompra & { lat: number; lon: number }; return { chave: c.chave, lat: x.lat, lon: x.lon, peso: c._mg!.lucro, rotulo: `${c.mun}, ${c.uf}: lucro estimado ${BRLc(c._mg!.lucro)}` }; });
-  const x = sel ? uf[sel] : null;
+  const mostra = hover || sel, x = mostra ? uf[mostra] : null;
   return (
     <section className="card onde" aria-label="Onde estão">
       <div className="card-h">
-        <div><h2>Onde estão</h2><div className="sub">{sel && x ? `${sel}: ${licit(x.n)} · lucro potencial ${BRLc(x.lucro)} · ${KGc(x.kg)}` : `${licit(O.length)} em ${Object.keys(uf).length} estados · toque num estado`}</div></div>
+        <div><h2>Onde estão</h2><div className="sub" data-testid="onde-sub">{mostra && x ? `${mostra}: ${licit(x.n)} · lucro potencial ${BRLc(x.lucro)} · ${KGc(x.kg)}` : mostra ? `${mostra}: nenhuma licitação aberta` : `${licit(O.length)} em ${Object.keys(uf).length} estados · toque num estado`}</div></div>
         <button type="button" className="linkbtn" onClick={() => { setF({ ...DEF(), ufs: sel ? [sel] : [] }); navegar("oportunidades"); }}>{sel ? `Ver ${sel}` : "Ver no mapa"} <IArrow size={12} /></button>
       </div>
       <div className="card-b">
-        <Mapa porUF={uf} sel={sel} onSel={(u) => setSel(sel === u ? null : u)} origem={origem} pontos={pontos} onPonto={abrirDetalhe} />
+        <Mapa porUF={uf} sel={sel} onSel={(u) => setSel(sel === u ? null : u)} origem={origem} pontos={pontos} onPonto={abrirDetalhe}
+          onHover={(u, t, pos) => { setHover(u); setTip(t && pos ? { t, x: pos.x, y: pos.y } : null); }} />
+        {tip && <div className="map-tip" role="tooltip" data-h={tip.x > window.innerWidth - 320 ? "esq" : "dir"} data-v={tip.y > window.innerHeight - 70 ? "cima" : "baixo"}
+          style={{ ...(tip.x > window.innerWidth - 320 ? { right: window.innerWidth - tip.x } : { left: tip.x }), ...(tip.y > window.innerHeight - 70 ? { bottom: window.innerHeight - tip.y } : { top: tip.y }) }}>{tip.t}</div>}
         <div className="map-legend tiny muted"><span>1</span><span className="grad" /><span>{Math.max(...Object.values(uf).map((v) => v.n), 1)} abertas</span>{pontos.length > 0 && <span className="lg"><i className="pt" />as melhores</span>}<span className="lg"><i className="or" />{origem?.nome || "origem"}</span></div>
         <div className="chips-row" style={{ padding: "8px 0 0" }}>
           {top.map(([u, v]) => <button key={u} type="button" className="chip mono" aria-pressed={sel === u} onClick={() => setSel(sel === u ? null : u)}>{u} {v.n}</button>)}

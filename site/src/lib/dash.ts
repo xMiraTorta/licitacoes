@@ -1,8 +1,8 @@
 /* Contas da tela Hoje e do Mercado: tudo a partir das licitações abertas (sem duplicatas). */
 import type { MeusDados, Painel } from "../types";
 import { dayNum, todayYMD } from "./format";
-import { follows, getW } from "./filtros";
-import { grupoTipo, isOpen, median, mgCls, NIVEIS, quant, SELOS, TM, type PCompra, type Preparado } from "./modelo";
+import { follows, selosFiltro } from "./filtros";
+import { grupoTipo, isOpen, median, mgCls, NIVEIS, quant, SELO_ROTULO, SELOS, TM, type PCompra, type Preparado } from "./modelo";
 
 export type StatusMargem = "bom" | "apertado" | "preju" | "sem";
 export const statusMargem = (c: PCompra): StatusMargem => (!c._mg ? "sem" : mgCls(c._mg.mp) === "pos" ? "bom" : mgCls(c._mg.mp) === "mid" ? "apertado" : "preju");
@@ -13,9 +13,9 @@ export interface Kpis {
   n: number; kg: number; vcafe: number; comCusto: number; lucro: number; boas: number; apertadas: number; preju: number; sem: number;
   mpTipica: number | null; mp25: number | null; mp75: number | null; fecham7: number; fecham3: number; amanha: number; hoje: number;
   lucroTotal: number; lucroDist: [string, number][]; publicadas: { dia: string; n: number }[]; semana: number; fechamSemana: { dia: string; n: number }[];
-  minhas: number; novas: number;
+  novas: number;
 }
-export function kpis(O: PCompra[], wf: MeusDados, todas: PCompra[], now = Date.now()): Kpis {
+export function kpis(O: PCompra[], todas: PCompra[], now = Date.now()): Kpis {
   const t0 = dayNum(todayYMD());
   const d = (c: PCompra) => (c.fim ? dayNum(c.fim.slice(0, 10)) - t0 : null);
   const mps = O.filter((c) => c._mg).map((c) => c._mg!.mp).sort((a, b) => a - b);
@@ -46,7 +46,6 @@ export function kpis(O: PCompra[], wf: MeusDados, todas: PCompra[], now = Date.n
     publicadas: Object.entries(pub).map(([dia, n]) => ({ dia, n })),
     semana: Object.entries(pub).slice(-7).reduce((a, [, n]) => a + n, 0),
     fechamSemana,
-    minhas: todas.filter((c) => follows(getW(wf, c.chave))).length,
     novas: O.filter((c) => c._new).length,
   };
 }
@@ -106,24 +105,36 @@ export function simulador(O: PCompra[], prep: Preparado): SimNivel[] {
   });
 }
 
-export interface Exigencia { l: string; n: number; med: number | null }
+export interface Exigencia { l: string; n: number; med: number | null; tag: string }
+/* Conta com a MESMA regra do filtro "selos" (o clique no cartão abre a lista com ele): todo café aberto, inclusive grão e nota
+   mínima sem etiqueta. O preço típico continua só do torrado e moído com R$/kg. */
 export function exigencias(O: PCompra[]): Exigencia[] {
-  const tor = O.filter((c) => c._main && grupoTipo(c._main.tipo) === TM);
-  const rot: Record<string, string> = { "ABIC/pureza": "Selo ABIC / pureza", "Premium/1ª qualidade (termo comercial)": "“Premium” / 1ª qualidade", "Nota QG/sensorial": "Nota mínima de bebida", Laudo: "Laudo de laboratório", "Marca ref.": "Marca de referência", "Aceita conilon/blend": "Aceita conilon ou blend", "Sem PVA (grãos selecionados)": "Grãos sem defeitos (PVA)", "Agric. familiar": "Agricultura familiar" };
-  const L = SELOS.map((t) => { const X = tor.filter((c) => c._main!.tags.includes(t)); return { l: rot[t] || t, n: X.length, med: median(X.map((c) => c._main!.rkg!)) }; });
-  const nota = tor.filter((c) => c._main!.qg);
-  L.push({ l: "Nota mínima de bebida", n: nota.length, med: median(nota.map((c) => c._main!.rkg!)) });
-  const seen = new Set<string>();
-  return L.filter((x) => x.n && !seen.has(x.l) && seen.add(x.l)).sort((a, b) => b.n - a.n);
+  const L = SELOS.map((t) => {
+    const X = O.filter((c) => selosFiltro(c).includes(t));
+    const tm = X.filter((c) => grupoTipo(c._main!.tipo) === TM && c._main!.rkg != null);
+    return { l: SELO_ROTULO[t] || t, n: X.length, med: median(tm.map((c) => c._main!.rkg!)), tag: t };
+  });
+  return L.filter((x) => x.n).sort((a, b) => b.n - a.n);
 }
 
-export function embalagem(O: PCompra[]): { l: string; n: number }[] {
+/* Quantas licitações acompanhadas há em cada etapa (as que saíram dos dados continuam contando, como no quadro).
+   Status que não está mais na lista do data.json entra em "outro status", para o total sempre fechar. */
+const COR_ETAPA: Record<string, string> = { "": "sem", "A analisar": "muted", "Em preparação": "ap", Enviada: "acc", Ganha: "bom", Perdida: "preju", Desistiu: "preju" };
+export function etapasMinhas(wf: MeusDados, opcoes: string[]): { total: number; partes: { t: string; n: number; cls: string }[] } {
+  const L = Object.values(wf).filter((w) => follows(w));
+  const partes = ["", ...opcoes].map((e) => ({ t: e || "Sem status", n: L.filter((w) => (w.status || "") === e).length, cls: COR_ETAPA[e] || "acc" }));
+  const outros = L.filter((w) => w.status && !opcoes.includes(w.status)).length;
+  if (outros) partes.push({ t: "Outro status", n: outros, cls: "muted" });
+  return { total: L.length, partes };
+}
+
+export function embalagem(O: PCompra[]): { l: string; n: number; f: string }[] {
   const conta = (f: (c: PCompra) => boolean) => O.filter(f).length;
   return [
-    { l: "a vácuo", n: conta((c) => c.emb_f.includes("Vácuo")) },
-    { l: "pacote 500 g", n: conta((c) => c.emb_f.includes("500 g")) },
-    { l: "pacote 250 g", n: conta((c) => c.emb_f.includes("250 g")) },
-    { l: "pacote 1 kg", n: conta((c) => c.emb_f.includes("1 kg")) },
+    { l: "a vácuo", n: conta((c) => c.emb_f.includes("Vácuo")), f: "Vácuo" },
+    { l: "pacote 500 g", n: conta((c) => c.emb_f.includes("500 g")), f: "500 g" },
+    { l: "pacote 250 g", n: conta((c) => c.emb_f.includes("250 g")), f: "250 g" },
+    { l: "pacote 1 kg", n: conta((c) => c.emb_f.includes("1 kg")), f: "1 kg" },
   ];
 }
 
@@ -159,7 +170,7 @@ export function insights(O: PCompra[], k: Kpis, uf: Record<string, UFInfo>): Ins
   out.push({ tag: "Perto de casa", titulo: `${perto.length} licitaç${perto.length === 1 ? "ão" : "ões"} a até 300 km`, texto: pertoL.length ? `${pertoL.length} ${pertoL.length === 1 ? "dá" : "dão"} lucro, ${f(pertoL.reduce((s, c) => s + c._mg!.lucro, 0))} somados. A melhor é ${melhor.mun}, ${melhor.uf} (${melhor.dist} km): ${melhor._mg!.lucro >= 1e5 ? f(melhor._mg!.lucro) : "R$ " + Math.round(melhor._mg!.lucro / 1e3) + " mil"} de lucro estimado.` : "Nenhuma delas dá lucro ao preço do órgão com os seus custos.", acao: "Ver as mais próximas", filtro: "perto" });
   const excl = O.filter((c) => c.me.startsWith("Exclusivo ME/EPP")).length, cota = O.filter((c) => c.me.startsWith("Cota")).length, parcial = O.filter((c) => /^Exclusivo em/.test(c.me)).length;
   out.push({ tag: "Você tem vantagem", titulo: `${excl + cota + parcial} compras dão preferência a empresa pequena`, texto: `${excl} são exclusivas para ME/EPP, ${cota} têm cota reservada e ${parcial} reservam parte dos itens. No Simples Nacional você entra em todas elas.`, acao: "Ver as exclusivas", filtro: "me" });
-  const abic = O.filter((c) => c._main && c._main.tags.includes("ABIC/pureza")).length, laudo = O.filter((c) => c._main && c._main.tags.includes("Laudo")).length;
+  const abic = O.filter((c) => selosFiltro(c).includes("ABIC/pureza")).length, laudo = O.filter((c) => selosFiltro(c).includes("Laudo")).length;
   const vac = O.filter((c) => c.emb_f.includes("Vácuo")).length, g500 = O.filter((c) => c.emb_f.includes("500 g")).length;
   out.push({ tag: "O que os editais pedem", titulo: `Selo ABIC em ${abic} editais, laudo em ${laudo}`, texto: `Vácuo em ${vac} compras e pacote de 500 g em ${g500}. Ter o selo de pureza e embalagem a vácuo de 500 g abre a maior parte do mercado.`, acao: "Guia: documentos e selos", filtro: "guia" });
   return out.slice(0, 4);

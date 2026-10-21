@@ -28,7 +28,7 @@ export function Paleta() {
   }, [prep, q]); // eslint-disable-line react-hooks/exhaustive-deps
   const vai = (fn: () => void) => { setPaleta(false); fn(); };
   return (
-    <Command.Dialog open={aberta} onOpenChange={setPaleta} label="Busca e ações" className="paleta" shouldFilter={false} loop>
+    <Command.Dialog open={aberta} onOpenChange={setPaleta} label="Busca e ações" contentClassName="paleta" shouldFilter={false} loop>
       <div className="paleta-in">
         <ISearch size={18} />
         <Command.Input value={q} onValueChange={setQ} placeholder="Buscar município, órgão, nº ou ação" autoFocus />

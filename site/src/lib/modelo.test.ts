@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { DEF, passes, sortList } from "./filtros";
 import { parseNum } from "./format";
-import { preparar } from "./modelo";
+import { preparar, tiposTexto } from "./modelo";
 import type { Painel } from "../types";
 
 // Mesmos dados de teste do pytest (tests/fixtures/data_min.json), para o site e o coletor concordarem.
@@ -62,5 +62,13 @@ describe("preparar", () => {
     const caro = preparar(data, {}, { torra: 15 });
     const c = caro.byk["18243295000192-1-000080/2026"];
     expect(c._mg!.custo).toBeGreaterThan(prep.byk[c.chave]._mg!.custo + 10);
+  });
+});
+
+describe("tiposTexto", () => {
+  it("não repete o tipo quando há a versão descafeinada", () => {
+    expect(tiposTexto(["Torrado e moído", "Torrado e moído (descafeinado)"])).toBe("Torrado e moído (+ descafeinado)");
+    expect(tiposTexto(["Torrado e moído (descafeinado)"])).toBe("Torrado e moído (descafeinado)");
+    expect(tiposTexto(["Grão", "Torrado e moído"])).toBe("Grão, Torrado e moído");
   });
 });

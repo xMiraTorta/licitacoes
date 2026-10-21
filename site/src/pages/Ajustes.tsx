@@ -112,7 +112,7 @@ function Sincronizacao() {
       <h2 className="row-flex"><span className={"sdot " + st} aria-hidden="true" />Sincronização <span className="small muted" id="syncLbl">· {lbl}{sync.quando ? " em " + fmtDataHoraBR(sync.quando) : ""}</span></h2>
       {!REPO ? <p className="small muted" style={{ marginTop: 8 }}>Gravação no GitHub disponível só no site publicado. Aqui as anotações ficam neste navegador.</p> : (
         <>
-          <p className="small ink2" style={{ marginTop: 8 }}>Favoritos, status, preços, notas, checklist, pisos e meus custos são gravados sozinhos em <code>{SYNC_PATH}</code>, na branch <code>{SYNC_BRANCH}</code> do repositório (visível ao público; não apague essa branch). Cada gravação fica no <a href={hist} target="_blank" rel="noopener">histórico</a>, então dá para recuperar versões antigas.</p>
+          <p className="small ink2" style={{ marginTop: 8 }}>Favoritos, status, preços, notas, checklist, pisos e meus custos ficam guardados sozinhos no seu GitHub, numa área separada do site chamada “{SYNC_BRANCH}” (qualquer pessoa pode ver; não apague essa área). Cada gravação fica no <a href={hist} target="_blank" rel="noopener">histórico</a>, então dá para recuperar versões antigas.</p>
           {sync.erro && <p className="small crit" style={{ marginTop: 6 }}>{sync.erro}</p>}
           {sync.token ? (
             <div className="row-flex wrap" style={{ marginTop: 10 }}>
@@ -172,7 +172,7 @@ function Versao() {
         <dt>Dados de</dt><dd>{fmtDate(data.gerado_em.slice(0, 16))} (Brasília)</dd>
         <dt>Licitações</dt><dd>{n0(data.compras.length)} · {data.editais_lidos} com edital lido</dd>
         {co && <><dt>Última coleta</dt><dd>{n0(co.listadas || 0)} compras lidas no PNCP, {n0(co.candidatas || 0)} candidatas, {co.falhas ?? 0} falhas, {Math.round((co.segundos || 0) / 60)} min</dd></>}
-        <dt>Site</dt><dd>versão 2 (React) · {grupoTipo(TM)} como tipo de referência</dd>
+        <dt>Site</dt><dd>versão 2 · {grupoTipo(TM)} como tipo de referência</dd>
       </dl>
     </section>
   );

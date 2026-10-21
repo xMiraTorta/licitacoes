@@ -22,7 +22,7 @@ export function Toasts() {
             onDragEnd={(_, info) => { if (Math.abs(info.offset.x) > 80) fecharToast(t.id); }}
           >
             <span className="toast-dot" aria-hidden="true" />
-            <span className="toast-msg">{t.msg}</span>
+            <span className="toast-msg">{t.msg}{t.n && t.n > 1 ? <span className="toast-n mono" data-n={t.n}>×{t.n}</span> : null}</span>
             {t.acao && <button type="button" className="linkbtn" onClick={() => { t.acao!.fn(); fecharToast(t.id); }}>{t.acao.rotulo}</button>}
             <button type="button" className="toast-x" aria-label="Fechar aviso" onClick={() => fecharToast(t.id)}><IX size={14} /></button>
           </motion.div>

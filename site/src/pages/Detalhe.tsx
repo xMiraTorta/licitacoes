@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { BRL, BRL0, countdown, fmtDate, fmtMin, KG, n0, n1, n3, nrm, parseNum, PCT, PP, tcase } from "../lib/format";
 import { follows, temAnotacao } from "../lib/filtros";
-import { edStatus, grupoTipo, marcasVarejo, MERCADO_VAREJO, mgCls, nivelPorque, platShort, pncpLink, pontosDeAtencao, rkLbl, rkOutrosTxt, rkV, urg, varejoTxt, type PCompra } from "../lib/modelo";
+import { edStatus, grupoTipo, marcasVarejo, MERCADO_VAREJO, mgCls, nivelPorque, platShort, pncpLink, pontosDeAtencao, rkLbl, rkOutrosTxt, rkV, tiposTexto, urg, varejoTxt, type PCompra } from "../lib/modelo";
 import { abrirDetalhe, fecharDetalhe, navegar } from "../router";
 import { setW, store, toast, useStore } from "../store";
 import { Contador } from "../ui/Contador";
@@ -67,7 +67,7 @@ function Corpo({ c }: { c: PCompra }) {
 function Veredito({ c }: { c: PCompra }) {
   const x = c._cmp, refs = useStore((s) => s.prep!.refs), mr = useStore((s) => s.data!.marcas_ref);
   if (!x) {
-    const why = c.itens.every((i) => !i.nivel) ? `${c.tipos.join(", ")}: tipo sem comparação por nível de qualidade.` : "O item de café torrado não tem R$/kg calculável (falta peso ou valor, ou o valor parece erro de unidade).";
+    const why = c.itens.every((i) => !i.nivel) ? `${tiposTexto(c.tipos)}: tipo sem comparação por nível de qualidade.` : "O item de café torrado não tem R$/kg calculável (falta peso ou valor, ou o valor parece erro de unidade).";
     return <section className="card verdict"><h3>Vale a pena?</h3><p className="small ink2">{why} Compare pelo valor unitário dos itens.</p></section>;
   }
   const r = refs[grupoTipo(x.i.tipo) + "|" + x.i.nivel];
@@ -76,15 +76,16 @@ function Veredito({ c }: { c: PCompra }) {
   return (
     <section className="card verdict">
       <h3>Vale a pena?</h3>
-      <div className="big">{BRL(x.i.rkg)}/kg para café {x.i.tipo.toLowerCase()} nível {x.i.nivel} <PrecoCmp c={c} longo /></div>
+      <div className="big">{BRL(x.i.rkg)}/kg para café {x.i.tipo.toLowerCase()} nível {x.i.nivel}</div>
+      {x.dif != null && <div><PrecoCmp c={c} longo /></div>}
       {r && <Strip r={r} v={x.i.rkg!} piso={x.piso} nivel={x.i.nivel || ""} vj={vj} />}
-      <p className="small ink2">
-        {x.dif == null ? "Poucas licitações abertas desse nível para calcular um preço típico." : <>Preço típico do nível: <b>{BRL(x.ref)}/kg</b> ({r!.n} itens abertos; a maioria fica entre {BRL(r!.p25)} e {BRL(r!.p75)}).</>}
-        {x.piso ? (x.ok ? <b className="good"> Cobre o seu piso de {BRL(x.piso)}/kg.</b> : <b className="crit"> Abaixo do seu piso de {BRL(x.piso)}/kg.</b>) : <> <button type="button" className="linkbtn" data-act="pisos" onClick={() => irAjustes(`[data-piso="${x.i.nivel}"]`)}>Definir meu preço mínimo para {x.i.nivel}</button></>}
-        {mv && <><br />Marcas de referência citadas no edital (linha mais básica) custam {BRL(mv.min)} a {BRL(mv.max)}/kg no varejo.</>}
-        {vj && <><br />Varejo {x.i.nivel} em supermercados (ABIC, {MERCADO_VAREJO.data}): {BRL(vj)}/kg.</>}
-        <br /><span className="muted">Por que nível {x.i.nivel}: {nivelPorque(x.i)}. O preço típico compara licitações entre si; não é custo.</span>
-      </p>
+      <div className="vd-list">
+        <div><small>Preço típico do nível</small>{x.dif == null ? "Poucas licitações abertas desse nível para calcular." : <><b>{BRL(x.ref)}/kg</b> · {r!.n} itens abertos; a maioria fica entre {BRL(r!.p25)} e {BRL(r!.p75)}</>}</div>
+        <div><small>Meu preço mínimo</small>{x.piso ? (x.ok ? <b className="good">Cobre o seu piso de {BRL(x.piso)}/kg</b> : <b className="crit">Abaixo do seu piso de {BRL(x.piso)}/kg</b>) : <button type="button" className="linkbtn" data-act="pisos" onClick={() => irAjustes(`[data-piso="${x.i.nivel}"]`)}>Definir meu preço mínimo para {x.i.nivel}</button>}</div>
+        {mv && <div><small>Marcas de referência citadas no edital (linha mais básica)</small>{BRL(mv.min)} a {BRL(mv.max)}/kg no varejo</div>}
+        {vj && <div><small>Varejo {x.i.nivel} em supermercados (ABIC, {MERCADO_VAREJO.data})</small>{BRL(vj)}/kg</div>}
+        <div><small>Por que nível {x.i.nivel}</small>{nivelPorque(x.i)}. <span className="muted">O preço típico compara licitações entre si; não é custo.</span></div>
+      </div>
     </section>
   );
 }
@@ -96,7 +97,7 @@ function Strip({ r, v, piso, nivel, vj }: { r: { med: number; p25: number; p75: 
   for (let t = 40; t <= hi; t += 20) ticks.push(t);
   return (
     <svg className="strip" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`R$/kg estimado das licitações nível ${nivel}`}>
-      {ticks.map((t) => <g key={t}><line className="grid" x1={x(t)} x2={x(t)} y1={y0} y2={y1} /><text className="axl" x={x(t)} y={H - 2} textAnchor="middle">R$ {t}</text></g>)}
+      {ticks.map((t, i) => <g key={t}><line className="grid" x1={x(t)} x2={x(t)} y1={y0} y2={y1} /><text className={"axl" + (i % 2 ? " alt" : "")} x={x(t)} y={H - 2} textAnchor={t === hi ? "end" : "middle"}>R$ {t}</text></g>)}
       <rect className="band" x={x(r.p25)} y={y0 + 3} width={Math.max(2, x(r.p75) - x(r.p25))} height={y1 - y0 - 6} rx="3"><title>Faixa comum (metade das licitações): {BRL(r.p25)} a {BRL(r.p75)}/kg</title></rect>
       {r.pts.map((p, i) => <rect key={p.chave + "|" + i} className="dotp" x={x(p.v) - 1.5} y={y0 + 5} width="3" height={y1 - y0 - 10} rx="1.5" onClick={() => abrirDetalhe(p.chave)} />)}
       <rect className="medr" x={x(r.med) - 1.5} y={y0} width="3" height={y1 - y0} rx="1.5"><title>Preço típico {nivel}: {BRL(r.med)}/kg</title></rect>

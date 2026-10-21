@@ -24,22 +24,26 @@ interface Props {
   aneis?: number[];
   pontos?: Ponto[];
   onPonto?: (chave: string) => void;
+  onHover?: (uf: string | null, texto: string | null, pos?: { x: number; y: number }) => void; // só mouse: no toque o estado fica selecionado
   compacto?: boolean;
 }
 const cor = (n: number): string => (n >= 40 ? "var(--seq-6)" : n >= 20 ? "var(--seq-5)" : n >= 10 ? "var(--seq-4)" : n >= 6 ? "var(--seq-3)" : n >= 3 ? "var(--seq-2)" : n >= 1 ? "var(--seq-1)" : "var(--surface-2)");
 
-export function Mapa({ porUF, sel, onSel, origem, aneis = [300, 600, 1000], pontos = [], onPonto, compacto }: Props) {
+export function Mapa({ porUF, sel, onSel, origem, aneis = [300, 600, 1000], pontos = [], onPonto, onHover, compacto }: Props) {
   const ufs = useMemo(() => Object.keys(M.uf).sort((a, b) => Number(a === "DF") - Number(b === "DF")), []); // DF por cima de GO
   const o = origem && origem.lat != null && origem.lon != null ? projetar(origem.lat, origem.lon) : null;
   const maxPeso = Math.max(1, ...pontos.map((p) => p.peso));
+  const mouse = (e: React.PointerEvent) => (e.pointerType === "mouse" ? { x: e.clientX, y: e.clientY } : undefined);
+  const hoverUF = (uf: string) => (e: React.PointerEvent) => { const x = porUF[uf]; onHover?.(uf, `${uf}: ${licit(x ? x.n : 0)}${x && x.lucro ? ` · lucro estimado ${BRLc(x.lucro)}` : ""}`, mouse(e)); };
   return (
     <svg viewBox={M.viewBox} className={"mapa" + (compacto ? " compacto" : "")} role="img" aria-label="Mapa do Brasil com licitações abertas por estado">
       {ufs.map((uf) => {
         const x = porUF[uf] || { n: 0 };
         return (
           <path key={uf} className={"uf" + (sel === uf ? " sel" : "")} d={M.uf[uf]} fill={cor(x.n)} onClick={() => onSel?.(uf)} tabIndex={onSel ? 0 : -1} role={onSel ? "button" : undefined}
-            onKeyDown={(e) => { if (onSel && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onSel(uf); } }} aria-label={`${uf}: ${licit(x.n)}`}>
-            <title>{uf}: {licit(x.n)}{x.lucro ? ` · lucro estimado ${BRLc(x.lucro)}` : ""}</title>
+            onKeyDown={(e) => { if (onSel && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onSel(uf); } }} aria-label={`${uf}: ${licit(x.n)}`}
+            onPointerEnter={hoverUF(uf)} onPointerMove={hoverUF(uf)} onPointerLeave={() => onHover?.(null, null)}>
+            {!onHover && <title>{uf}: {licit(x.n)}{x.lucro ? ` · lucro estimado ${BRLc(x.lucro)}` : ""}</title>}
           </path>
         );
       })}
@@ -56,8 +60,9 @@ export function Mapa({ porUF, sel, onSel, origem, aneis = [300, 600, 1000], pont
       {pontos.map((p) => {
         const [x, y] = projetar(p.lat, p.lon);
         return (
-          <circle key={p.chave} cx={x} cy={y} r={4 + 9 * Math.sqrt(p.peso / maxPeso)} className="ponto" onClick={() => onPonto?.(p.chave)} tabIndex={onPonto ? 0 : -1} role={onPonto ? "button" : undefined} aria-label={p.rotulo}>
-            <title>{p.rotulo}</title>
+          <circle key={p.chave} cx={x} cy={y} r={4 + 9 * Math.sqrt(p.peso / maxPeso)} className="ponto" onClick={() => onPonto?.(p.chave)} tabIndex={onPonto ? 0 : -1} role={onPonto ? "button" : undefined} aria-label={p.rotulo}
+            onPointerEnter={(e) => onHover?.(null, p.rotulo + " · clique para abrir", mouse(e))} onPointerMove={(e) => onHover?.(null, p.rotulo + " · clique para abrir", mouse(e))} onPointerLeave={() => onHover?.(null, null)}>
+            {!onHover && <title>{p.rotulo}</title>}
           </circle>
         );
       })}
