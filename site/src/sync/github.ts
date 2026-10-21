@@ -2,16 +2,16 @@
    Arquivo dados/meus-dados.json na branch "dados" deste repositório (público por decisão do dono: as anotações
    ficam visíveis). Branch própria porque cada gravação na main reconstruiria o GitHub Pages. O próprio site cria
    a branch na primeira gravação. Grava pela API do GitHub com uma chave de acesso que fica SÓ neste navegador.
-   Junta aparelhos por item: vale a alteração mais recente (campo upd); remoção vira {upd} (marca de removido).
+   Junta aparelhos por item: vale a alteração mais recente (campo upd); remoção vira {upd} (marca de removido), que
+   fica para sempre (60 bytes): sem ela, um aparelho que ficou meses sem abrir traria o favorito antigo de volta.
    Checklist, pisos e meus custos: vale o conjunto alterado por último (upd em meta). */
 import { K, lget, lraw, lremove, lset } from "../lib/storage";
-import { aplicarJuncao, aoAlterarAnotacoes, CUSTO_KEYS, nivelValido, setMeta, setSync, store, temAnotacao, toast } from "../store";
+import { aplicarJuncao, aoAlterarAnotacoes, CUSTO_KEYS, nivelValido, setMeta, setSync, store, toast } from "../store";
 import type { Checklist, MeusCustos, MeusDados, Pisos } from "../types";
 
 export const SYNC_PATH = "dados/meus-dados.json";
 export const SYNC_BRANCH = "dados";
 const SYNC_ATRASO = 3000;
-const MARCA_DIAS = 180;
 
 export const REPO: string | null = (() => {
   const h = location.hostname.match(/^([\w-]+)\.github\.io$/i), p = location.pathname.split("/").filter(Boolean)[0];
@@ -37,8 +37,6 @@ export function juntar(rem: Partial<Doc> | null): Juncao {
     if (!/^\d{14}-\d+-\d{6}\/\d{4}$/.test(k) || !v || typeof v !== "object") continue;
     if (!md[k] || (v.upd || "") > (md[k].upd || "")) { md[k] = v; mudouLocal = true; }
   }
-  const lim = new Date(Date.now() - MARCA_DIAS * 864e5).toISOString();
-  for (const [k, v] of Object.entries(md)) if (!temAnotacao(v) && (v.upd || "") < lim) delete md[k]; // marcas antigas
   let cl = s.checklist, clu = s.meta.checklist_upd, pi = s.pisos, piu = s.meta.pisos_upd, cu = s.custos, cuu = s.meta.custos_upd;
   const rcl = rem?.checklist, rpi = rem?.pisos, rcu = rem?.custos;
   if (rcl && rcl.itens && (rcl.upd || "") > (clu || "")) { cl = Object.fromEntries(Object.entries(rcl.itens).filter(([k, v]) => /^\d+$/.test(k) && v === 1)) as Checklist; clu = rcl.upd; mudouLocal = true; }

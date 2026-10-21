@@ -7,7 +7,7 @@ name: Publicar site
 on:
   push:
     branches: [main]
-    paths: [data.json, "site/**", .github/workflows/pages.yml]
+    paths: [data.json, coletor/mercado.json, coletor/marcas_cafe.json, coletor/custos.json, "site/**", .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:
@@ -41,8 +41,16 @@ jobs:
         run: |
           npm ci
           npm run build
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      # O data.json da coleta recebe aqui os preços de mercado, as marcas e os custos atuais (coletor/*.json) e a hora
+      # de publicação: a coleta e os preços nunca escrevem o mesmo arquivo, e a página aberta percebe a versão nova.
       - name: Juntar os dados ao site
-        run: cp data.json site/dist/
+        run: |
+          pip install --quiet -r requirements.txt
+          python -m coletor embutir --saida site/dist
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site/dist

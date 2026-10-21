@@ -18,6 +18,20 @@ describe("parseNum", () => {
   });
 });
 
+describe("filtros de distância", () => {
+  const prep = preparar(data, {}, {});
+  it("dist mostra só as até N km e distMin só as além de N km; juntos cobrem todas", () => {
+    const todas = prep.compras.filter((c) => passes(c, DEF(), {}, false));
+    const perto = prep.compras.filter((c) => passes(c, { ...DEF(), dist: 600 }, {}, false)); // dados de teste: 189 a 1.917 km
+    const longe = prep.compras.filter((c) => passes(c, { ...DEF(), distMin: 600 }, {}, false));
+    expect(perto.length).toBeGreaterThan(0);
+    expect(longe.length).toBeGreaterThan(0);
+    expect(perto.every((c) => c.dist != null && c.dist <= 600)).toBe(true);
+    expect(longe.every((c) => c.dist != null && c.dist > 600)).toBe(true);
+    expect(perto.length + longe.length).toBe(todas.filter((c) => c.dist != null).length);
+  });
+});
+
 describe("preparar", () => {
   const prep = preparar(data, {}, {});
   it("calcula item principal, nível e margem com a mesma regra do coletor", () => {

@@ -18,7 +18,7 @@ export const FACETS: Facet[] = [
 ];
 export const VALORES: [string, string][] = [["", "Qualquer"], ["a", "Até R$ 50 mil"], ["b", "R$ 50 a 200 mil"], ["c", "R$ 200 mil a 1 mi"], ["d", "Acima de R$ 1 mi"], ["n", "Sem valor (sigiloso)"]];
 export const MEX = ["Exclusiva ME/EPP (todos os itens)", "Exclusiva em parte dos itens"];
-export const DEF = (): Filtros => ({ q: "", niveis: [], precos: [], ufs: [], tipos: [], cats: [], embs: [], me: [], mods: [], plats: [], marcas: [], dist: 0, valor: "", hideDup: true, fav: false, novas: false, urg: false, rkg: false, viavel: false, status: "" });
+export const DEF = (): Filtros => ({ q: "", niveis: [], precos: [], ufs: [], tipos: [], cats: [], embs: [], me: [], mods: [], plats: [], marcas: [], dist: 0, distMin: 0, valor: "", hideDup: true, fav: false, novas: false, urg: false, rkg: false, viavel: false, status: "" });
 
 export const ORDENS: [Ordem, string][] = [
   ["prazo", "Prazo mais próximo"],
@@ -56,6 +56,7 @@ export function passes(c: PCompra, F: Filtros, wf: MeusDados, temPisos: boolean,
   if (F.viavel && temPisos && !(c._cmp && c._cmp.ok)) return false;
   if (F.status && (F.status === "__none" ? !!w.status : w.status !== F.status)) return false;
   if (F.dist && (c.dist == null || c.dist > F.dist)) return false;
+  if (F.distMin && (c.dist == null || c.dist <= F.distMin)) return false;
   if (!valorOk(c, F.valor)) return false;
   for (const f of FACETS) {
     if (f.k === skip || !F[f.k].length) continue;
@@ -86,7 +87,7 @@ export function sortList(L: PCompra[], sort: Ordem): PCompra[] {
 
 export function activeCount(F: Filtros): number {
   let n = FACETS.reduce((a, f) => a + F[f.k].length, 0);
-  (["dist", "valor", "fav", "novas", "urg", "rkg", "viavel", "status"] as const).forEach((k) => { if (F[k]) n++; });
+  (["dist", "distMin", "valor", "fav", "novas", "urg", "rkg", "viavel", "status"] as const).forEach((k) => { if (F[k]) n++; });
   if (!F.hideDup) n++;
   return n;
 }
