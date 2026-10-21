@@ -222,6 +222,7 @@ export interface Filtros {
   mods: string[];
   plats: string[];
   marcas: string[];
+  selos: string[]; // exigências do item principal (selo ABIC, laudo, nota mínima, marca de referência...)
   dist: number; // até N km (0 = qualquer)
   distMin: number; // além de N km (0 = qualquer); usado por "Longe, mas vale"
   valor: string;

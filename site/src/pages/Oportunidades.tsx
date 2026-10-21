@@ -7,6 +7,7 @@ import { BRL, BRLc, fmtMin, fmtPrazo, KG, n0 } from "../lib/format";
 import { isOpen, rkLbl, rkV, tiposTexto, urg, type PCompra } from "../lib/modelo";
 import { abrirDetalhe, fecharDetalhe } from "../router";
 import { limparFiltros, setF, setFiltrosAbertos, setSort, setUI, setW, toast, useStore, type State } from "../store";
+import type { Ordem } from "../types";
 import { IFilter, IStar, IX } from "../ui/icons";
 import { useCelular } from "../ui/hooks";
 import { Margem, MeBadge, Nivel, PisoChip, PrecoCmp, Prazo, Selos, UFBadge } from "../ui/Pecas";
@@ -49,7 +50,7 @@ export function Oportunidades() {
         <div className="card empty"><b>Nenhuma licitação com esses filtros.</b><button type="button" className="btn" onClick={limparFiltros}>Limpar filtros</button></div>
       ) : (
         <div className="list" role="list">
-          <div className="lhead lbl"><span /><span>Prazo</span><span>Local e órgão</span><span>O que pedem</span><span className="r">Volume · valor</span><span className="r">R$/kg órgão</span><span className="r">Margem · lucro</span><span>Minha proposta</span></div>
+          <div className="lhead lbl"><span /><Cab t="Prazo" ordens={["prazo"]} sort={s.ui.sort} /><span>Local e órgão</span><span>O que pedem</span><Cab t="Volume · valor" ordens={["valor", "kg"]} sort={s.ui.sort} r /><Cab t="R$/kg órgão" ordens={["rkg_desc", "rkg_asc"]} sort={s.ui.sort} r /><Cab t="Margem · lucro" ordens={["lucro", "margem"]} sort={s.ui.sort} r /><span>Minha proposta</span></div>
           <LayoutGroup>
             <AnimatePresence initial={false}>
               {L.slice(0, limite).map((c, i) => <Linha key={c.chave} c={c} sel={s.opened === c.chave} foco={cursor === i} compacto={!!s.opened && !celular} />)}
@@ -74,6 +75,18 @@ export function Oportunidades() {
         ) : lista}
       </div>
     </div>
+  );
+}
+
+/* Cabeçalho de coluna que ordena ao clicar: 1º clique a ordem principal, 2º a alternativa (valor/kg, maior/menor R$/kg, lucro/margem). */
+function Cab({ t, ordens, sort, r }: { t: string; ordens: Ordem[]; sort: Ordem; r?: boolean }) {
+  const i = ordens.indexOf(sort), on = i >= 0;
+  const prox = ordens[(i + 1) % ordens.length];
+  const rot = on ? ORDENS.find((o) => o[0] === sort)![1] : ORDENS.find((o) => o[0] === ordens[0])![1];
+  return (
+    <button type="button" className={"lh-sort" + (r ? " r" : "")} data-on={on} data-sort={ordens[0]} aria-sort={on ? "descending" : "none"} title={on ? `Ordenado por: ${rot}. Clique para ${ORDENS.find((o) => o[0] === prox)![1].toLowerCase()}` : `Ordenar por ${rot.toLowerCase()}`} onClick={() => setSort(prox)}>
+      {t}{on && <span aria-hidden="true"> ▾</span>}
+    </button>
   );
 }
 
@@ -160,7 +173,7 @@ function Filtros({ s, celular }: { s: State; celular: boolean }) {
         </details>
         {secoes[4]}{secoes[5]}{secoes[6]}
         <details className="fsec" data-sec="valor" open><summary>Valor estimado (café)</summary><div className="opts">{VALORES.map(([k, l]) => <button key={k} type="button" className="opt" aria-pressed={F.valor === k} onClick={() => setF({ valor: F.valor === k ? "" : k })} data-valor={k}>{l}</button>)}</div></details>
-        {secoes[7]}{secoes[8]}{secoes[9]}
+        {secoes[7]}{secoes[8]}{secoes[9]}{secoes[10]}
         <details className="fsec" data-sec="meu" open><summary>Meu acompanhamento</summary>
           <label className="toggle">Só meus favoritos ★<input type="checkbox" checked={F.fav} onChange={(e) => setF({ fav: e.target.checked })} data-t="fav" /></label>
           <select className="inp" value={F.status} onChange={(e) => setF({ status: e.target.value })} aria-label="Status da proposta" id="stsel" style={{ marginTop: 6 }}><option value="">Qualquer status</option><option value="__none">Sem status</option>{data.status_opcoes.map((o) => <option key={o} value={o}>{o}</option>)}</select>

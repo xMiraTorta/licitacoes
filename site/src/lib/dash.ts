@@ -106,24 +106,24 @@ export function simulador(O: PCompra[], prep: Preparado): SimNivel[] {
   });
 }
 
-export interface Exigencia { l: string; n: number; med: number | null }
+export interface Exigencia { l: string; n: number; med: number | null; tag: string }
 export function exigencias(O: PCompra[]): Exigencia[] {
   const tor = O.filter((c) => c._main && grupoTipo(c._main.tipo) === TM);
   const rot: Record<string, string> = { "ABIC/pureza": "Selo ABIC / pureza", "Premium/1ª qualidade (termo comercial)": "“Premium” / 1ª qualidade", "Nota QG/sensorial": "Nota mínima de bebida", Laudo: "Laudo de laboratório", "Marca ref.": "Marca de referência", "Aceita conilon/blend": "Aceita conilon ou blend", "Sem PVA (grãos selecionados)": "Grãos sem defeitos (PVA)", "Agric. familiar": "Agricultura familiar" };
-  const L = SELOS.map((t) => { const X = tor.filter((c) => c._main!.tags.includes(t)); return { l: rot[t] || t, n: X.length, med: median(X.map((c) => c._main!.rkg!)) }; });
+  const L = SELOS.map((t) => { const X = tor.filter((c) => c._main!.tags.includes(t)); return { l: rot[t] || t, n: X.length, med: median(X.map((c) => c._main!.rkg!)), tag: t }; });
   const nota = tor.filter((c) => c._main!.qg);
-  L.push({ l: "Nota mínima de bebida", n: nota.length, med: median(nota.map((c) => c._main!.rkg!)) });
+  L.push({ l: "Nota mínima de bebida", n: nota.length, med: median(nota.map((c) => c._main!.rkg!)), tag: "Nota QG/sensorial" });
   const seen = new Set<string>();
   return L.filter((x) => x.n && !seen.has(x.l) && seen.add(x.l)).sort((a, b) => b.n - a.n);
 }
 
-export function embalagem(O: PCompra[]): { l: string; n: number }[] {
+export function embalagem(O: PCompra[]): { l: string; n: number; f: string }[] {
   const conta = (f: (c: PCompra) => boolean) => O.filter(f).length;
   return [
-    { l: "a vácuo", n: conta((c) => c.emb_f.includes("Vácuo")) },
-    { l: "pacote 500 g", n: conta((c) => c.emb_f.includes("500 g")) },
-    { l: "pacote 250 g", n: conta((c) => c.emb_f.includes("250 g")) },
-    { l: "pacote 1 kg", n: conta((c) => c.emb_f.includes("1 kg")) },
+    { l: "a vácuo", n: conta((c) => c.emb_f.includes("Vácuo")), f: "Vácuo" },
+    { l: "pacote 500 g", n: conta((c) => c.emb_f.includes("500 g")), f: "500 g" },
+    { l: "pacote 250 g", n: conta((c) => c.emb_f.includes("250 g")), f: "250 g" },
+    { l: "pacote 1 kg", n: conta((c) => c.emb_f.includes("1 kg")), f: "1 kg" },
   ];
 }
 

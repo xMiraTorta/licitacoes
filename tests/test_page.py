@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 from typing import Any
 
 from playwright.sync_api import Locator, Page
@@ -990,7 +991,7 @@ def test_proposal_card_footer_is_always_the_same(page: Page, fixture_url: str) -
         st, ab, pa = card.locator(".glide-btn").bounding_box(), card.locator("[data-open]").bounding_box(), card.locator(f'[data-testid="unfollow-{k}"]').bounding_box()
         assert st and ab and pa and abs(st["y"] - ab["y"]) < 4 and pa["y"] > ab["y"] + ab["height"] - 1, k  # status e Abrir numa linha; Parar embaixo
         assert abs(pa["x"] - st["x"]) < 2 and pa["height"] < 40  # Parar alinhado à esquerda, numa linha só
-    assert page.locator(".stage-g h3 .cnt").count() == 3 and page.locator(".stage-g h3 i").count() == 0
+    assert page.locator(".stage-g h3 .cnt").count() == 7 and page.locator(".stage-g h3 i").count() == 0  # 7 colunas no computador (uma por etapa)
     assert page.locator('.agenda .seg button:has-text("Minhas")').count() == 1
 
 
@@ -1000,3 +1001,86 @@ def test_settings_sync_text_without_jargon(page: Page, fixture_url: str) -> None
     for jargao in ("branch", "repositório", "meus-dados.json", "React"):
         assert jargao not in t, jargao
     assert "(React)" not in page.locator(".page.ajustes").inner_text()
+
+
+# ---------------- revisão de UI/UX (21/10/2026): interatividade
+def test_requirement_and_packaging_blocks_open_filtered_list(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "hoje")
+    linha = page.locator('[aria-label="Exigências mais comuns"] button.hb-row').first
+    n = int(re.match(r"\d+", linha.locator(".hb-v").inner_text()).group())  # type: ignore[union-attr]
+    linha.click()
+    page.wait_for_selector(".page.opp")
+    assert len(page.evaluate("window.__monitor.F().selos")) == 1 and page.evaluate("window.__monitor.count()") == n
+    assert page.locator('.fsec[data-sec="selos"]').count() == 1  # o filtro novo aparece no painel
+    go_tab(page, "hoje")
+    page.locator('[aria-label="Embalagem e tipo de compra"] button.donut-item').first.click()
+    page.wait_for_selector(".page.opp")
+    assert page.evaluate("window.__monitor.F().embs") == ["Vácuo"] and page.evaluate("window.__monitor.F().selos") == []
+
+
+def test_list_headers_sort_on_click(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    sort = lambda: page.evaluate("window.__monitor.state().ui.sort")  # noqa: E731
+    page.click('.lhead .lh-sort[data-sort="rkg_desc"]')
+    assert sort() == "rkg_desc"
+    L = page.evaluate("window.__monitor.lista()")
+    assert L.index(FIRST) < L.index(MIXED)  # 66,03 antes de 46,94
+    page.click('.lhead .lh-sort[data-sort="rkg_desc"]')  # de novo: inverte
+    assert sort() == "rkg_asc"
+    page.click('.lhead .lh-sort[data-sort="lucro"]')
+    assert sort() == "lucro"
+    page.click('.lhead .lh-sort[data-sort="prazo"]')
+    assert sort() == "prazo" and page.locator('.lhead .lh-sort[data-on="true"]').inner_text().lower().startswith("prazo")
+
+
+def test_map_hover_shows_state_tip(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url, "hoje")
+    page.locator('.mapa path[aria-label^="MG:"]').hover()
+    tip = page.locator(".map-tip")
+    tip.wait_for()
+    assert tip.inner_text().startswith("MG:") and "licitaç" in tip.inner_text()
+    assert page.locator('[data-testid="onde-sub"]').inner_text().startswith("MG:")
+    page.mouse.move(2, 2)
+    page.wait_for_selector(".map-tip", state="detached")
+    assert not page.locator('[data-testid="onde-sub"]').inner_text().startswith("MG:")
+
+
+def test_market_chart_labels_each_line(page: Page, real_url: str) -> None:
+    goto(page, real_url, "mercado")
+    labels = page.evaluate("[...document.querySelectorAll('.linechart .endl-t')].map(t => t.textContent)")  # SVG não tem innerText
+    assert len(labels) == 3 and any(t.startswith("Tradicional") for t in labels) and any(t.startswith("Gourmet") for t in labels)
+    boxes = [b.bounding_box() for b in page.locator(".linechart .endl-t").all()]
+    svg = page.locator(".linechart").bounding_box()
+    assert svg and all(b and b["x"] + b["width"] <= svg["x"] + svg["width"] + 1 for b in boxes)  # dentro do gráfico
+    ys = sorted(b["y"] for b in boxes if b)
+    assert all(ys[i + 1] - ys[i] >= 9 for i in range(len(ys) - 1))  # sem sobreposição
+
+
+def test_board_columns_and_drag_between_stages(page: Page, fixture_url: str) -> None:
+    goto(page, fixture_url)
+    page.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({FIRST: {"fav": True, "upd": "x"}})])
+    page.reload()
+    wait_ready(page)
+    go_tab(page, "propostas")
+    assert page.locator("#board .stage-g").count() == 7  # no computador toda etapa vira coluna, mesmo vazia
+    assert page.locator('#board .stage-g[data-col="Enviada"] .drop-vazio').count() == 1
+    page.drag_and_drop(f'.prop[data-ch="{FIRST}"]', '#board .stage-g[data-col="Enviada"]')
+    page.wait_for_selector(f'#board .stage-g[data-col="Enviada"] .prop[data-ch="{FIRST}"]')
+    assert ls(page, WFK)[FIRST]["status"] == "Enviada"
+    page.drag_and_drop(f'.prop[data-ch="{FIRST}"]', '#board .stage-g[data-col=""]')  # de volta: sem status, continua favorita
+    page.wait_for_selector(f'#board .stage-g[data-col=""] .prop[data-ch="{FIRST}"]')
+    w = ls(page, WFK)[FIRST]
+    assert w.get("status", "") == "" and w["fav"] is True
+    assert page.locator("#board .stage-g.over").count() == 0
+
+
+def test_board_on_phone_stacks_only_filled_stages(browser: Any, fixture_url: str) -> None:
+    pg = nova_pagina(browser, 390, 844)
+    goto(pg, fixture_url)
+    pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [WFK, json.dumps({FIRST: {"fav": True, "upd": "x"}, MIXED: {"status": "Enviada", "upd": "x"}})])
+    pg.reload()
+    wait_ready(pg)
+    go_tab(pg, "propostas")
+    assert pg.locator("#board .stage-g").count() == 2 and pg.locator(".prop[draggable]").count() == 0
+    assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    fechar(pg)

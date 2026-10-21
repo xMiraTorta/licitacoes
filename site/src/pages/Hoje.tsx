@@ -120,11 +120,11 @@ export function Hoje() {
         <div className="trio">
           <section className="card pad" aria-label="Exigências mais comuns">
             <h2>Exigências</h2><div className="sub small muted">em quantas compras aparece · preço típico de quem pede</div>
-            <Hbar rows={exigencias(O).slice(0, 7).map((e) => ({ l: e.l, v: e.n, extra: e.med ? BRL(e.med).replace(",00", "") + "/kg" : undefined }))} />
+            <Hbar rows={exigencias(O).slice(0, 7).map((e) => ({ l: e.l, v: e.n, extra: e.med ? BRL(e.med).replace(",00", "") + "/kg" : undefined, chave: e.tag, onClick: () => irLista({ selos: [e.tag] }) }))} />
           </section>
           <section className="card pad" aria-label="Embalagem e tipo de compra">
             <h2>Embalagem</h2>
-            <div className="donuts">{embalagem(O).map((e) => <Donut key={e.l} frac={e.n / Math.max(1, O.length)} rotulo={Math.round((e.n / Math.max(1, O.length)) * 100) + "%"} sub={e.l} />)}</div>
+            <div className="donuts">{embalagem(O).map((e) => <Donut key={e.l} frac={e.n / Math.max(1, O.length)} rotulo={Math.round((e.n / Math.max(1, O.length)) * 100) + "%"} sub={e.l} onClick={() => irLista({ embs: [e.f] })} />)}</div>
             <h2 style={{ marginTop: 12 }}>Tipo de compra</h2>
             <TipoCompra O={O} />
           </section>
@@ -195,20 +195,24 @@ function Melhores({ O }: { O: PCompra[] }) {
 /* ---------------- onde estão */
 function OndeEstao({ O, uf }: { O: PCompra[]; uf: ReturnType<typeof porUF> }) {
   const [sel, setSel] = useState<string | null>(null);
+  const [tip, setTip] = useState<{ t: string; x: number; y: number } | null>(null); // dica que segue o mouse (no toque, o estado tocado fica selecionado e aparece no subtítulo)
+  const [hover, setHover] = useState<string | null>(null);
   const origem = useStore((s) => s.data?.origem);
   const top = Object.entries(uf).sort((a, b) => b[1].n - a[1].n).slice(0, 6);
   const pontos: Ponto[] = O.filter((c) => c._mg && c._mg.lucro > 0 && (c as PCompra & { lat?: number; lon?: number }).lat != null)
     .sort((a, b) => b._mg!.lucro - a._mg!.lucro).slice(0, 6)
     .map((c) => { const x = c as PCompra & { lat: number; lon: number }; return { chave: c.chave, lat: x.lat, lon: x.lon, peso: c._mg!.lucro, rotulo: `${c.mun}, ${c.uf}: lucro estimado ${BRLc(c._mg!.lucro)}` }; });
-  const x = sel ? uf[sel] : null;
+  const mostra = hover || sel, x = mostra ? uf[mostra] : null;
   return (
     <section className="card onde" aria-label="Onde estão">
       <div className="card-h">
-        <div><h2>Onde estão</h2><div className="sub">{sel && x ? `${sel}: ${licit(x.n)} · lucro potencial ${BRLc(x.lucro)} · ${KGc(x.kg)}` : `${licit(O.length)} em ${Object.keys(uf).length} estados · toque num estado`}</div></div>
+        <div><h2>Onde estão</h2><div className="sub" data-testid="onde-sub">{mostra && x ? `${mostra}: ${licit(x.n)} · lucro potencial ${BRLc(x.lucro)} · ${KGc(x.kg)}` : mostra ? `${mostra}: nenhuma licitação aberta` : `${licit(O.length)} em ${Object.keys(uf).length} estados · toque num estado`}</div></div>
         <button type="button" className="linkbtn" onClick={() => { setF({ ...DEF(), ufs: sel ? [sel] : [] }); navegar("oportunidades"); }}>{sel ? `Ver ${sel}` : "Ver no mapa"} <IArrow size={12} /></button>
       </div>
       <div className="card-b">
-        <Mapa porUF={uf} sel={sel} onSel={(u) => setSel(sel === u ? null : u)} origem={origem} pontos={pontos} onPonto={abrirDetalhe} />
+        <Mapa porUF={uf} sel={sel} onSel={(u) => setSel(sel === u ? null : u)} origem={origem} pontos={pontos} onPonto={abrirDetalhe}
+          onHover={(u, t, pos) => { setHover(u); setTip(t && pos ? { t, x: pos.x, y: pos.y } : null); }} />
+        {tip && <div className="map-tip" role="tooltip" style={{ left: tip.x, top: tip.y }}>{tip.t}</div>}
         <div className="map-legend tiny muted"><span>1</span><span className="grad" /><span>{Math.max(...Object.values(uf).map((v) => v.n), 1)} abertas</span>{pontos.length > 0 && <span className="lg"><i className="pt" />as melhores</span>}<span className="lg"><i className="or" />{origem?.nome || "origem"}</span></div>
         <div className="chips-row" style={{ padding: "8px 0 0" }}>
           {top.map(([u, v]) => <button key={u} type="button" className="chip mono" aria-pressed={sel === u} onClick={() => setSel(sel === u ? null : u)}>{u} {v.n}</button>)}

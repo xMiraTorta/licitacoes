@@ -1,4 +1,4 @@
-/* Minhas propostas: quadro por etapa + agenda de prazos. */
+/* Minhas propostas: quadro por etapa (colunas no computador, com arrastar e soltar; empilhado no celular) + agenda de prazos. */
 import { useMemo, useState } from "react";
 import { follows, getW } from "../lib/filtros";
 import { BRL, BRLc, dayNum, fmtDate, fmtPrazo, licit, PCT, todayYMD, WDL } from "../lib/format";
@@ -7,23 +7,36 @@ import { LinhaMini } from "./Hoje";
 import { abrirDetalhe, navegar } from "../router";
 import { setUI, setW, toast, useStore } from "../store";
 import { GlideSelect, HoldButton } from "../ui/Controles";
+import { useCelular } from "../ui/hooks";
 import { IStar } from "../ui/icons";
 import { Nivel, PrecoCmp, Prazo, Selos, UFBadge } from "../ui/Pecas";
 import { Segmentado } from "../ui/Segmentado";
 
 export function Propostas() {
   const s = useStore((x) => x);
+  const celular = useCelular();
   const [etapa, setEtapa] = useState<string | null>(null);
+  const [arrastando, setArrastando] = useState<string | null>(null);
+  const [sobre, setSobre] = useState<string | null>(null);
   const prep = s.prep!, data = s.data!, wf = s.wf;
   const abertas = useMemo(() => prep.compras.filter((c) => follows(getW(wf, c.chave))).sort((a, b) => (a._ms ?? 1e15) - (b._ms ?? 1e15)).map((c) => c.chave), [prep, wf]);
   const sumidas = useMemo(() => Object.keys(wf).filter((k) => !prep.byk[k] && follows(wf[k])).sort((a, b) => ((wf[a].ref || {}).fim || "").localeCompare((wf[b].ref || {}).fim || "")), [prep, wf]);
   const todas = abertas.concat(sumidas), st = (k: string) => wf[k]?.status || "";
   const etapas: [string, string][] = [["", "Favoritas sem status"], ...data.status_opcoes.map((x) => [x, x] as [string, string])];
   const val = abertas.reduce((a, k) => a + (prep.byk[k].vcafe || 0), 0), prox = abertas.find((k) => isOpen(prep.byk[k], s.now));
-  const grupos = etapas.filter(([e]) => etapa == null || etapa === e).map(([e, t]) => [t, todas.filter((k) => st(k) === e)] as [string, string[]]).filter(([, L]) => L.length);
+  // computador: todas as etapas viram colunas (as vazias recebem cartões arrastados); celular: só as que têm algo
+  const grupos = etapas.filter(([e]) => etapa == null || etapa === e).map(([e, t]) => [e, t, todas.filter((k) => st(k) === e)] as [string, string, string[]]).filter(([, , L]) => L.length || (!celular && etapa == null));
+  const soltar = (e: string) => (ev: React.DragEvent) => {
+    ev.preventDefault();
+    const k = ev.dataTransfer.getData("text/plain") || arrastando;
+    setSobre(null); setArrastando(null);
+    if (!k || st(k) === e) return;
+    setW(k, e ? { status: e } : { status: "", fav: true }); // "Favoritas sem status": tira o status e garante a estrela, senão sumiria do quadro
+    toast(e ? `Status: ${e}` : "Sem status (continua favorita)");
+  };
   return (
     <div className="page propostas">
-      <div className="page-h"><h1>Minhas propostas</h1><span className="small muted">Licitações que você marcou com ★ ou às quais deu um status. Mude o status direto no cartão; em “Abrir” você edita preço e notas.</span></div>
+      <div className="page-h"><h1>Minhas propostas</h1><span className="small muted">Licitações que você marcou com ★ ou às quais deu um status. Mude o status no cartão{celular ? "" : " ou arraste o cartão para outra coluna"}; em “Abrir” você edita preço e notas.</span></div>
       {!todas.length ? (
         <div className="card empty" style={{ padding: 40 }}><b>Você ainda não acompanha nenhuma licitação.</b><span>Marque ★ nas oportunidades que interessam ou dê um status a elas: elas aparecem aqui, organizadas por etapa.</span><button type="button" className="btn primary" onClick={() => navegar("oportunidades")}>Ver oportunidades</button></div>
       ) : (
@@ -37,9 +50,18 @@ export function Propostas() {
             <button type="button" className="chip" aria-pressed={etapa == null} onClick={() => setEtapa(null)} data-stage="__all">Todas<i>{todas.length}</i></button>
             {etapas.map(([e, t]) => { const n = todas.filter((k) => st(k) === e).length; return <button key={e} type="button" className={"chip" + (n ? "" : " zero")} aria-pressed={etapa === e} onClick={() => setEtapa(etapa === e ? null : e)} data-stage={e}>{t}<i>{n}</i></button>; })}
           </div>
-          <div id="board">
-            {grupos.length ? grupos.map(([t, L]) => (
-              <section key={t} className="stage-g"><h3>{t} <span className="cnt">{L.length}</span></h3><div className="props">{L.map((k) => <PropCard key={k} k={k} />)}</div></section>
+          <div id="board" className={(etapa != null ? "so-uma" : "") + (celular ? " cel" : "")}>
+            {grupos.length ? grupos.map(([e, t, L]) => (
+              <section key={t} className={"stage-g" + (sobre === e && arrastando ? " over" : "")} data-col={e} aria-label={t}
+                onDragOver={(ev) => { if (!celular && arrastando) { ev.preventDefault(); ev.dataTransfer.dropEffect = "move"; if (sobre !== e) setSobre(e); } }}
+                onDragLeave={(ev) => { if (!ev.currentTarget.contains(ev.relatedTarget as Node | null)) setSobre((x) => (x === e ? null : x)); }}
+                onDrop={soltar(e)}>
+                <h3>{t} <span className="cnt">{L.length}</span></h3>
+                <div className="props">
+                  {L.map((k) => <PropCard key={k} k={k} arrastavel={!celular} arrastando={arrastando === k} onDragStart={() => setArrastando(k)} onDragEnd={() => { setArrastando(null); setSobre(null); }} />)}
+                  {!L.length && <div className="drop-vazio tiny muted">Arraste um cartão para cá</div>}
+                </div>
+              </section>
             )) : <div className="card empty"><b>Nenhuma licitação nesta etapa.</b></div>}
           </div>
         </>
@@ -49,7 +71,7 @@ export function Propostas() {
   );
 }
 
-function PropCard({ k }: { k: string }) {
+function PropCard({ k, arrastavel, arrastando, onDragStart, onDragEnd }: { k: string; arrastavel?: boolean; arrastando?: boolean; onDragStart?: () => void; onDragEnd?: () => void }) {
   const c = useStore((s) => s.prep!.byk[k]) as PCompra | undefined;
   const w = useStore((s) => s.wf[k]) || {};
   const data = useStore((s) => s.data)!;
@@ -57,7 +79,8 @@ function PropCard({ k }: { k: string }) {
   const mun = c ? c.mun : r.mun, uf = c ? c.uf : r.uf, org = c ? c._orgao : r.orgao, val = c ? c.vcafe : r.vcafe;
   const x = c && c._cmp, m = c && w.preco && rkV(c) ? (rkV(c)! - w.preco) / rkV(c)! : null;
   return (
-    <article className="prop card" data-ch={k}>
+    <article className={"prop card" + (arrastando ? " dragging" : "")} data-ch={k} draggable={arrastavel || undefined}
+      onDragStart={(ev) => { ev.dataTransfer.setData("text/plain", k); ev.dataTransfer.effectAllowed = "move"; onDragStart?.(); }} onDragEnd={onDragEnd}>
       <header>
         <button type="button" className={"star" + (w.fav ? " on" : "")} data-act="fav" aria-label={w.fav ? "Remover dos favoritos" : "Marcar como favorito"} onClick={() => { const on = !w.fav; setW(k, { fav: on }); toast(on ? "★ Adicionada aos favoritos" : "Removida dos favoritos"); }}><IStar size={16} filled={!!w.fav} /></button>
         <div className="pt"><b>{mun ? `${mun} · ${uf}` : k}</b><span className="small muted ell">{org || ""}</span></div>
