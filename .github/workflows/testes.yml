@@ -4,6 +4,10 @@ name: Testes
 
 on:
   pull_request:
+    paths-ignore: # PR só de documentação não gasta minutos do Actions
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
   workflow_dispatch:
 
 permissions:
