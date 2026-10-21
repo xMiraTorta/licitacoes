@@ -67,7 +67,7 @@ def sede_por_nome(mun: str | None, uf: str | None) -> tuple[float | None, float 
 
 def calcular(client: httpx.Client | None = None, pausa: float = 1.0) -> int:
     """Consulta o OSRM em lotes e grava o CSV. Município sem rota (ilhas) fica em branco."""
-    cli = client or httpx.Client(timeout=60, headers={"User-Agent": "licitacoes-monitor/1.0"})
+    cli = client or httpx.Client(timeout=60, headers={"User-Agent": "monitor-licitacoes/1.0 (github.com/xMiraTorta)"})
     with MUNICIPIOS.open(encoding="utf-8") as f:
         muns = list(csv.DictReader(f))
     saida: list[dict[str, str]] = []

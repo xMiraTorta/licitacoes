@@ -4,12 +4,12 @@
 
 **Licitações de café abertas no Brasil, com preço, custo, margem e prazo, num painel só.**
 
-[![Site](https://img.shields.io/badge/site-xmiratorta.github.io%2Flicitacoes-1d4ed8?style=flat-square)](https://xmiratorta.github.io/licitacoes/)
-[![Atualizar licitações](https://img.shields.io/github/actions/workflow/status/xMiraTorta/licitacoes/atualizar.yml?branch=main&label=coleta%20di%C3%A1ria&style=flat-square)](https://github.com/xMiraTorta/licitacoes/actions/workflows/atualizar.yml)
-[![Publicar site](https://img.shields.io/github/actions/workflow/status/xMiraTorta/licitacoes/pages.yml?branch=main&label=site&style=flat-square)](https://github.com/xMiraTorta/licitacoes/actions/workflows/pages.yml)
-[![Testes](https://img.shields.io/github/actions/workflow/status/xMiraTorta/licitacoes/testes.yml?label=testes&style=flat-square)](https://github.com/xMiraTorta/licitacoes/actions/workflows/testes.yml)
+[![Site](https://img.shields.io/badge/site-xmiratorta.github.io%2Fmonitor-licitacoes-1d4ed8?style=flat-square)](https://xmiratorta.github.io/monitor-licitacoes/)
+[![Atualizar licitações](https://img.shields.io/github/actions/workflow/status/xMiraTorta/monitor-licitacoes/atualizar.yml?branch=main&label=coleta%20di%C3%A1ria&style=flat-square)](https://github.com/xMiraTorta/monitor-licitacoes/actions/workflows/atualizar.yml)
+[![Publicar site](https://img.shields.io/github/actions/workflow/status/xMiraTorta/monitor-licitacoes/pages.yml?branch=main&label=site&style=flat-square)](https://github.com/xMiraTorta/monitor-licitacoes/actions/workflows/pages.yml)
+[![Testes](https://img.shields.io/github/actions/workflow/status/xMiraTorta/monitor-licitacoes/testes.yml?label=testes&style=flat-square)](https://github.com/xMiraTorta/monitor-licitacoes/actions/workflows/testes.yml)
 
-<a href="https://xmiratorta.github.io/licitacoes/"><img src="docs/img/hoje.png" alt="Tela Hoje do Monitor de Licitações" width="880"></a>
+<a href="https://xmiratorta.github.io/monitor-licitacoes/"><img src="docs/img/hoje.png" alt="Tela Hoje do Monitor de Licitações" width="880"></a>
 
 </div>
 

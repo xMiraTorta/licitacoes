@@ -26,7 +26,7 @@ from loguru import logger
 BASE = Path(__file__).with_name("mercado.json")
 CEPEA = "https://www.cepea.org.br/br/indicador/cafe.aspx"
 CARVALHAES = "https://www.carvalhaes.com.br/cotacoes/cotacoes.asp"
-UA = "monitor-licitacoes-cafe/1.0 (+https://xmiratorta.github.io/licitacoes/)"
+UA = "monitor-licitacoes/1.0 (+https://github.com/xMiraTorta/monitor-licitacoes)"
 SACA_CARVALHAES = 60.5  # kg
 
 # Classe da Carvalhaes -> começo do nome na tabela
